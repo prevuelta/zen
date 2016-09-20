@@ -1,0 +1,29 @@
+{
+  "name": "zen",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "watch" : "parallelshell 'npm run watch:js' 'npm run serve'",
+    "watch:js": "watch 'npm run js' ./src",
+    "js": "browserify -x three ./src/main.js -o ./dist/main.js",
+    "lib": "browserify -r three -o ./dist/lib.js",
+    "serve": "http-server ./dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@bitbucket.org/artformachine/zengarden.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/artformachine/zengarden#readme",
+  "dependencies": {
+    "three": "^0.81.0"
+  },
+  "devDependencies": {
+    "babelify": "^7.3.0",
+    "browserify": "^13.1.0",
+    "parallelshell": "^2.0.0",
+    "watch": "^0.19.2"
+  }
+}
