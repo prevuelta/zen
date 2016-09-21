@@ -8,7 +8,7 @@
     "watch:js": "watch 'npm run js' ./src",
     "js": "browserify -x three ./src/main.js -o ./dist/main.js",
     "lib": "browserify -r three -o ./dist/lib.js",
-    "serve": "http-server ./dist"
+    "serve": "http-server -p 4321 ./dist"
   },
   "repository": {
     "type": "git",
