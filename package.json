@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "watch" : "parallelshell 'npm run watch:js' 'npm run serve'",
+    "watch": "parallelshell 'npm run watch:js' 'npm run serve'",
     "watch:js": "watch 'npm run js' ./src",
     "js": "browserify -x three ./src/main.js -o ./dist/main.js",
     "lib": "browserify -r three -o ./dist/lib.js",
