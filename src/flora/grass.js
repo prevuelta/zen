@@ -18,12 +18,12 @@ function Blade () {
         return new THREE.Vector3(x,y+(i*nodeDelta),0)
     });
 
-    let spline = new THREE.SplineCurve3(splineVectors);
+    let spline = new THREE.CatmullRomCurve3(splineVectors);
 
-    let lineWidth = Math.round(Math.random() * 8);
+    let lineWidth = 1+ Math.round(Math.random() * 5);
 
     var material = new THREE.LineBasicMaterial({
-        color: 0x008800,
+        color: 0xffffff,
         linewidth: lineWidth
     });
 
