@@ -1,10 +1,14 @@
 'use strict';
 
+let THREE = require('three');
+
 module.exports = {
     crack (geo, min, max) {
-        for (let i = min; i <= max; i++) {
-            this.pit(geo, i);
-        }
+        // for (let i = min; i <= max; i++) {
+            // this.pit(geo, i);
+        // }
+        geo.computeBoundingBox();
+        console.log(geo.boundingBox);
     },
     pit (geo, testVertice) {
 
@@ -19,7 +23,7 @@ module.exports = {
 
     },
     break (geo, min, max) {
-        
+
     },
     erode (geo) {
         geo.vertices.forEach(v => {

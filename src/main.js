@@ -43,8 +43,8 @@ let texture = new THREE.TextureLoader();
 
         x = i % rowCount;
 
-        cube.position.x = x * 1;
-        cube.position.z = z * 1;
+        cube.position.x = x * 1.1;
+        cube.position.z = z * 1.1;
 
         group.add( cube );
     }

@@ -3,7 +3,8 @@
 let THREE = require('three');
 
 let Entropy = require('../abstract/entropy');
-
+let Field = require('../abstract/Field');
+let Cross = require('../util/cross');
 /*
 
 NOTES:
@@ -16,7 +17,7 @@ NOTES:
 
 function Cobble (scene) {
 
-    let geo = new THREE.BoxGeometry( 1, 0.2, 1, 5, 2, 2);
+    let geo = new THREE.BoxGeometry(1, 0.6 - (Math.random() * 0.2), 1, 4, 4, 4);
 
     geo.centroid = new THREE.Vector3();
 
@@ -34,9 +35,44 @@ function Cobble (scene) {
     let min = Math.min(one, two);
     let max = Math.max(one, two);
 
+    let fields = [];
 
-    Entropy.pit(geo, pit);
-    Entropy.erode(geo, pit);
+    let fieldCount = 3;
+
+    for (let i = 0; i < fieldCount; i++) {
+        fields.push(Field(fieldPos(), 0.01));
+    }
+
+    function fieldPos () {
+        return {
+            x: (Math.random() - 0.5) * 1,
+            y: (Math.random() - 0.5) * 1,
+            z: (Math.random() - 0.5) * 1
+        }
+    }
+
+    let markers = new THREE.Object3D();
+
+    fields.forEach(f => {
+
+        let cross = Cross(0.05);
+
+        cross.position.x = f.x;
+        cross.position.y = f.y;
+        cross.position.z = f.z;
+
+        markers.add(cross);
+    });
+
+    geo.vertices.forEach(v => {
+        fields.forEach(f => {
+            f.affect(v, geo.centroid);
+        });
+    });
+
+//
+    // Entropy.pit(geo, pit);
+    // Entropy.erode(geo, pit);
     Entropy.crack(geo, min, max);
 
     // for ( var i = 0, l = geo.vertices.length; i < l; i ++ ) {
@@ -66,8 +102,7 @@ function Cobble (scene) {
     var helper = new THREE.WireframeHelper( mesh, 0x444444 ); // or THREE.WireframeHelper
 
     mesh.add( helper );
-
-    console.log("CENTER", geo.centroid);
+    mesh.add( markers );
 
     return mesh;
 }

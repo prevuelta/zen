@@ -1,11 +1,15 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
+let THREE = require('three');
+
 module.exports = {
     crack (geo, min, max) {
-        for (let i = min; i <= max; i++) {
-            this.pit(geo, i);
-        }
+        // for (let i = min; i <= max; i++) {
+            // this.pit(geo, i);
+        // }
+        geo.computeBoundingBox();
+        console.log(geo.boundingBox);
     },
     pit (geo, testVertice) {
 
@@ -20,7 +24,7 @@ module.exports = {
 
     },
     break (geo, min, max) {
-        
+
     },
     erode (geo) {
         geo.vertices.forEach(v => {
@@ -32,7 +36,28 @@ module.exports = {
         });
     }
 }
-},{}],2:[function(require,module,exports){
+},{"three":"three"}],2:[function(require,module,exports){
+'use strict';
+
+function Field (origin, strength) {
+    console.log(strength);
+    return {
+        x: origin.x,
+        y: origin.y,
+        z: origin.z,
+        strength: strength,
+        affect (v, origin) {
+            let dist = v.distanceTo(this);
+            let dir = v.clone();
+            dir.normalize();
+            dir.multiplyScalar(this.strength/dist);
+            v.sub(dir);
+        }
+    }
+}
+
+module.exports = Field;
+},{}],3:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -99,13 +124,14 @@ function Grass (options) {
 
 
 module.exports = Grass;
-},{"three":"three"}],3:[function(require,module,exports){
+},{"three":"three"}],4:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
 
 let Entropy = require('../abstract/entropy');
-
+let Field = require('../abstract/Field');
+let Cross = require('../util/cross');
 /*
 
 NOTES:
@@ -118,7 +144,7 @@ NOTES:
 
 function Cobble (scene) {
 
-    let geo = new THREE.BoxGeometry( 1, 0.2, 1, 5, 2, 2);
+    let geo = new THREE.BoxGeometry(1, 0.6 - (Math.random() * 0.2), 1, 4, 4, 4);
 
     geo.centroid = new THREE.Vector3();
 
@@ -136,9 +162,44 @@ function Cobble (scene) {
     let min = Math.min(one, two);
     let max = Math.max(one, two);
 
+    let fields = [];
 
-    Entropy.pit(geo, pit);
-    Entropy.erode(geo, pit);
+    let fieldCount = 3;
+
+    for (let i = 0; i < fieldCount; i++) {
+        fields.push(Field(fieldPos(), 0.01));
+    }
+
+    function fieldPos () {
+        return {
+            x: (Math.random() - 0.5) * 1,
+            y: (Math.random() - 0.5) * 1,
+            z: (Math.random() - 0.5) * 1
+        }
+    }
+
+    let markers = new THREE.Object3D();
+
+    fields.forEach(f => {
+
+        let cross = Cross(0.05);
+
+        cross.position.x = f.x;
+        cross.position.y = f.y;
+        cross.position.z = f.z;
+
+        markers.add(cross);
+    });
+
+    geo.vertices.forEach(v => {
+        fields.forEach(f => {
+            f.affect(v, geo.centroid);
+        });
+    });
+
+//
+    // Entropy.pit(geo, pit);
+    // Entropy.erode(geo, pit);
     Entropy.crack(geo, min, max);
 
     // for ( var i = 0, l = geo.vertices.length; i < l; i ++ ) {
@@ -168,14 +229,13 @@ function Cobble (scene) {
     var helper = new THREE.WireframeHelper( mesh, 0x444444 ); // or THREE.WireframeHelper
 
     mesh.add( helper );
-
-    console.log("CENTER", geo.centroid);
+    mesh.add( markers );
 
     return mesh;
 }
 
 module.exports = Cobble;
-},{"../abstract/entropy":1,"three":"three"}],4:[function(require,module,exports){
+},{"../abstract/Field":2,"../abstract/entropy":1,"../util/cross":6,"three":"three"}],5:[function(require,module,exports){
 
 'use strict';
 
@@ -221,8 +281,8 @@ let texture = new THREE.TextureLoader();
 
         x = i % rowCount;
 
-        cube.position.x = x * 1;
-        cube.position.z = z * 1;
+        cube.position.x = x * 1.1;
+        cube.position.z = z * 1.1;
 
         group.add( cube );
     }
@@ -263,4 +323,47 @@ let texture = new THREE.TextureLoader();
     render();
 
 // });
-},{"./flora/grass":2,"./geology/cobble":3,"three":"three"}]},{},[4]);
+},{"./flora/grass":3,"./geology/cobble":4,"three":"three"}],6:[function(require,module,exports){
+'use strict';
+
+let THREE = require('three');
+
+function Cross (size) {
+
+    let material = new THREE.LineBasicMaterial({
+        color: 0xff0000
+    });
+
+    let group = new THREE.Object3D();
+
+    for (let i = 0;i < 3; i++) {
+        let geometry = new THREE.Geometry();
+
+        if (i === 0) {
+            geometry.vertices.push(
+                new THREE.Vector3( -size, 0, 0 ),
+                new THREE.Vector3( size, 0, 0 )
+            );
+        } else if (i === 1) {
+            geometry.vertices.push(
+                new THREE.Vector3( 0, -size, 0 ),
+                new THREE.Vector3( 0, size, 0 )
+            );
+        } else {
+            geometry.vertices.push(
+                new THREE.Vector3( 0, 0, -size),
+                new THREE.Vector3( 0, 0, size)
+            );
+        }
+
+        let line = new THREE.Line( geometry, material );
+
+        group.add(line);
+    }
+
+    return group;
+
+}
+
+module.exports = Cross;
+},{"three":"three"}]},{},[5]);
