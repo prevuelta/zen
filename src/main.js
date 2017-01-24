@@ -49,7 +49,13 @@ let texture = new THREE.TextureLoader();
 
     //     group.add( cube );
     // }
-    group.add(Rock(scene));
+    let rock = Rock();
+
+    rock.position.x = 1.1;
+
+    rock.position.z = 1.1;
+
+    group.add(rock);
 
     group.rotation.y = Math.PI/4;
     group.rotation.x = Math.PI/8;
@@ -77,10 +83,9 @@ let texture = new THREE.TextureLoader();
     function render() {
         // group.rotation.x += 0.01;
         // group.center();
-        // scene.rotateOnAxis(yAxis, Math.PI/480);
+        scene.rotateOnAxis(yAxis, Math.PI/480);
         // scene.rotateOnAxis(zAxis, Math.PI/960);
-        // requestAnimationFrame( render );
-        console.log("rendering")
+        requestAnimationFrame( render );
         renderer.render( scene, camera );
     }
 

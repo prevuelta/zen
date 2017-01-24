@@ -9,19 +9,56 @@ let Cross = require('../util/cross');
 let qh = require('quickhull3d');
 
 
-function Rock (scene) {
+function Rock () {
 
-        var x, y, z, max = 1.0,min = 0.1,points = [];
-        for (var i = 0; i <= 10; i++) {
-            x = Math.floor(Math.random() * (max - min + 1)) + min;
-            y = Math.floor(Math.random() * (max - min + 1)) + min;
-            z = Math.floor(Math.random() * (max - min + 1)) + min;
-            points.push(new THREE.Vector3(x, y, z));
-        }
+    let points = [];
+    let min = -2, max = 2;
+    for (var i = 0; i <= 20; i++) {
+        points.push([
+            randomInt(min, max),
+            randomInt(min, max),
+            randomInt(min, max)
+        ]);
+    }
 
-        let geometry = new THREE.ConvexGeometry(points);
+    function randomFloat (min, max) {
+        return Math.random() * (max - min) - max;
+    }
 
-//     let geo = new THREE.BoxGeometry(1, 0.6 - (Math.random() * 0.2), 1, 4, 4, 4);
+    function randomInt (min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // let geometry = new THREE.ConvexGeometry(points);
+
+    console.log(points);
+
+    // let outline = qh(points, {skipTriangulation: true });
+    let outline = qh(points);
+
+    let geo = new THREE.Geometry();
+
+    // geo.vertices = points;
+
+    points.forEach(p => {
+        geo.vertices.push(new THREE.Vector3(p[0], p[1], p[2]));
+    })
+
+    // let triangles = THREE.Shape.Utils.triangulateShape ( points, [] );
+
+    outline.forEach((p, i) => {
+        let [i1, i2, i3] = p;
+        geo.faces.push(new THREE.Face3(i1, i2, i3));
+    })
+
+    // outline.forEach(f => {
+        // geo.faces.push(f)
+    // });
+
+    geo.computeFaceNormals();
+    geo.computeVertexNormals();
+
+        // let geo = new THREE.BoxGeometry(1, 0.6 - (Math.random() * 0.2), 1, 4, 4, 4);
 
 //     geo.centroid = new THREE.Vector3();
 
@@ -39,34 +76,18 @@ function Rock (scene) {
 //     let min = Math.min(one, two);
 //     let max = Math.max(one, two);
 
-//     let fields = [];
+    let markers = new THREE.Object3D();
 
-//     let fieldCount = 3;
+    points.forEach(f => {
 
-//     for (let i = 0; i < fieldCount; i++) {
-//         fields.push(Field(fieldPos(), 0.01));
-//     }
+        let cross = Cross(0.05);
 
-//     function fieldPos () {
-//         return {
-//             x: (Math.random() - 0.5) * 1,
-//             y: (Math.random() - 0.5) * 1,
-//             z: (Math.random() - 0.5) * 1
-//         }
-//     }
+        cross.position.x = f[0];
+        cross.position.y = f[1];
+        cross.position.z = f[2];
 
-//     let markers = new THREE.Object3D();
-
-//     fields.forEach(f => {
-
-//         let cross = Cross(0.05);
-
-//         cross.position.x = f.x;
-//         cross.position.y = f.y;
-//         cross.position.z = f.z;
-
-//         markers.add(cross);
-//     });
+        markers.add(cross);
+    });
 
 //     geo.vertices.forEach(v => {
 //         fields.forEach(f => {
@@ -96,6 +117,7 @@ function Rock (scene) {
     let material = new THREE.MeshLambertMaterial( {
         color: 0xffffff,
         shading: THREE.FlatShading,
+        side: THREE.DoubleSide,
         polygonOffset: true,
         polygonOffsetFactor: 1, // positive value pushes polygon further away
         polygonOffsetFactor: 1
@@ -103,10 +125,10 @@ function Rock (scene) {
 
     let mesh = new THREE.Mesh( geo, material );
 
-    // var helper = new THREE.WireframeHelper( mesh, 0x444444 ); // or THREE.WireframeHelper
+    var helper = new THREE.WireframeHelper( mesh, 0xFF0000 ); // or THREE.WireframeHelper
 
-    // mesh.add( helper );
-//     mesh.add( markers );
+    mesh.add( helper );
+    mesh.add( markers );
 
     return mesh;
 }
