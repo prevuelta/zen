@@ -12,11 +12,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@bitbucket.org/artformachine/zengarden.git"
+    "url": "https://github.com/prevuelta/zen.git"
   },
   "author": "",
   "license": "ISC",
-  "homepage": "https://bitbucket.org/artformachine/zengarden#readme",
+  "homepage": "https://github.com/prevuelta/zen.git",
   "dependencies": {
     "quickhull3d": "^2.0.0",
     "three": "^0.81.0"
