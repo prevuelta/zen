@@ -7,6 +7,7 @@ var scene = new THREE.Scene();
 
 let Grass = require('./flora/grass');
 let Cobble = require('./geology/cobble');
+let Rock = require('./geology/rock');
 
 scene.background = new THREE.Color('#ffffff');
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -35,19 +36,20 @@ let texture = new THREE.TextureLoader();
 
     let [x, z] = [0, 0];
 
-    for (let i = 0; i < maxCubes; i++) {
-        var cube = Cobble(scene);
+    // for (let i = 0; i < maxCubes; i++) {
+    //     var cube = Cobble(scene);
 
-        if (i % rowCount == 0 && i)
-            z++;
+    //     if (i % rowCount == 0 && i)
+    //         z++;
 
-        x = i % rowCount;
+    //     x = i % rowCount;
 
-        cube.position.x = x * 1.1;
-        cube.position.z = z * 1.1;
+    //     cube.position.x = x * 1.1;
+    //     cube.position.z = z * 1.1;
 
-        group.add( cube );
-    }
+    //     group.add( cube );
+    // }
+    group.add(Rock(scene));
 
     group.rotation.y = Math.PI/4;
     group.rotation.x = Math.PI/8;
@@ -75,9 +77,10 @@ let texture = new THREE.TextureLoader();
     function render() {
         // group.rotation.x += 0.01;
         // group.center();
-        scene.rotateOnAxis(yAxis, Math.PI/480);
+        // scene.rotateOnAxis(yAxis, Math.PI/480);
         // scene.rotateOnAxis(zAxis, Math.PI/960);
-        requestAnimationFrame( render );
+        // requestAnimationFrame( render );
+        console.log("rendering")
         renderer.render( scene, camera );
     }
 

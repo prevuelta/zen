@@ -46,7 +46,8 @@ function Field (origin, strength) {
         y: origin.y,
         z: origin.z,
         strength: strength,
-        affect (v, origin) {
+        affect (v) {
+            
             let dist = v.distanceTo(this);
             let dir = v.clone();
             dir.normalize();
@@ -235,7 +236,120 @@ function Cobble (scene) {
 }
 
 module.exports = Cobble;
-},{"../abstract/Field":2,"../abstract/entropy":1,"../util/cross":6,"three":"three"}],5:[function(require,module,exports){
+},{"../abstract/Field":2,"../abstract/entropy":1,"../util/cross":7,"three":"three"}],5:[function(require,module,exports){
+'use strict';
+
+let THREE = require('three');
+
+let Entropy = require('../abstract/entropy');
+let Field = require('../abstract/Field');
+let Cross = require('../util/cross');
+
+
+function Rock (scene) {
+
+        var x, y, z, max = 1.0,min = 0.1,points = [];
+        for (var i = 0; i <= 10; i++) {
+            x = Math.floor(Math.random() * (max - min + 1)) + min;
+            y = Math.floor(Math.random() * (max - min + 1)) + min;
+            z = Math.floor(Math.random() * (max - min + 1)) + min;
+            points.push(new THREE.Vector3(x, y, z));
+        }
+
+        let geometry = new THREE.ConvexGeometry(points);
+
+//     let geo = new THREE.BoxGeometry(1, 0.6 - (Math.random() * 0.2), 1, 4, 4, 4);
+
+//     geo.centroid = new THREE.Vector3();
+
+//     for ( var i = 0, l = geo.vertices.length; i < l; i ++ ) {
+//         geo.centroid.add(geo.vertices[ i ]);
+//     }
+
+//     geo.centroid.divideScalar( geo.vertices.length );
+
+//     let pit = Math.floor(Math.random() * geo.vertices.length);
+
+//     let one = Math.floor(Math.random() * geo.vertices.length);
+//     let two = Math.floor(Math.random() * geo.vertices.length);
+
+//     let min = Math.min(one, two);
+//     let max = Math.max(one, two);
+
+//     let fields = [];
+
+//     let fieldCount = 3;
+
+//     for (let i = 0; i < fieldCount; i++) {
+//         fields.push(Field(fieldPos(), 0.01));
+//     }
+
+//     function fieldPos () {
+//         return {
+//             x: (Math.random() - 0.5) * 1,
+//             y: (Math.random() - 0.5) * 1,
+//             z: (Math.random() - 0.5) * 1
+//         }
+//     }
+
+//     let markers = new THREE.Object3D();
+
+//     fields.forEach(f => {
+
+//         let cross = Cross(0.05);
+
+//         cross.position.x = f.x;
+//         cross.position.y = f.y;
+//         cross.position.z = f.z;
+
+//         markers.add(cross);
+//     });
+
+//     geo.vertices.forEach(v => {
+//         fields.forEach(f => {
+//             f.affect(v, geo.centroid);
+//         });
+//     });
+
+// //
+//     // Entropy.pit(geo, pit);
+//     // Entropy.erode(geo, pit);
+//     Entropy.crack(geo, min, max);
+
+//     // for ( var i = 0, l = geo.vertices.length; i < l; i ++ ) {
+
+//         // let v = geo.vertices[i];
+//         // console.log(v);
+//         // let dist = geo.centroid.distanceTo(v);
+//         // let dir = v.clone();
+//         // dir.normalize();
+//         // dir.multiplyScalar(dist/(5*(1+Math.random())));
+//         // console.log(dir);
+//         // v.sub(dir);
+//         // console.log("Distance", );
+//     // }
+
+//     // material
+    let material = new THREE.MeshLambertMaterial( {
+        color: 0xffffff,
+        shading: THREE.FlatShading,
+        polygonOffset: true,
+        polygonOffsetFactor: 1, // positive value pushes polygon further away
+        polygonOffsetFactor: 1
+    });
+
+    let mesh = new THREE.Mesh( geo, material );
+
+    // var helper = new THREE.WireframeHelper( mesh, 0x444444 ); // or THREE.WireframeHelper
+
+    // mesh.add( helper );
+//     mesh.add( markers );
+
+    return mesh;
+}
+
+module.exports = Rock;
+},{"../abstract/Field":2,"../abstract/entropy":1,"../util/cross":7,"three":"three"}],6:[function(require,module,exports){
 
 'use strict';
 
@@ -245,6 +359,7 @@ var scene = new THREE.Scene();
 
 let Grass = require('./flora/grass');
 let Cobble = require('./geology/cobble');
+let Rock = require('./geology/rock');
 
 scene.background = new THREE.Color('#ffffff');
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -273,19 +388,20 @@ let texture = new THREE.TextureLoader();
 
     let [x, z] = [0, 0];
 
-    for (let i = 0; i < maxCubes; i++) {
-        var cube = Cobble(scene);
+    // for (let i = 0; i < maxCubes; i++) {
+    //     var cube = Cobble(scene);
 
-        if (i % rowCount == 0 && i)
-            z++;
+    //     if (i % rowCount == 0 && i)
+    //         z++;
 
-        x = i % rowCount;
+    //     x = i % rowCount;
 
-        cube.position.x = x * 1.1;
-        cube.position.z = z * 1.1;
+    //     cube.position.x = x * 1.1;
+    //     cube.position.z = z * 1.1;
 
-        group.add( cube );
-    }
+    //     group.add( cube );
+    // }
+    group.add(Rock(scene));
 
     group.rotation.y = Math.PI/4;
     group.rotation.x = Math.PI/8;
@@ -313,9 +429,10 @@ let texture = new THREE.TextureLoader();
     function render() {
         // group.rotation.x += 0.01;
         // group.center();
-        scene.rotateOnAxis(yAxis, Math.PI/480);
+        // scene.rotateOnAxis(yAxis, Math.PI/480);
         // scene.rotateOnAxis(zAxis, Math.PI/960);
-        requestAnimationFrame( render );
+        // requestAnimationFrame( render );
+        console.log("rendering")
         renderer.render( scene, camera );
     }
 
@@ -323,7 +440,7 @@ let texture = new THREE.TextureLoader();
     render();
 
 // });
-},{"./flora/grass":3,"./geology/cobble":4,"three":"three"}],6:[function(require,module,exports){
+},{"./flora/grass":3,"./geology/cobble":4,"./geology/rock":5,"three":"three"}],7:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -366,4 +483,4 @@ function Cross (size) {
 }
 
 module.exports = Cross;
-},{"three":"three"}]},{},[5]);
+},{"three":"three"}]},{},[6]);
