@@ -6,8 +6,8 @@
   "scripts": {
     "watch": "parallelshell 'npm run watch:js' 'npm run serve'",
     "watch:js": "watch 'npm run js' ./src",
-    "js": "browserify -x three ./src/main.js -o ./dist/main.js",
-    "lib": "browserify -r three -o ./dist/lib.js",
+    "js": "browserify -x three -x three-subdivision-modifier -x quickhull3d ./src/main.js -o ./dist/main.js",
+    "lib": "browserify -r three -r three-subdivision-modifier -r quickhull3d -o ./dist/lib.js",
     "serve": "http-server -p 4321 ./dist"
   },
   "repository": {
@@ -19,7 +19,8 @@
   "homepage": "https://github.com/prevuelta/zen.git",
   "dependencies": {
     "quickhull3d": "^2.0.0",
-    "three": "^0.81.0"
+    "three": "^0.81.0",
+    "three-subdivision-modifier": "^1.0.5"
   },
   "devDependencies": {
     "babelify": "^7.3.0",

@@ -62,6 +62,8 @@ let texture = new THREE.TextureLoader();
 
     group.position.x-=rowCount/2;
 
+    // group.scale.set(0.2, 0.2, 0.2);
+
     scene.add(group);
     scene.add(new THREE.AxisHelper(5));
 

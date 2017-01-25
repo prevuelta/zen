@@ -8,7 +8,6 @@ function Field (origin, strength) {
         z: origin.z,
         strength: strength,
         affect (v) {
-            
             let dist = v.distanceTo(this);
             let dir = v.clone();
             dir.normalize();
