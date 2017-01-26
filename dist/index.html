@@ -11,6 +11,31 @@
         </style>
     </head>
     <body>
+        <script type="x-shader/x-vertex" id="vertexshader">
+            
+            // switch on high precision floats
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+            
+            void main()
+            {
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+            }
+            
+        </script>
+        <script type="x-shader/x-fragment" id="fragmentshader">
+
+        #ifdef GL_ES
+        precision highp float;
+        #endif
+
+        void main()
+        {
+            gl_FragColor    = vec4(1.0,0.0,1.0,1.0);
+        }
+
+        </script>
 
         <script src="lib.js" ></script>
         <script src="main.js" ></script>
