@@ -243,6 +243,7 @@ let THREE = require('../util/patchedThree');
 let Entropy = require('../abstract/entropy');
 let Field = require('../abstract/Field');
 let Cross = require('../util/cross');
+let Util = require('../util/util');
 
 const qh = require('quickhull3d');
 const SubdivisionModifier = require('three-subdivision-modifier');
@@ -256,83 +257,87 @@ function Rock (size) {
     let min = -size, max = size;
     for (var i = 0; i <= pointCount; i++) {
         points.push([
-            randomFloat(min, max),
-            randomFloat(min, max),
-            randomFloat(min, max)
+            Util.randomFloat(min, max),
+            Util.randomFloat(min, max),
+            Util.randomFloat(min, max)
         ]);
     }
 
-    function randomFloat (min, max) {
-        return Math.random() * (max - min) - max;
-    }
 
-    function randomInt (min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
 
     // let geometry = new THREE.ConvexGeometry(points);
 
-    console.log(points);
+    // console.log(points);
 
     // let outline = qh(points, {skipTriangulation: true });
-    let outline = qh(points);
+    let outline = qh(points);//.reduce((a, b) => a.concat(b)).map(i => points[i]).reduce((a, b) => a.concat(b));
 
-    let geo = new THREE.Geometry();
+    let geometry = new THREE.Geometry();
 
-    points.forEach(p => {
-        geo.vertices.push(new THREE.Vector3(p[0], p[1], p[2]));
-    })
+
+    // let vertices = new Float32Array(outline);
+
+    // geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    // geometry.addAttribute( 'uniforms', {
+    //         time: { value: 1.0 },
+    //         resolution: { value: new THREE.Vector2() }
+    //     });
+
+        // uniforms: {
+        //     time: { value: 1.0 },
+        //     resolution: { value: new THREE.Vector2() }
+        // },
+        // attributes: {
+        //     vertexOpacity: { value: [] }
+        // },
+    // debugger;
+    geometry.vertices = points.map(p => {
+        return new THREE.Vector3(p[0], p[1], p[2]);
+    });
 
     outline.forEach((p, i) => {
         let [i1, i2, i3] = p;
-        geo.faces.push(new THREE.Face3(i1, i2, i3));
-    })
-
-    // First we want to clone our original geometry.
-    // Just in case we want to get the low poly version back.
-    // debugger;
-    // var smooth = THREE.Object3D.prototype.clone(geo);
-
-    // Next, we need to merge vertices to clean up any unwanted vertex. 
-    geo.mergeVertices();
-
-    // Create a new instance of the modifier and pass the number of divisions.
-    var modifier = new SubdivisionModifier(1);
-
-    // Apply the modifier to our cloned geometry.
-    modifier.modify( geo );
-
-
-    geo.vertices.forEach(v => {
-        // console.log(v)
-        v.addScalar(randomFloat(-0.1, 0.1));
+        geometry.faces.push(new THREE.Face3(i1, i2, i3));
     });
 
+    geometry.computeFaceNormals();
+    geometry.mergeVertices();
+    geometry.computeVertexNormals();
 
+    // Next, we need to merge vertices to clean up any unwanted vertex. 
+    // geometry.mergeVertices();
+
+    // Create a new instance of the modifier and pass the number of divisions.
+    // var modifier = new SubdivisionModifier(1);
+
+    // Apply the modifier to our cloned geometry.
+    // modifier.modify( geo );
+
+
+    // geo.vertices.forEach(v => {
+        // console.log(v)
+        // v.addScalar(randomFloat(-0.1, 0.1));
+    // });
 
     let LENGTH = 0.1;
 
-    var tessellateModifier = new THREE.TessellateModifier( LENGTH );
+    // var tessellateModifier = new THREE.TessellateModifier( LENGTH );
+    // tessellateModifier.modify( geometry );
 
-    // for ( var i = 0; i < N; i ++ ) {
-
-        tessellateModifier.modify( geo );
-
-    // // }
     // geo.mergeVertices();
 
     /* Roughen */
 
 
-    // var modifier2 = new SubdivisionModifier(1);
+    var modifier2 = new SubdivisionModifier(3);
 
-    // modifier2.modify( geo );
+    modifier2.modify( geometry );
 
     // geo.mergeVertices();
 
 
-// Finally, add our new detailed geometry to a mesh object and add it to our scene.
-// var mesh = new THREE.Mesh( smooth, new THREE.MeshPhongMaterial( { color: 0x222222 } ) );
+    // Finally, add our new detailed geometry to a mesh object and add it to our scene.
+    // var mesh = new THREE.Mesh( smooth, new THREE.MeshPhongMaterial( { color: 0x222222 } ) );
 
 
     // geo.computeFaceNormals();
@@ -407,32 +412,36 @@ function Rock (size) {
     // });
 
     var material = new THREE.ShaderMaterial( {
-
         uniforms: {
             time: { value: 1.0 },
             resolution: { value: new THREE.Vector2() }
-        },
-        attributes: {
-            vertexOpacity: { value: [] }
         },
         vertexShader: document.getElementById( 'vertexShader' ).textContent,
         fragmentShader: document.getElementById( 'fragmentShader' ).textContent
 
     });
 
-    // let mesh = new THREE.Mesh( geo, material );
-    let mesh = new THREE.Mesh( geo, material );
+    var buffer_g = new THREE.BufferGeometry();
+    buffer_g.fromGeometry(geometry);
 
-    var helper = new THREE.WireframeHelper( mesh, 0xFF0000 ); // or THREE.WireframeHelper
+    // let mesh = new THREE.Mesh( geometry, material );
+    let mesh = new THREE.Mesh( buffer_g, material );
 
-    mesh.add( helper );
-    mesh.add( markers );
+    let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
+
+    var line = new THREE.LineSegments( wireframe );
+    line.material.depthTest = false;
+    line.material.opacity = 0.25;
+    line.material.transparent = true;
+
+    // mesh.add( line );
+    // mesh.add( markers );
 
     return mesh;
 }
 
 module.exports = Rock;
-},{"../abstract/Field":2,"../abstract/entropy":1,"../util/cross":7,"../util/patchedThree":8,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],6:[function(require,module,exports){
+},{"../abstract/Field":2,"../abstract/entropy":1,"../util/cross":7,"../util/patchedThree":8,"../util/util":9,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],6:[function(require,module,exports){
 
 'use strict';
 
@@ -443,6 +452,7 @@ var scene = new THREE.Scene();
 let Grass = require('./flora/grass');
 let Cobble = require('./geology/cobble');
 let Rock = require('./geology/rock');
+let Util = require('./util/util');
 
 scene.background = new THREE.Color('#ffffff');
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -454,14 +464,14 @@ document.body.appendChild( renderer.domElement );
 
 let geos = [];
 
-let maxCubes = 9;
-let rowCount = Math.sqrt(maxCubes);
+const MAX = 48;
+let rowCount = Math.sqrt(MAX);
 
 let texture = new THREE.TextureLoader();
 
 // texture.load('assets/stone_texture.jpg', function (texture){
     // The actual texture is returned in the event.content
-    var material = new THREE.MeshLambertMaterial({
+    let material = new THREE.MeshLambertMaterial({
         color: 0xffffff,
         side: THREE.DoubleSide,
         vertexColors: THREE.VertexColors
@@ -471,36 +481,34 @@ let texture = new THREE.TextureLoader();
 
     let [x, z] = [0, 0];
 
-    // for (let i = 0; i < maxCubes; i++) {
-    //     var cube = Cobble(scene);
+    for (let i = 0; i < MAX; i++) {
+        let rock = Rock(Math.random());
 
-    //     if (i % rowCount == 0 && i)
-    //         z++;
+        // if (i % rowCount == 0 && i)
+        //     z++;
 
-    //     x = i % rowCount;
+        // x = i % rowCount;
 
-    //     cube.position.x = x * 1.1;
-    //     cube.position.z = z * 1.1;
+        // rock.position.x = x * 1.1;
+        // rock.position.z = z * 1.1;
 
-    //     group.add( cube );
-    // }
-    let rock = Rock();
+        rock.position.x = Util.randomFloat(-2, 2);
+        rock.position.y = Util.randomFloat(-2, 2);
+        rock.position.z = Util.randomFloat(-2, 2);
 
-    rock.position.x = 1.1;
+        group.add( rock );
+    }
 
-    rock.position.z = 1.1;
 
-    group.add(rock);
+    // group.rotation.y = Math.PI/4;
+    // group.rotation.x = Math.PI/8;
 
-    group.rotation.y = Math.PI/4;
-    group.rotation.x = Math.PI/8;
-
-    group.position.x-=rowCount/2;
+    // group.position.x-=rowCount/2;
 
     // group.scale.set(0.2, 0.2, 0.2);
 
     scene.add(group);
-    scene.add(new THREE.AxisHelper(5));
+    // scene.add(new THREE.AxisHelper(5));
 
     camera.position.z = 5;
 
@@ -530,7 +538,7 @@ let texture = new THREE.TextureLoader();
     render();
 
 // });
-},{"./flora/grass":3,"./geology/cobble":4,"./geology/rock":5,"three":"three"}],7:[function(require,module,exports){
+},{"./flora/grass":3,"./geology/cobble":4,"./geology/rock":5,"./util/util":9,"three":"three"}],7:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -815,4 +823,13 @@ THREE.TessellateModifier.prototype.modify = function ( geometry ) {
 };
 
 module.exports = THREE;
-},{"three":"three"}]},{},[6]);
+},{"three":"three"}],9:[function(require,module,exports){
+module.exports = {
+    randomFloat (min, max) {
+        return Math.random() * (max - min) - max;
+    },
+    randomInt (min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+}
+},{}]},{},[6]);

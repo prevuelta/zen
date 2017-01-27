@@ -8,6 +8,7 @@ var scene = new THREE.Scene();
 let Grass = require('./flora/grass');
 let Cobble = require('./geology/cobble');
 let Rock = require('./geology/rock');
+let Util = require('./util/util');
 
 scene.background = new THREE.Color('#ffffff');
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -19,14 +20,14 @@ document.body.appendChild( renderer.domElement );
 
 let geos = [];
 
-let maxCubes = 9;
-let rowCount = Math.sqrt(maxCubes);
+const MAX = 48;
+let rowCount = Math.sqrt(MAX);
 
 let texture = new THREE.TextureLoader();
 
 // texture.load('assets/stone_texture.jpg', function (texture){
     // The actual texture is returned in the event.content
-    var material = new THREE.MeshLambertMaterial({
+    let material = new THREE.MeshLambertMaterial({
         color: 0xffffff,
         side: THREE.DoubleSide,
         vertexColors: THREE.VertexColors
@@ -36,36 +37,34 @@ let texture = new THREE.TextureLoader();
 
     let [x, z] = [0, 0];
 
-    // for (let i = 0; i < maxCubes; i++) {
-    //     var cube = Cobble(scene);
+    for (let i = 0; i < MAX; i++) {
+        let rock = Rock(Math.random());
 
-    //     if (i % rowCount == 0 && i)
-    //         z++;
+        // if (i % rowCount == 0 && i)
+        //     z++;
 
-    //     x = i % rowCount;
+        // x = i % rowCount;
 
-    //     cube.position.x = x * 1.1;
-    //     cube.position.z = z * 1.1;
+        // rock.position.x = x * 1.1;
+        // rock.position.z = z * 1.1;
 
-    //     group.add( cube );
-    // }
-    let rock = Rock();
+        rock.position.x = Util.randomFloat(-2, 2);
+        rock.position.y = Util.randomFloat(-2, 2);
+        rock.position.z = Util.randomFloat(-2, 2);
 
-    rock.position.x = 1.1;
+        group.add( rock );
+    }
 
-    rock.position.z = 1.1;
 
-    group.add(rock);
+    // group.rotation.y = Math.PI/4;
+    // group.rotation.x = Math.PI/8;
 
-    group.rotation.y = Math.PI/4;
-    group.rotation.x = Math.PI/8;
-
-    group.position.x-=rowCount/2;
+    // group.position.x-=rowCount/2;
 
     // group.scale.set(0.2, 0.2, 0.2);
 
     scene.add(group);
-    scene.add(new THREE.AxisHelper(5));
+    // scene.add(new THREE.AxisHelper(5));
 
     camera.position.z = 5;
 

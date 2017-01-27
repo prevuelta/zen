@@ -8,7 +8,7 @@
     "watch:js": "watch 'npm run js' ./src",
     "js": "browserify -x three -x three-subdivision-modifier -x quickhull3d ./src/main.js -o ./dist/main.js",
     "lib": "browserify -r three -r three-subdivision-modifier -r quickhull3d -o ./dist/lib.js",
-    "serve": "http-server -p 4321 ./dist"
+    "serve": "parallelshell 'http-server -p 4321 ./dist' 'browser-sync start --proxy localhost:4321 --files dist/'"
   },
   "repository": {
     "type": "git",
@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "babelify": "^7.3.0",
+    "browser-sync": "^2.18.6",
     "browserify": "^13.1.0",
     "parallelshell": "^2.0.0",
     "watch": "^0.19.2"
