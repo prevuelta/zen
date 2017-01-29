@@ -11,6 +11,39 @@
         </style>
     </head>
     <body>
+        <script type="x-shader/x-vertex" id="vertexShader">
+            // switch on high precision floats
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+
+            varying vec3 vNormal;
+            void main () {
+                vNormal = normal;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        </script>
+        <script type="x-shader/x-fragment" id="fragmentShader">
+
+        #ifdef GL_ES
+        precision highp float;
+        #endif
+        varying vec3 vNormal;
+        void main() {
+            vec3 light = vec3(0.5, 0.2, 1.0);
+
+  // ensure it's normalized
+  light = normalize(light);
+
+  // calculate the dot product of
+  // the light to the vertex normal
+  float dProd = max(0.0,
+                    dot(vNormal, light));
+
+            gl_FragColor    = vec4(dProd,dProd,dProd,1.0);
+        }
+
+        </script>
 
         <script src="lib.js" ></script>
         <script src="main.js" ></script>

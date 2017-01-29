@@ -1,11 +1,15 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
+let THREE = require('three');
+
 module.exports = {
     crack (geo, min, max) {
-        for (let i = min; i <= max; i++) {
-            this.pit(geo, i);
-        }
+        // for (let i = min; i <= max; i++) {
+            // this.pit(geo, i);
+        // }
+        geo.computeBoundingBox();
+        console.log(geo.boundingBox);
     },
     pit (geo, testVertice) {
 
@@ -20,7 +24,7 @@ module.exports = {
 
     },
     break (geo, min, max) {
-        
+
     },
     erode (geo) {
         geo.vertices.forEach(v => {
@@ -32,7 +36,28 @@ module.exports = {
         });
     }
 }
-},{}],2:[function(require,module,exports){
+},{"three":"three"}],2:[function(require,module,exports){
+'use strict';
+
+function Field (origin, strength) {
+    console.log(strength);
+    return {
+        x: origin.x,
+        y: origin.y,
+        z: origin.z,
+        strength: strength,
+        affect (v) {
+            let dist = v.distanceTo(this);
+            let dir = v.clone();
+            dir.normalize();
+            dir.multiplyScalar(this.strength/dist);
+            v.sub(dir);
+        }
+    }
+}
+
+module.exports = Field;
+},{}],3:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -99,13 +124,14 @@ function Grass (options) {
 
 
 module.exports = Grass;
-},{"three":"three"}],3:[function(require,module,exports){
+},{"three":"three"}],4:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
 
 let Entropy = require('../abstract/entropy');
-
+let Field = require('../abstract/Field');
+let Cross = require('../util/cross');
 /*
 
 NOTES:
@@ -118,7 +144,7 @@ NOTES:
 
 function Cobble (scene) {
 
-    let geo = new THREE.BoxGeometry( 1, 0.2, 1, 5, 2, 2);
+    let geo = new THREE.BoxGeometry(1, 0.6 - (Math.random() * 0.2), 1, 4, 4, 4);
 
     geo.centroid = new THREE.Vector3();
 
@@ -136,9 +162,44 @@ function Cobble (scene) {
     let min = Math.min(one, two);
     let max = Math.max(one, two);
 
+    let fields = [];
 
-    Entropy.pit(geo, pit);
-    Entropy.erode(geo, pit);
+    let fieldCount = 3;
+
+    for (let i = 0; i < fieldCount; i++) {
+        fields.push(Field(fieldPos(), 0.01));
+    }
+
+    function fieldPos () {
+        return {
+            x: (Math.random() - 0.5) * 1,
+            y: (Math.random() - 0.5) * 1,
+            z: (Math.random() - 0.5) * 1
+        }
+    }
+
+    let markers = new THREE.Object3D();
+
+    fields.forEach(f => {
+
+        let cross = Cross(0.05);
+
+        cross.position.x = f.x;
+        cross.position.y = f.y;
+        cross.position.z = f.z;
+
+        markers.add(cross);
+    });
+
+    geo.vertices.forEach(v => {
+        fields.forEach(f => {
+            f.affect(v, geo.centroid);
+        });
+    });
+
+//
+    // Entropy.pit(geo, pit);
+    // Entropy.erode(geo, pit);
     Entropy.crack(geo, min, max);
 
     // for ( var i = 0, l = geo.vertices.length; i < l; i ++ ) {
@@ -168,14 +229,219 @@ function Cobble (scene) {
     var helper = new THREE.WireframeHelper( mesh, 0x444444 ); // or THREE.WireframeHelper
 
     mesh.add( helper );
-
-    console.log("CENTER", geo.centroid);
+    mesh.add( markers );
 
     return mesh;
 }
 
 module.exports = Cobble;
-},{"../abstract/entropy":1,"three":"three"}],4:[function(require,module,exports){
+},{"../abstract/Field":2,"../abstract/entropy":1,"../util/cross":7,"three":"three"}],5:[function(require,module,exports){
+'use strict';
+
+let THREE = require('../util/patchedThree');
+
+let Entropy = require('../abstract/entropy');
+let Field = require('../abstract/Field');
+let Cross = require('../util/cross');
+let Util = require('../util/util');
+
+const qh = require('quickhull3d');
+const SubdivisionModifier = require('three-subdivision-modifier');
+
+function Rock (size) {
+
+    size = size || 2;
+    let pointCount = 10;
+
+    let points = [];
+    let min = -size, max = size;
+    for (var i = 0; i <= pointCount; i++) {
+        points.push([
+            Util.randomFloat(min, max),
+            Util.randomFloat(min, max),
+            Util.randomFloat(min, max)
+        ]);
+    }
+
+
+
+    // let geometry = new THREE.ConvexGeometry(points);
+
+    // console.log(points);
+
+    // let outline = qh(points, {skipTriangulation: true });
+    let outline = qh(points);//.reduce((a, b) => a.concat(b)).map(i => points[i]).reduce((a, b) => a.concat(b));
+
+    let geometry = new THREE.Geometry();
+
+
+    // let vertices = new Float32Array(outline);
+
+    // geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    // geometry.addAttribute( 'uniforms', {
+    //         time: { value: 1.0 },
+    //         resolution: { value: new THREE.Vector2() }
+    //     });
+
+        // uniforms: {
+        //     time: { value: 1.0 },
+        //     resolution: { value: new THREE.Vector2() }
+        // },
+        // attributes: {
+        //     vertexOpacity: { value: [] }
+        // },
+    // debugger;
+    geometry.vertices = points.map(p => {
+        return new THREE.Vector3(p[0], p[1], p[2]);
+    });
+
+    outline.forEach((p, i) => {
+        let [i1, i2, i3] = p;
+        geometry.faces.push(new THREE.Face3(i1, i2, i3));
+    });
+
+    geometry.computeFaceNormals();
+    geometry.mergeVertices();
+    geometry.computeVertexNormals();
+
+    // Next, we need to merge vertices to clean up any unwanted vertex. 
+    // geometry.mergeVertices();
+
+    // Create a new instance of the modifier and pass the number of divisions.
+    // var modifier = new SubdivisionModifier(1);
+
+    // Apply the modifier to our cloned geometry.
+    // modifier.modify( geo );
+
+
+    // geo.vertices.forEach(v => {
+        // console.log(v)
+        // v.addScalar(randomFloat(-0.1, 0.1));
+    // });
+
+    let LENGTH = 0.1;
+
+    // var tessellateModifier = new THREE.TessellateModifier( LENGTH );
+    // tessellateModifier.modify( geometry );
+
+    // geo.mergeVertices();
+
+    /* Roughen */
+
+
+    var modifier2 = new SubdivisionModifier(3);
+
+    modifier2.modify( geometry );
+
+    // geo.mergeVertices();
+
+
+    // Finally, add our new detailed geometry to a mesh object and add it to our scene.
+    // var mesh = new THREE.Mesh( smooth, new THREE.MeshPhongMaterial( { color: 0x222222 } ) );
+
+
+    // geo.computeFaceNormals();
+    // geo.computeVertexNormals();
+
+        // let geo = new THREE.BoxGeometry(1, 0.6 - (Math.random() * 0.2), 1, 4, 4, 4);
+
+//     geo.centroid = new THREE.Vector3();
+
+//     for ( var i = 0, l = geo.vertices.length; i < l; i ++ ) {
+//         geo.centroid.add(geo.vertices[ i ]);
+//     }
+
+//     geo.centroid.divideScalar( geo.vertices.length );
+
+//     let pit = Math.floor(Math.random() * geo.vertices.length);
+
+//     let one = Math.floor(Math.random() * geo.vertices.length);
+//     let two = Math.floor(Math.random() * geo.vertices.length);
+
+//     let min = Math.min(one, two);
+//     let max = Math.max(one, two);
+
+    /* Markers */
+
+    let markers = new THREE.Object3D();
+
+    points.forEach(f => {
+
+        let cross = Cross(0.05);
+
+        cross.position.x = f[0];
+        cross.position.y = f[1];
+        cross.position.z = f[2];
+
+        markers.add(cross);
+    });
+
+    /* Fields */
+
+    // geo.vertices.forEach(v => {
+    //     fields.forEach(f => {
+    //         f.affect(v, geo.centroid);
+    //     });
+    // });
+
+// //
+//     // Entropy.pit(geo, pit);
+//     // Entropy.erode(geo, pit);
+//     Entropy.crack(geo, min, max);
+
+//     // for ( var i = 0, l = geo.vertices.length; i < l; i ++ ) {
+
+//         // let v = geo.vertices[i];
+//         // console.log(v);
+//         // let dist = geo.centroid.distanceTo(v);
+//         // let dir = v.clone();
+//         // dir.normalize();
+//         // dir.multiplyScalar(dist/(5*(1+Math.random())));
+//         // console.log(dir);
+//         // v.sub(dir);
+//         // console.log("Distance", );
+//     // }
+
+//     // material
+    // let material = new THREE.MeshLambertMaterial( {
+    //     color: 0xffffff,
+    //     shading: THREE.FlatShading,
+    //     polygonOffset: true,
+    //     polygonOffsetFactor: 1, // positive value pushes polygon further away
+    //     polygonOffsetFactor: 1
+    // });
+
+    var material = new THREE.ShaderMaterial( {
+        uniforms: {
+            time: { value: 1.0 },
+            resolution: { value: new THREE.Vector2() }
+        },
+        vertexShader: document.getElementById( 'vertexShader' ).textContent,
+        fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+
+    });
+
+    var buffer_g = new THREE.BufferGeometry();
+    buffer_g.fromGeometry(geometry);
+
+    // let mesh = new THREE.Mesh( geometry, material );
+    let mesh = new THREE.Mesh( buffer_g, material );
+
+    let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
+
+    var line = new THREE.LineSegments( wireframe );
+    line.material.depthTest = false;
+    line.material.opacity = 0.25;
+    line.material.transparent = true;
+
+    // mesh.add( line );
+    // mesh.add( markers );
+
+    return mesh;
+}
+
+module.exports = Rock;
+},{"../abstract/Field":2,"../abstract/entropy":1,"../util/cross":7,"../util/patchedThree":8,"../util/util":9,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],6:[function(require,module,exports){
 
 'use strict';
 
@@ -185,6 +451,8 @@ var scene = new THREE.Scene();
 
 let Grass = require('./flora/grass');
 let Cobble = require('./geology/cobble');
+let Rock = require('./geology/rock');
+let Util = require('./util/util');
 
 scene.background = new THREE.Color('#ffffff');
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -196,14 +464,14 @@ document.body.appendChild( renderer.domElement );
 
 let geos = [];
 
-let maxCubes = 9;
-let rowCount = Math.sqrt(maxCubes);
+const MAX = 48;
+let rowCount = Math.sqrt(MAX);
 
 let texture = new THREE.TextureLoader();
 
 // texture.load('assets/stone_texture.jpg', function (texture){
     // The actual texture is returned in the event.content
-    var material = new THREE.MeshLambertMaterial({
+    let material = new THREE.MeshLambertMaterial({
         color: 0xffffff,
         side: THREE.DoubleSide,
         vertexColors: THREE.VertexColors
@@ -213,27 +481,34 @@ let texture = new THREE.TextureLoader();
 
     let [x, z] = [0, 0];
 
-    for (let i = 0; i < maxCubes; i++) {
-        var cube = Cobble(scene);
+    for (let i = 0; i < MAX; i++) {
+        let rock = Rock(Math.random());
 
-        if (i % rowCount == 0 && i)
-            z++;
+        // if (i % rowCount == 0 && i)
+        //     z++;
 
-        x = i % rowCount;
+        // x = i % rowCount;
 
-        cube.position.x = x * 1;
-        cube.position.z = z * 1;
+        // rock.position.x = x * 1.1;
+        // rock.position.z = z * 1.1;
 
-        group.add( cube );
+        rock.position.x = Util.randomFloat(-2, 2);
+        rock.position.y = Util.randomFloat(-2, 2);
+        rock.position.z = Util.randomFloat(-2, 2);
+
+        group.add( rock );
     }
 
-    group.rotation.y = Math.PI/4;
-    group.rotation.x = Math.PI/8;
 
-    group.position.x-=rowCount/2;
+    // group.rotation.y = Math.PI/4;
+    // group.rotation.x = Math.PI/8;
+
+    // group.position.x-=rowCount/2;
+
+    // group.scale.set(0.2, 0.2, 0.2);
 
     scene.add(group);
-    scene.add(new THREE.AxisHelper(5));
+    // scene.add(new THREE.AxisHelper(5));
 
     camera.position.z = 5;
 
@@ -263,4 +538,298 @@ let texture = new THREE.TextureLoader();
     render();
 
 // });
-},{"./flora/grass":2,"./geology/cobble":3,"three":"three"}]},{},[4]);
+},{"./flora/grass":3,"./geology/cobble":4,"./geology/rock":5,"./util/util":9,"three":"three"}],7:[function(require,module,exports){
+'use strict';
+
+let THREE = require('three');
+
+function Cross (size) {
+
+    let material = new THREE.LineBasicMaterial({
+        color: 0xff0000
+    });
+
+    let group = new THREE.Object3D();
+
+    for (let i = 0;i < 3; i++) {
+        let geometry = new THREE.Geometry();
+
+        if (i === 0) {
+            geometry.vertices.push(
+                new THREE.Vector3( -size, 0, 0 ),
+                new THREE.Vector3( size, 0, 0 )
+            );
+        } else if (i === 1) {
+            geometry.vertices.push(
+                new THREE.Vector3( 0, -size, 0 ),
+                new THREE.Vector3( 0, size, 0 )
+            );
+        } else {
+            geometry.vertices.push(
+                new THREE.Vector3( 0, 0, -size),
+                new THREE.Vector3( 0, 0, size)
+            );
+        }
+
+        let line = new THREE.Line( geometry, material );
+
+        group.add(line);
+    }
+
+    return group;
+
+}
+
+module.exports = Cross;
+},{"three":"three"}],8:[function(require,module,exports){
+/**
+ * Break faces with edges longer than maxEdgeLength
+ * - not recursive
+ *
+ * @author alteredq / http://alteredqualia.com/
+ */
+
+
+let THREE = require('three');
+
+THREE.TessellateModifier = function ( maxEdgeLength ) {
+
+    this.maxEdgeLength = maxEdgeLength;
+
+};
+
+THREE.TessellateModifier.prototype.modify = function ( geometry ) {
+
+    var edge;
+
+    var faces = [];
+    var faceVertexUvs = [];
+    var maxEdgeLengthSquared = this.maxEdgeLength * this.maxEdgeLength;
+
+    for ( var i = 0, il = geometry.faceVertexUvs.length; i < il; i ++ ) {
+
+        faceVertexUvs[ i ] = [];
+
+    }
+
+    for ( var i = 0, il = geometry.faces.length; i < il; i ++ ) {
+
+        var face = geometry.faces[ i ];
+
+        if ( face instanceof THREE.Face3 ) {
+
+            var a = face.a;
+            var b = face.b;
+            var c = face.c;
+
+            var va = geometry.vertices[ a ];
+            var vb = geometry.vertices[ b ];
+            var vc = geometry.vertices[ c ];
+
+            var dab = va.distanceToSquared( vb );
+            var dbc = vb.distanceToSquared( vc );
+            var dac = va.distanceToSquared( vc );
+
+            if ( dab > maxEdgeLengthSquared || dbc > maxEdgeLengthSquared || dac > maxEdgeLengthSquared ) {
+
+                var m = geometry.vertices.length;
+
+                var triA = face.clone();
+                var triB = face.clone();
+
+                if ( dab >= dbc && dab >= dac ) {
+
+                    var vm = va.clone();
+                    vm.lerp( vb, 0.5 );
+
+                    triA.a = a;
+                    triA.b = m;
+                    triA.c = c;
+
+                    triB.a = m;
+                    triB.b = b;
+                    triB.c = c;
+
+                    if ( face.vertexNormals.length === 3 ) {
+
+                        var vnm = face.vertexNormals[ 0 ].clone();
+                        vnm.lerp( face.vertexNormals[ 1 ], 0.5 );
+
+                        triA.vertexNormals[ 1 ].copy( vnm );
+                        triB.vertexNormals[ 0 ].copy( vnm );
+
+                    }
+
+                    if ( face.vertexColors.length === 3 ) {
+
+                        var vcm = face.vertexColors[ 0 ].clone();
+                        vcm.lerp( face.vertexColors[ 1 ], 0.5 );
+
+                        triA.vertexColors[ 1 ].copy( vcm );
+                        triB.vertexColors[ 0 ].copy( vcm );
+
+                    }
+
+                    edge = 0;
+
+                } else if ( dbc >= dab && dbc >= dac ) {
+
+                    var vm = vb.clone();
+                    vm.lerp( vc, 0.5 );
+
+                    triA.a = a;
+                    triA.b = b;
+                    triA.c = m;
+
+                    triB.a = m;
+                    triB.b = c;
+                    triB.c = a;
+
+                    if ( face.vertexNormals.length === 3 ) {
+
+                        var vnm = face.vertexNormals[ 1 ].clone();
+                        vnm.lerp( face.vertexNormals[ 2 ], 0.5 );
+
+                        triA.vertexNormals[ 2 ].copy( vnm );
+
+                        triB.vertexNormals[ 0 ].copy( vnm );
+                        triB.vertexNormals[ 1 ].copy( face.vertexNormals[ 2 ] );
+                        triB.vertexNormals[ 2 ].copy( face.vertexNormals[ 0 ] );
+
+                    }
+
+                    if ( face.vertexColors.length === 3 ) {
+
+                        var vcm = face.vertexColors[ 1 ].clone();
+                        vcm.lerp( face.vertexColors[ 2 ], 0.5 );
+
+                        triA.vertexColors[ 2 ].copy( vcm );
+
+                        triB.vertexColors[ 0 ].copy( vcm );
+                        triB.vertexColors[ 1 ].copy( face.vertexColors[ 2 ] );
+                        triB.vertexColors[ 2 ].copy( face.vertexColors[ 0 ] );
+
+                    }
+
+                    edge = 1;
+
+                } else {
+
+                    var vm = va.clone();
+                    vm.lerp( vc, 0.5 );
+
+                    triA.a = a;
+                    triA.b = b;
+                    triA.c = m;
+
+                    triB.a = m;
+                    triB.b = b;
+                    triB.c = c;
+
+                    if ( face.vertexNormals.length === 3 ) {
+
+                        var vnm = face.vertexNormals[ 0 ].clone();
+                        vnm.lerp( face.vertexNormals[ 2 ], 0.5 );
+
+                        triA.vertexNormals[ 2 ].copy( vnm );
+                        triB.vertexNormals[ 0 ].copy( vnm );
+
+                    }
+
+                    if ( face.vertexColors.length === 3 ) {
+
+                        var vcm = face.vertexColors[ 0 ].clone();
+                        vcm.lerp( face.vertexColors[ 2 ], 0.5 );
+
+                        triA.vertexColors[ 2 ].copy( vcm );
+                        triB.vertexColors[ 0 ].copy( vcm );
+
+                    }
+
+                    edge = 2;
+
+                }
+
+                faces.push( triA, triB );
+                geometry.vertices.push( vm );
+
+                for ( var j = 0, jl = geometry.faceVertexUvs.length; j < jl; j ++ ) {
+
+                    if ( geometry.faceVertexUvs[ j ].length ) {
+
+                        var uvs = geometry.faceVertexUvs[ j ][ i ];
+
+                        var uvA = uvs[ 0 ];
+                        var uvB = uvs[ 1 ];
+                        var uvC = uvs[ 2 ];
+
+                        // AB
+
+                        if ( edge === 0 ) {
+
+                            var uvM = uvA.clone();
+                            uvM.lerp( uvB, 0.5 );
+
+                            var uvsTriA = [ uvA.clone(), uvM.clone(), uvC.clone() ];
+                            var uvsTriB = [ uvM.clone(), uvB.clone(), uvC.clone() ];
+
+                        // BC
+
+                        } else if ( edge === 1 ) {
+
+                            var uvM = uvB.clone();
+                            uvM.lerp( uvC, 0.5 );
+
+                            var uvsTriA = [ uvA.clone(), uvB.clone(), uvM.clone() ];
+                            var uvsTriB = [ uvM.clone(), uvC.clone(), uvA.clone() ];
+
+                        // AC
+
+                        } else {
+
+                            var uvM = uvA.clone();
+                            uvM.lerp( uvC, 0.5 );
+
+                            var uvsTriA = [ uvA.clone(), uvB.clone(), uvM.clone() ];
+                            var uvsTriB = [ uvM.clone(), uvB.clone(), uvC.clone() ];
+
+                        }
+
+                        faceVertexUvs[ j ].push( uvsTriA, uvsTriB );
+
+                    }
+
+                }
+
+            } else {
+
+                faces.push( face );
+
+                for ( var j = 0, jl = geometry.faceVertexUvs.length; j < jl; j ++ ) {
+
+                    faceVertexUvs[ j ].push( geometry.faceVertexUvs[ j ][ i ] );
+
+                }
+
+            }
+
+        }
+
+    }
+
+    geometry.faces = faces;
+    geometry.faceVertexUvs = faceVertexUvs;
+
+};
+
+module.exports = THREE;
+},{"three":"three"}],9:[function(require,module,exports){
+module.exports = {
+    randomFloat (min, max) {
+        return Math.random() * (max - min) - max;
+    },
+    randomInt (min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+}
+},{}]},{},[6]);
