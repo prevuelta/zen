@@ -9,11 +9,14 @@ let Util = require('../util/util');
 
 const qh = require('quickhull3d');
 const SubdivisionModifier = require('three-subdivision-modifier');
+const vert = require('../shaders/test.vert');
+const frag = require('../shaders/test.frag');
+
 
 function Rock (size) {
 
     size = size || 2;
-    let pointCount = 10;
+    let pointCount = Util.randomInt(4, 30);
 
     let points = [];
     let min = -size, max = size;
@@ -81,19 +84,18 @@ function Rock (size) {
         // v.addScalar(randomFloat(-0.1, 0.1));
     // });
 
-    let LENGTH = 0.1;
+    // for (let i = 0;i < 1;i++) {
+        // let LENGTH = 1;
+        // var tessellateModifier = new THREE.TessellateModifier( LENGTH );
+        // tessellateModifier.modify( geometry );
+    // }
 
-    // var tessellateModifier = new THREE.TessellateModifier( LENGTH );
-    // tessellateModifier.modify( geometry );
-
-    // geo.mergeVertices();
 
     /* Roughen */
 
 
-    var modifier2 = new SubdivisionModifier(3);
-
-    modifier2.modify( geometry );
+    var modifier = new SubdivisionModifier(2);
+    modifier.modify( geometry );
 
     // geo.mergeVertices();
 
@@ -129,7 +131,7 @@ function Rock (size) {
 
     points.forEach(f => {
 
-        let cross = Cross(0.05);
+        let cross = Cross(0.5);
 
         cross.position.x = f[0];
         cross.position.y = f[1];
@@ -178,8 +180,8 @@ function Rock (size) {
             time: { value: 1.0 },
             resolution: { value: new THREE.Vector2() }
         },
-        vertexShader: document.getElementById( 'vertexShader' ).textContent,
-        fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+        vertexShader: vert,
+        fragmentShader: frag
 
     });
 
@@ -196,7 +198,8 @@ function Rock (size) {
     line.material.opacity = 0.25;
     line.material.transparent = true;
 
-    // mesh.add( line );
+    if (Util.params.wireframe)
+        mesh.add( line );
     // mesh.add( markers );
 
     return mesh;

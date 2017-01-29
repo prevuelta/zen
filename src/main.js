@@ -11,12 +11,11 @@ let Rock = require('./geology/rock');
 let Util = require('./util/util');
 
 scene.background = new THREE.Color('#ffffff');
-var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+var camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
 
 var renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
-
 
 let geos = [];
 
@@ -25,6 +24,30 @@ let rowCount = Math.sqrt(MAX);
 
 let texture = new THREE.TextureLoader();
 
+Util.renderScene = renderScene;
+Util.addObjects = addObjects;
+
+
+renderScene();
+addObjects();
+
+let group;
+
+function addObjects () {
+    if (typeof group !== 'undefined')
+        scene.remove(group);
+
+    group = new THREE.Object3D();
+
+    let [x, z] = [0, 0];
+
+    let rock = Rock(Util.randomInt(10, 26));
+    group.add(rock);
+
+    scene.add(group);
+}
+
+function renderScene () {
 // texture.load('assets/stone_texture.jpg', function (texture){
     // The actual texture is returned in the event.content
     let material = new THREE.MeshLambertMaterial({
@@ -33,40 +56,10 @@ let texture = new THREE.TextureLoader();
         vertexColors: THREE.VertexColors
     });
 
-    let group = new THREE.Object3D();
-
-    let [x, z] = [0, 0];
-
-    for (let i = 0; i < MAX; i++) {
-        let rock = Rock(Math.random());
-
-        // if (i % rowCount == 0 && i)
-        //     z++;
-
-        // x = i % rowCount;
-
-        // rock.position.x = x * 1.1;
-        // rock.position.z = z * 1.1;
-
-        rock.position.x = Util.randomFloat(-2, 2);
-        rock.position.y = Util.randomFloat(-2, 2);
-        rock.position.z = Util.randomFloat(-2, 2);
-
-        group.add( rock );
-    }
-
-
-    // group.rotation.y = Math.PI/4;
-    // group.rotation.x = Math.PI/8;
-
-    // group.position.x-=rowCount/2;
-
-    // group.scale.set(0.2, 0.2, 0.2);
-
-    scene.add(group);
     // scene.add(new THREE.AxisHelper(5));
 
-    camera.position.z = 5;
+    camera.position.z = 100;
+    camera.target = new THREE.Vector3( 0, 0, 0 );
 
     var light = new THREE.AmbientLight( 0x404040 ); // soft white light
     scene.add( light );
@@ -92,5 +85,7 @@ let texture = new THREE.TextureLoader();
 
 
     render();
+
+}
 
 // });
