@@ -37,12 +37,12 @@ function Rock (size) {
     // let outline = qh(points, {skipTriangulation: true });
     let outline = qh(points);//.reduce((a, b) => a.concat(b)).map(i => points[i]).reduce((a, b) => a.concat(b));
 
-    let geometry = new THREE.Geometry();
+    let geometry = new THREE.BufferGeometry();
 
 
     // let vertices = new Float32Array(outline);
 
-    // geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    
     // geometry.addAttribute( 'uniforms', {
     //         time: { value: 1.0 },
     //         resolution: { value: new THREE.Vector2() }
@@ -56,18 +56,24 @@ function Rock (size) {
         //     vertexOpacity: { value: [] }
         // },
     // debugger;
-    geometry.vertices = points.map(p => {
-        return new THREE.Vector3(p[0], p[1], p[2]);
-    });
+    // geometry.vertices = points.map(p => {
+        // return new THREE.Vector3(p[0], p[1], p[2]);
+    // });
 
-    outline.forEach((p, i) => {
-        let [i1, i2, i3] = p;
-        geometry.faces.push(new THREE.Face3(i1, i2, i3));
-    });
+    var vertices = new Float32Array(points.reduce((a,b) => a.concat(b)));
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
 
-    geometry.computeFaceNormals();
-    geometry.mergeVertices();
-    geometry.computeVertexNormals();
+    var indices = new Uint16Array(outline.reduce((a,b) => a.concat(b)));
+    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+
+
+    // outline.forEach((p, i) => {
+    //     let [i1, i2, i3] = p;
+    //     geometry.faces.push(new THREE.Face3(i1, i2, i3));
+    // });
+    // geometry.computeFaceNormals();
+    // geometry.mergeVertices();
+    // geometry.computeVertexNormals();
 
     // Next, we need to merge vertices to clean up any unwanted vertex. 
     // geometry.mergeVertices();
@@ -185,21 +191,29 @@ function Rock (size) {
 
     });
 
-    var buffer_g = new THREE.BufferGeometry();
-    buffer_g.fromGeometry(geometry);
+    // var buffer_g = new THREE.BufferGeometry();
+    // buffer_g.fromGeometry(geometry);
 
-    // let mesh = new THREE.Mesh( geometry, material );
-    let mesh = new THREE.Mesh( buffer_g, material );
+    let mesh = new THREE.Mesh( geometry, material );
+    // let mesh = new THREE.Mesh( buffer_g, material );
 
-    let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
+    // let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
 
-    var line = new THREE.LineSegments( wireframe );
-    line.material.depthTest = false;
-    line.material.opacity = 0.25;
-    line.material.transparent = true;
+    // let helper = new THREE.BoundingBoxHelper(mesh, new THREE.Color(0xFF0000));
 
-    if (Util.params.wireframe)
-        mesh.add( line );
+    // mesh.add(helper);
+
+    // helper.update();
+
+    // console.log("Helper", helper.box.max.x - helper.box.min.x)
+
+    // var line = new THREE.LineSegments( wireframe );
+    // line.material.depthTest = false;
+    // line.material.opacity = 0.25;
+    // line.material.transparent = true;
+
+    // if (Util.params.wireframe)
+        // mesh.add( line );
     // mesh.add( markers );
 
     return mesh;

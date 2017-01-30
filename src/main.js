@@ -26,7 +26,7 @@ let world,
 
 let geos = [];
 
-const ROCKS = 2;
+const ROCKS = 300;
 
 let yAxis = new THREE.Vector3(0,1,0);
 
@@ -40,7 +40,7 @@ function initCannon() {
 
     // World
     world = new CANNON.World();
-    world.gravity.set(0,-1,0);
+    world.gravity.set(0,-10,0);
     world.broadphase = new CANNON.NaiveBroadphase();
     world.solver.iterations = 10;
 
@@ -55,22 +55,30 @@ function initCannon() {
 
         let {geometry} = bodies[i].mesh;
         geometry.computeBoundingBox();
-        let bbox = geometry.boundingBox;
-        // let bbox = new THREE.Box3().setFromObject(bodies[i].mesh);
+        // let bbox = geometry.boundingBox;
+        let bbox = new THREE.Box3().setFromObject(bodies[i].mesh);
+
+        // console.log(bbox.size())
+        // let [x, y, z] = bbox.size();
+        // debugger;
+
+        let x = bbox.max.x - bbox.min.x;
+        let y = bbox.max.y - bbox.min.y;
+        let z = bbox.max.z - bbox.min.z;
 
 
-        let x = Math.abs(bbox.max.x - bbox.min.x);
-        let y = Math.abs(bbox.max.y - bbox.min.y);
-        let z = Math.abs(bbox.max.z - bbox.min.z);
+        // debugger;
 
-        console.log(x, y, z);
+        let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
 
-        let shape = new CANNON.Box(new CANNON.Vec3(x,y,z));
+
+        // let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
         let mass = 1;
+
         let body = new CANNON.Body({
             mass: 1
         });
-        body.position.set(Util.randomInt(0, 20), Util.randomInt(0, 20), 10);
+        body.position.set(Util.randomInt(-20, 20), Util.randomInt(8, 20), Util.randomInt(-20, 20));
         body.addShape(shape);
         bodies[i].body = body;
         world.addBody(body);
@@ -98,7 +106,7 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomInt(1, 3));
+        let rock = Rock(Util.randomFloat(0.2, 2));
         // group.add(rock);
         rock.position.x = Util.randomInt(0, 30);
         rock.position.z = Util.randomInt(0, 30);
@@ -156,10 +164,10 @@ function render() {
 
 function updatePhysics () {
       // Step the physics world
-      world.step(timeStep);
+    world.step(timeStep);
       // Copy coordinates from Cannon.js to Three.js
-      bodies.forEach(b => {
+    bodies.forEach(b => {
         b.mesh.position.copy(b.body.position);
         b.mesh.quaternion.copy(b.body.quaternion);
-      });
+    });
 }

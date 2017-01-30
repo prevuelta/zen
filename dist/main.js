@@ -4421,6 +4421,27 @@ dat.utils.common);
 },{}],4:[function(require,module,exports){
 'use strict';
 
+function Field (origin, strength) {
+    console.log(strength);
+    return {
+        x: origin.x,
+        y: origin.y,
+        z: origin.z,
+        strength: strength,
+        affect (v) {
+            let dist = v.distanceTo(this);
+            let dir = v.clone();
+            dir.normalize();
+            dir.multiplyScalar(this.strength/dist);
+            v.sub(dir);
+        }
+    }
+}
+
+module.exports = Field;
+},{}],5:[function(require,module,exports){
+'use strict';
+
 let THREE = require('three');
 
 module.exports = {
@@ -4456,28 +4477,7 @@ module.exports = {
         });
     }
 }
-},{"three":"three"}],5:[function(require,module,exports){
-'use strict';
-
-function Field (origin, strength) {
-    console.log(strength);
-    return {
-        x: origin.x,
-        y: origin.y,
-        z: origin.z,
-        strength: strength,
-        affect (v) {
-            let dist = v.distanceTo(this);
-            let dir = v.clone();
-            dir.normalize();
-            dir.multiplyScalar(this.strength/dist);
-            v.sub(dir);
-        }
-    }
-}
-
-module.exports = Field;
-},{}],6:[function(require,module,exports){
+},{"three":"three"}],6:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -4655,7 +4655,7 @@ function Cobble (scene) {
 }
 
 module.exports = Cobble;
-},{"../abstract/Field":5,"../abstract/entropy":4,"../util/cross":12,"three":"three"}],8:[function(require,module,exports){
+},{"../abstract/Field":4,"../abstract/entropy":5,"../util/cross":12,"three":"three"}],8:[function(require,module,exports){
 'use strict';
 
 let THREE = require('../util/patchedThree');
@@ -4695,12 +4695,12 @@ function Rock (size) {
     // let outline = qh(points, {skipTriangulation: true });
     let outline = qh(points);//.reduce((a, b) => a.concat(b)).map(i => points[i]).reduce((a, b) => a.concat(b));
 
-    let geometry = new THREE.Geometry();
+    let geometry = new THREE.BufferGeometry();
 
 
     // let vertices = new Float32Array(outline);
 
-    // geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    
     // geometry.addAttribute( 'uniforms', {
     //         time: { value: 1.0 },
     //         resolution: { value: new THREE.Vector2() }
@@ -4714,18 +4714,24 @@ function Rock (size) {
         //     vertexOpacity: { value: [] }
         // },
     // debugger;
-    geometry.vertices = points.map(p => {
-        return new THREE.Vector3(p[0], p[1], p[2]);
-    });
+    // geometry.vertices = points.map(p => {
+        // return new THREE.Vector3(p[0], p[1], p[2]);
+    // });
 
-    outline.forEach((p, i) => {
-        let [i1, i2, i3] = p;
-        geometry.faces.push(new THREE.Face3(i1, i2, i3));
-    });
+    var vertices = new Float32Array(points.reduce((a,b) => a.concat(b)));
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
 
-    geometry.computeFaceNormals();
-    geometry.mergeVertices();
-    geometry.computeVertexNormals();
+    var indices = new Uint16Array(outline.reduce((a,b) => a.concat(b)));
+    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+
+
+    // outline.forEach((p, i) => {
+    //     let [i1, i2, i3] = p;
+    //     geometry.faces.push(new THREE.Face3(i1, i2, i3));
+    // });
+    // geometry.computeFaceNormals();
+    // geometry.mergeVertices();
+    // geometry.computeVertexNormals();
 
     // Next, we need to merge vertices to clean up any unwanted vertex. 
     // geometry.mergeVertices();
@@ -4843,28 +4849,36 @@ function Rock (size) {
 
     });
 
-    var buffer_g = new THREE.BufferGeometry();
-    buffer_g.fromGeometry(geometry);
+    // var buffer_g = new THREE.BufferGeometry();
+    // buffer_g.fromGeometry(geometry);
 
-    // let mesh = new THREE.Mesh( geometry, material );
-    let mesh = new THREE.Mesh( buffer_g, material );
+    let mesh = new THREE.Mesh( geometry, material );
+    // let mesh = new THREE.Mesh( buffer_g, material );
 
-    let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
+    // let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
 
-    var line = new THREE.LineSegments( wireframe );
-    line.material.depthTest = false;
-    line.material.opacity = 0.25;
-    line.material.transparent = true;
+    // let helper = new THREE.BoundingBoxHelper(mesh, new THREE.Color(0xFF0000));
 
-    if (Util.params.wireframe)
-        mesh.add( line );
+    // mesh.add(helper);
+
+    // helper.update();
+
+    // console.log("Helper", helper.box.max.x - helper.box.min.x)
+
+    // var line = new THREE.LineSegments( wireframe );
+    // line.material.depthTest = false;
+    // line.material.opacity = 0.25;
+    // line.material.transparent = true;
+
+    // if (Util.params.wireframe)
+        // mesh.add( line );
     // mesh.add( markers );
 
     return mesh;
 }
 
 module.exports = Rock;
-},{"../abstract/Field":5,"../abstract/entropy":4,"../shaders/test.frag":10,"../shaders/test.vert":11,"../util/cross":12,"../util/patchedThree":13,"../util/util":14,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],9:[function(require,module,exports){
+},{"../abstract/Field":4,"../abstract/entropy":5,"../shaders/test.frag":10,"../shaders/test.vert":11,"../util/cross":12,"../util/patchedThree":13,"../util/util":14,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],9:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -4893,7 +4907,7 @@ let world,
 
 let geos = [];
 
-const ROCKS = 2;
+const ROCKS = 300;
 
 let yAxis = new THREE.Vector3(0,1,0);
 
@@ -4907,7 +4921,7 @@ function initCannon() {
 
     // World
     world = new CANNON.World();
-    world.gravity.set(0,-1,0);
+    world.gravity.set(0,-10,0);
     world.broadphase = new CANNON.NaiveBroadphase();
     world.solver.iterations = 10;
 
@@ -4922,22 +4936,30 @@ function initCannon() {
 
         let {geometry} = bodies[i].mesh;
         geometry.computeBoundingBox();
-        let bbox = geometry.boundingBox;
-        // let bbox = new THREE.Box3().setFromObject(bodies[i].mesh);
+        // let bbox = geometry.boundingBox;
+        let bbox = new THREE.Box3().setFromObject(bodies[i].mesh);
+
+        // console.log(bbox.size())
+        // let [x, y, z] = bbox.size();
+        // debugger;
+
+        let x = bbox.max.x - bbox.min.x;
+        let y = bbox.max.y - bbox.min.y;
+        let z = bbox.max.z - bbox.min.z;
 
 
-        let x = Math.abs(bbox.max.x - bbox.min.x);
-        let y = Math.abs(bbox.max.y - bbox.min.y);
-        let z = Math.abs(bbox.max.z - bbox.min.z);
+        // debugger;
 
-        console.log(x, y, z);
+        let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
 
-        let shape = new CANNON.Box(new CANNON.Vec3(x,y,z));
+
+        // let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
         let mass = 1;
+
         let body = new CANNON.Body({
             mass: 1
         });
-        body.position.set(Util.randomInt(0, 20), Util.randomInt(0, 20), 10);
+        body.position.set(Util.randomInt(-20, 20), Util.randomInt(8, 20), Util.randomInt(-20, 20));
         body.addShape(shape);
         bodies[i].body = body;
         world.addBody(body);
@@ -4965,7 +4987,7 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomInt(1, 3));
+        let rock = Rock(Util.randomFloat(0.2, 2));
         // group.add(rock);
         rock.position.x = Util.randomInt(0, 30);
         rock.position.z = Util.randomInt(0, 30);
@@ -5023,16 +5045,16 @@ function render() {
 
 function updatePhysics () {
       // Step the physics world
-      world.step(timeStep);
+    world.step(timeStep);
       // Copy coordinates from Cannon.js to Three.js
-      bodies.forEach(b => {
+    bodies.forEach(b => {
         b.mesh.position.copy(b.body.position);
         b.mesh.quaternion.copy(b.body.quaternion);
-      });
+    });
 }
 
 },{"./flora/grass":6,"./geology/cobble":7,"./geology/rock":8,"./util/util":14,"cannon":"cannon","three":"three"}],10:[function(require,module,exports){
-module.exports = "#ifdef GL_ES\nprecision highp float;\n#endif\n\nvarying vec3 vNormal;\nvarying vec3 vPosition;\n\nvarying vec2 vUv;\nvarying float noise;\n\nhighp float rand(vec2 co)\n{\n    highp float a = 12.9898;\n    highp float b = 78.233;\n    highp float c = 43758.5453;\n    highp float dt= dot(co.xy ,vec2(a,b));\n    highp float sn= mod(dt,3.14);\n    return fract(sin(sn) * c);\n}\n\n\nvoid main() {\n    vec3 light = vec3(0.0, 0.0, 0.0);\n\n    // ensure it's normalized\n    light = normalize(light);\n\n    float distance = length(vPosition);\n\n    // calculate the dot product of\n    // the light to the vertex normal\n    // float dProd = max(0.0, dot(vNormal, light));\n    // dProd = dProd * 20.0;\n    gl_FragColor = vec4(distance/20.0, (distance/20.0)-0.3, (distance/20.0)+0.4, 1.0);\n    if (vPosition.x > 0.0 && vPosition.x < 0.1) {\n        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    }\n    if (vPosition.y > 0.0 && vPosition.y < 0.1) {\n        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    }\n    // vec3 color = vec3( vUv * ( 1. - 2. * noise ), 0.0 );\n    // gl_FragColor = vec4( color.rgb, 1.0 );\n    // gl_FragColor = vec4(vNormal,0,1.0);  // draw red\n}";
+module.exports = "#ifdef GL_ES\nprecision highp float;\n#endif\n\nvarying vec3 vNormal;\nvarying vec3 vPosition;\n\nvarying vec2 vUv;\nvarying float noise;\n\nhighp float rand(vec2 co)\n{\n    highp float a = 12.9898;\n    highp float b = 78.233;\n    highp float c = 43758.5453;\n    highp float dt= dot(co.xy ,vec2(a,b));\n    highp float sn= mod(dt,3.14);\n    return fract(sin(sn) * c);\n}\n\n\nvoid main() {\n    vec3 light = vec3(0.0, 0.0, 0.0);\n\n    // ensure it's normalized\n    light = normalize(light);\n\n    float distance = length(vPosition);\n\n    // calculate the dot product of\n    // the light to the vertex normal\n    // float dProd = max(0.0, dot(vNormal, light));\n    // gl_FragColor = vec4(dProd, dProd, dProd, 1.0);\n    // dProd = dProd * 20.0;\n    gl_FragColor = vec4(distance/15.0, distance/15.0, distance/15.0+0.3, 1.0);\n    // if (vPosition.x > 0.0 && vPosition.x < 0.1) {\n    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // }\n    // if (vPosition.y > 0.0 && vPosition.y < 0.1) {\n    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // }\n    // vec3 color = vec3( vUv * ( 1. - 2. * noise ), 0.0 );\n    // gl_FragColor = vec4( color.rgb, 1.0 );\n    // gl_FragColor = vec4(vNormal,0,1.0);  // draw red\n}";
 
 },{}],11:[function(require,module,exports){
 module.exports = "// switch on high precision floats\n#ifdef GL_ES\nprecision highp float;\n#endif\n\n//\n// GLSL textureless classic 3D noise \"cnoise\",\n// with an RSL-style periodic variant \"pnoise\".\n// Author:  Stefan Gustavson (stefan.gustavson@liu.se)\n// Version: 2011-10-11\n//\n// Many thanks to Ian McEwan of Ashima Arts for the\n// ideas for permutation and gradient selection.\n//\n// Copyright (c) 2011 Stefan Gustavson. All rights reserved.\n// Distributed under the MIT license. See LICENSE file.\n// https://github.com/stegu/webgl-noise\n//\n\nvec3 mod289(vec3 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289(vec4 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute(vec4 x)\n{\n  return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nvec3 fade(vec3 t) {\n  return t*t*t*(t*(t*6.0-15.0)+10.0);\n}\n\n// Classic Perlin noise\nfloat cnoise(vec3 P)\n{\n  vec3 Pi0 = floor(P); // Integer part for indexing\n  vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1\n  Pi0 = mod289(Pi0);\n  Pi1 = mod289(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute(permute(ix) + iy);\n  vec4 ixy0 = permute(ixy + iz0);\n  vec4 ixy1 = permute(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n  return 2.2 * n_xyz;\n}\n\n// Classic Perlin noise, periodic variant\nfloat pnoise(vec3 P, vec3 rep)\n{\n  vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period\n  vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period\n  Pi0 = mod289(Pi0);\n  Pi1 = mod289(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute(permute(ix) + iy);\n  vec4 ixy0 = permute(ixy + iz0);\n  vec4 ixy1 = permute(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n  return 2.2 * n_xyz;\n}\n\nvarying vec2 vUv;\nvarying float noise;\n\nfloat turbulence( vec3 p ) {\n    float w = 100.0;\n    float t = -.5;\n    for (float f = 1.0 ; f <= 10.0 ; f++ ){\n        float power = pow( 2.0, f );\n        t += abs( pnoise( vec3( power * p ), vec3( 10.0, 10.0, 10.0 ) ) / power );\n    }\n    return t;\n}\n\nvarying vec3 vNormal;\nvarying vec3 vPosition;\n\nvoid main() {\n\n    vNormal = normal;\n    vPosition = position;\n    vUv = uv;\n\n    // get a turbulent 3d noise using the normal, normal to high freq\n    noise = 10.0 *  -.10 * turbulence( 0.2 * normal );\n    // get a 3d noise using the position, low frequency\n    float b = 5.0 * pnoise( 0.05 * position, vec3( 100.0 ) );\n    // compose both noises\n    float displacement = -10. * noise + b;\n    // float displacement = -20. * cnoise( vec3( 10.0, 10.0, 10.0 ) );\n\n    // move the position along the normal and transform it\n    vec3 newPosition = position + normal * displacement;\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n}";
