@@ -19,13 +19,12 @@ let Util = {
     },
     params: params,
     gui: gui,
-    renderScene: () => {}
 };
 
 gui.add(params, 'wireframe').name('Wireframe').onFinishChange(function(){
     // refresh based on the new value of params.interation
     console.log("let's go");
-    Util.addObjects();
+    // Util.addObjects();
 });
 
 module.exports = Util;

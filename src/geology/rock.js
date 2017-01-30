@@ -94,8 +94,8 @@ function Rock (size) {
     /* Roughen */
 
 
-    var modifier = new SubdivisionModifier(2);
-    modifier.modify( geometry );
+    // var modifier = new SubdivisionModifier(2);
+    // modifier.modify( geometry );
 
     // geo.mergeVertices();
 

@@ -4421,27 +4421,6 @@ dat.utils.common);
 },{}],4:[function(require,module,exports){
 'use strict';
 
-function Field (origin, strength) {
-    console.log(strength);
-    return {
-        x: origin.x,
-        y: origin.y,
-        z: origin.z,
-        strength: strength,
-        affect (v) {
-            let dist = v.distanceTo(this);
-            let dir = v.clone();
-            dir.normalize();
-            dir.multiplyScalar(this.strength/dist);
-            v.sub(dir);
-        }
-    }
-}
-
-module.exports = Field;
-},{}],5:[function(require,module,exports){
-'use strict';
-
 let THREE = require('three');
 
 module.exports = {
@@ -4477,7 +4456,28 @@ module.exports = {
         });
     }
 }
-},{"three":"three"}],6:[function(require,module,exports){
+},{"three":"three"}],5:[function(require,module,exports){
+'use strict';
+
+function Field (origin, strength) {
+    console.log(strength);
+    return {
+        x: origin.x,
+        y: origin.y,
+        z: origin.z,
+        strength: strength,
+        affect (v) {
+            let dist = v.distanceTo(this);
+            let dir = v.clone();
+            dir.normalize();
+            dir.multiplyScalar(this.strength/dist);
+            v.sub(dir);
+        }
+    }
+}
+
+module.exports = Field;
+},{}],6:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -4655,7 +4655,7 @@ function Cobble (scene) {
 }
 
 module.exports = Cobble;
-},{"../abstract/Field":4,"../abstract/entropy":5,"../util/cross":12,"three":"three"}],8:[function(require,module,exports){
+},{"../abstract/Field":5,"../abstract/entropy":4,"../util/cross":12,"three":"three"}],8:[function(require,module,exports){
 'use strict';
 
 let THREE = require('../util/patchedThree');
@@ -4752,8 +4752,8 @@ function Rock (size) {
     /* Roughen */
 
 
-    var modifier = new SubdivisionModifier(2);
-    modifier.modify( geometry );
+    // var modifier = new SubdivisionModifier(2);
+    // modifier.modify( geometry );
 
     // geo.mergeVertices();
 
@@ -4864,57 +4864,117 @@ function Rock (size) {
 }
 
 module.exports = Rock;
-},{"../abstract/Field":4,"../abstract/entropy":5,"../shaders/test.frag":10,"../shaders/test.vert":11,"../util/cross":12,"../util/patchedThree":13,"../util/util":14,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],9:[function(require,module,exports){
-
+},{"../abstract/Field":5,"../abstract/entropy":4,"../shaders/test.frag":10,"../shaders/test.vert":11,"../util/cross":12,"../util/patchedThree":13,"../util/util":14,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],9:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
-
-var scene = new THREE.Scene();
+let CANNON = require('cannon');
 
 let Grass = require('./flora/grass');
 let Cobble = require('./geology/cobble');
 let Rock = require('./geology/rock');
 let Util = require('./util/util');
 
-scene.background = new THREE.Color('#ffffff');
-var camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
+let world,
+    mass,
+    body,
+    shape,
+    plane,
+    group,
+    timeStep = 1/60,
+    camera,
+    scene,
+    renderer,
+    geometry,
+    material,
+    bodies = [],
+    mesh;
 
-var renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
 
 let geos = [];
 
-const MAX = 48;
-let rowCount = Math.sqrt(MAX);
+const ROCKS = 2;
 
-let texture = new THREE.TextureLoader();
+let yAxis = new THREE.Vector3(0,1,0);
 
-Util.renderScene = renderScene;
-Util.addObjects = addObjects;
+// Util.addObjects = addObjects;
+
+initThree();
+initCannon();
+animate();
+
+function initCannon() {
+
+    // World
+    world = new CANNON.World();
+    world.gravity.set(0,-1,0);
+    world.broadphase = new CANNON.NaiveBroadphase();
+    world.solver.iterations = 10;
+
+    // Ground plane
+    let plane = new CANNON.Plane();
+    let groundBody = new CANNON.Body({ mass: 0 });
+    groundBody.addShape(plane);
+    groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
+    world.add(groundBody);
+
+    for (let i = 0;i < ROCKS;i++) {
+
+        let {geometry} = bodies[i].mesh;
+        geometry.computeBoundingBox();
+        let bbox = geometry.boundingBox;
+        // let bbox = new THREE.Box3().setFromObject(bodies[i].mesh);
 
 
-renderScene();
-addObjects();
+        let x = Math.abs(bbox.max.x - bbox.min.x);
+        let y = Math.abs(bbox.max.y - bbox.min.y);
+        let z = Math.abs(bbox.max.z - bbox.min.z);
 
-let group;
+        console.log(x, y, z);
 
-function addObjects () {
-    if (typeof group !== 'undefined')
-        scene.remove(group);
+        let shape = new CANNON.Box(new CANNON.Vec3(x,y,z));
+        let mass = 1;
+        let body = new CANNON.Body({
+            mass: 1
+        });
+        body.position.set(Util.randomInt(0, 20), Util.randomInt(0, 20), 10);
+        body.addShape(shape);
+        bodies[i].body = body;
+        world.addBody(body);
+    }
+    // body.angularVelocity.set(0,0,-10);
+    // body.angularDamping = 0.5;
+
+}
+
+
+function initThree () {
+
+    scene = new THREE.Scene();
+
+    scene.background = new THREE.Color('#ffffff');
+    camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
+
+    // if (typeof group !== 'undefined') {
+    //     scene.remove(group);
+    //     return;
+    // }
 
     group = new THREE.Object3D();
 
-    let [x, z] = [0, 0];
+    group.position.y = 40;
 
-    let rock = Rock(Util.randomInt(10, 26));
-    group.add(rock);
+    for (let i = 0; i < ROCKS; i++) {
+        let rock = Rock(Util.randomInt(1, 3));
+        // group.add(rock);
+        rock.position.x = Util.randomInt(0, 30);
+        rock.position.z = Util.randomInt(0, 30);
+        scene.add(rock);
+        bodies.push({mesh: rock});
+    }
 
-    scene.add(group);
-}
+    // scene.add(group);
 
-function renderScene () {
 // texture.load('assets/stone_texture.jpg', function (texture){
     // The actual texture is returned in the event.content
     let material = new THREE.MeshLambertMaterial({
@@ -4923,9 +4983,10 @@ function renderScene () {
         vertexColors: THREE.VertexColors
     });
 
-    // scene.add(new THREE.AxisHelper(5));
+    scene.add(new THREE.AxisHelper(50));
 
     camera.position.z = 100;
+    camera.position.y = 10;
     camera.target = new THREE.Vector3( 0, 0, 0 );
 
     var light = new THREE.AmbientLight( 0x404040 ); // soft white light
@@ -4935,28 +4996,42 @@ function renderScene () {
     directionalLight.position.set( 2, 1, 0 );
     scene.add( directionalLight );
 
-    // group.add(Grass());
+    var geometry = new THREE.PlaneBufferGeometry( 50, 50 );
+    let plane = new THREE.Mesh( geometry, material );
+    plane.rotation.x = Math.PI/2;
+    plane.position.y = 0;
+    scene.add(plane);
 
-
-    let yAxis = new THREE.Vector3(0,1,0);
-    // let zAxis = new THREE.Vector3(1,0,0);
-
-    function render() {
-        // group.rotation.x += 0.01;
-        // group.center();
-        scene.rotateOnAxis(yAxis, Math.PI/480);
-        // scene.rotateOnAxis(zAxis, Math.PI/960);
-        requestAnimationFrame( render );
-        renderer.render( scene, camera );
-    }
-
-
-    render();
+    renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
 
 }
 
-// });
-},{"./flora/grass":6,"./geology/cobble":7,"./geology/rock":8,"./util/util":14,"three":"three"}],10:[function(require,module,exports){
+function animate () {
+    requestAnimationFrame( animate );
+    scene.rotateOnAxis(yAxis, Math.PI/480);
+    updatePhysics();
+    render();
+}
+
+
+function render() {
+    renderer.render( scene, camera );
+}
+
+
+function updatePhysics () {
+      // Step the physics world
+      world.step(timeStep);
+      // Copy coordinates from Cannon.js to Three.js
+      bodies.forEach(b => {
+        b.mesh.position.copy(b.body.position);
+        b.mesh.quaternion.copy(b.body.quaternion);
+      });
+}
+
+},{"./flora/grass":6,"./geology/cobble":7,"./geology/rock":8,"./util/util":14,"cannon":"cannon","three":"three"}],10:[function(require,module,exports){
 module.exports = "#ifdef GL_ES\nprecision highp float;\n#endif\n\nvarying vec3 vNormal;\nvarying vec3 vPosition;\n\nvarying vec2 vUv;\nvarying float noise;\n\nhighp float rand(vec2 co)\n{\n    highp float a = 12.9898;\n    highp float b = 78.233;\n    highp float c = 43758.5453;\n    highp float dt= dot(co.xy ,vec2(a,b));\n    highp float sn= mod(dt,3.14);\n    return fract(sin(sn) * c);\n}\n\n\nvoid main() {\n    vec3 light = vec3(0.0, 0.0, 0.0);\n\n    // ensure it's normalized\n    light = normalize(light);\n\n    float distance = length(vPosition);\n\n    // calculate the dot product of\n    // the light to the vertex normal\n    // float dProd = max(0.0, dot(vNormal, light));\n    // dProd = dProd * 20.0;\n    gl_FragColor = vec4(distance/20.0, (distance/20.0)-0.3, (distance/20.0)+0.4, 1.0);\n    if (vPosition.x > 0.0 && vPosition.x < 0.1) {\n        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    }\n    if (vPosition.y > 0.0 && vPosition.y < 0.1) {\n        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    }\n    // vec3 color = vec3( vUv * ( 1. - 2. * noise ), 0.0 );\n    // gl_FragColor = vec4( color.rgb, 1.0 );\n    // gl_FragColor = vec4(vNormal,0,1.0);  // draw red\n}";
 
 },{}],11:[function(require,module,exports){
@@ -5269,13 +5344,12 @@ let Util = {
     },
     params: params,
     gui: gui,
-    renderScene: () => {}
 };
 
 gui.add(params, 'wireframe').name('Wireframe').onFinishChange(function(){
     // refresh based on the new value of params.interation
     console.log("let's go");
-    Util.addObjects();
+    // Util.addObjects();
 });
 
 module.exports = Util;
