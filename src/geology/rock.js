@@ -42,7 +42,6 @@ function Rock (size) {
 
     // let vertices = new Float32Array(outline);
 
-    
     // geometry.addAttribute( 'uniforms', {
     //         time: { value: 1.0 },
     //         resolution: { value: new THREE.Vector2() }

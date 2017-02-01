@@ -20,20 +20,26 @@ function Terrain (size, amplitude) {
 
     }
 
+    let thing = [];
+
     for (let i = 0; i < size * size; i++) {
         if ((i+1)%size !== 0 && i < (size * size) - size) {
+            thing.push(i, i+1, i+size);
+            thing.push(i+1, i+size+1, i+size);
             geometry.faces.push(new THREE.Face3(i, i+1, i+size));
             geometry.faces.push(new THREE.Face3(i+1, i+size+1, i+size));
         }
     }
+
+    geometry.thing = thing;
 
     geometry.computeFaceNormals();
     geometry.mergeVertices();
     geometry.computeVertexNormals();
 
 
-    var modifier = new SubdivisionModifier(2);
-    modifier.modify( geometry );
+    // var modifier = new SubdivisionModifier(2);
+    // modifier.modify( geometry );
 
 
     let material = new THREE.MeshLambertMaterial( {
@@ -49,6 +55,7 @@ function Terrain (size, amplitude) {
 
     mesh.position.x = -size*amplitude/2;
     mesh.position.z = -size*amplitude/2;
+    mesh.position.y = 4;
 
     let markers = new THREE.Object3D();
 
@@ -56,10 +63,10 @@ function Terrain (size, amplitude) {
     let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
     var line = new THREE.LineSegments( wireframe );
     line.material.depthTest = false;
-    line.material.opacity = 0.25;
+    line.material.opacity = 0.5;
     line.material.transparent = true;
 
-    mesh.add( line );
+    // mesh.add( line );
 
     geometry.vertices.forEach(f => {
         let cross = Cross(0.5);

@@ -4847,6 +4847,27 @@ a+"px",m=b,r=0);return b},update:function(){l=this.end()}}};"object"===typeof mo
 },{}],6:[function(require,module,exports){
 'use strict';
 
+function Field (origin, strength) {
+    console.log(strength);
+    return {
+        x: origin.x,
+        y: origin.y,
+        z: origin.z,
+        strength: strength,
+        affect (v) {
+            let dist = v.distanceTo(this);
+            let dir = v.clone();
+            dir.normalize();
+            dir.multiplyScalar(this.strength/dist);
+            v.sub(dir);
+        }
+    }
+}
+
+module.exports = Field;
+},{}],7:[function(require,module,exports){
+'use strict';
+
 let THREE = require('three');
 
 module.exports = {
@@ -4882,28 +4903,7 @@ module.exports = {
         });
     }
 }
-},{"three":"three"}],7:[function(require,module,exports){
-'use strict';
-
-function Field (origin, strength) {
-    console.log(strength);
-    return {
-        x: origin.x,
-        y: origin.y,
-        z: origin.z,
-        strength: strength,
-        affect (v) {
-            let dist = v.distanceTo(this);
-            let dir = v.clone();
-            dir.normalize();
-            dir.multiplyScalar(this.strength/dist);
-            v.sub(dir);
-        }
-    }
-}
-
-module.exports = Field;
-},{}],8:[function(require,module,exports){
+},{"three":"three"}],8:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -5081,7 +5081,7 @@ function Cobble (scene) {
 }
 
 module.exports = Cobble;
-},{"../abstract/Field":7,"../abstract/entropy":6,"../util/cross":15,"three":"three"}],10:[function(require,module,exports){
+},{"../abstract/Field":6,"../abstract/entropy":7,"../util/cross":15,"three":"three"}],10:[function(require,module,exports){
 'use strict';
 
 let THREE = require('../util/patchedThree');
@@ -5126,7 +5126,6 @@ function Rock (size) {
 
     // let vertices = new Float32Array(outline);
 
-    
     // geometry.addAttribute( 'uniforms', {
     //         time: { value: 1.0 },
     //         resolution: { value: new THREE.Vector2() }
@@ -5304,7 +5303,7 @@ function Rock (size) {
 }
 
 module.exports = Rock;
-},{"../abstract/Field":7,"../abstract/entropy":6,"../shaders/test.frag":13,"../shaders/test.vert":14,"../util/cross":15,"../util/patchedThree":16,"../util/util":17,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],11:[function(require,module,exports){
+},{"../abstract/Field":6,"../abstract/entropy":7,"../shaders/test.frag":13,"../shaders/test.vert":14,"../util/cross":15,"../util/patchedThree":16,"../util/util":17,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],11:[function(require,module,exports){
 'use strict';
 
 let THREE = require('../util/patchedThree');
@@ -5327,20 +5326,26 @@ function Terrain (size, amplitude) {
 
     }
 
+    let thing = [];
+
     for (let i = 0; i < size * size; i++) {
         if ((i+1)%size !== 0 && i < (size * size) - size) {
+            thing.push(i, i+1, i+size);
+            thing.push(i+1, i+size+1, i+size);
             geometry.faces.push(new THREE.Face3(i, i+1, i+size));
             geometry.faces.push(new THREE.Face3(i+1, i+size+1, i+size));
         }
     }
+
+    geometry.thing = thing;
 
     geometry.computeFaceNormals();
     geometry.mergeVertices();
     geometry.computeVertexNormals();
 
 
-    var modifier = new SubdivisionModifier(2);
-    modifier.modify( geometry );
+    // var modifier = new SubdivisionModifier(2);
+    // modifier.modify( geometry );
 
 
     let material = new THREE.MeshLambertMaterial( {
@@ -5356,6 +5361,7 @@ function Terrain (size, amplitude) {
 
     mesh.position.x = -size*amplitude/2;
     mesh.position.z = -size*amplitude/2;
+    mesh.position.y = 4;
 
     let markers = new THREE.Object3D();
 
@@ -5363,10 +5369,10 @@ function Terrain (size, amplitude) {
     let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
     var line = new THREE.LineSegments( wireframe );
     line.material.depthTest = false;
-    line.material.opacity = 0.25;
+    line.material.opacity = 0.5;
     line.material.transparent = true;
 
-    mesh.add( line );
+    // mesh.add( line );
 
     geometry.vertices.forEach(f => {
         let cross = Cross(0.5);
@@ -5422,6 +5428,7 @@ document.body.appendChild( stats.domElement );
 let world,
     mass,
     body,
+    terrain,
     shape,
     plane,
     group,
@@ -5462,6 +5469,16 @@ function initCannon() {
     groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
     world.add(groundBody);
 
+    let terrainShape = new CANNON.Trimesh(terrain.geometry.vertices.reduce((a, b) => a.concat([b.x, b.y, b.z]), []) , terrain.geometry.thing);
+
+    let terrainBody = new CANNON.Body({
+        mass: 1
+    });
+
+    terrainBody.position.set(0, 0, 0);
+    terrainBody.addShape(terrainShape);
+    world.addBody(terrainBody);
+
     for (let i = 0;i < ROCKS;i++) {
 
         let {geometry} = bodies[i].mesh;
@@ -5480,7 +5497,6 @@ function initCannon() {
         // debugger;
 
         let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
-
 
         // let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
         let mass = 1;
@@ -5520,11 +5536,13 @@ function initThree () {
         // group.add(rock);
         rock.position.x = Util.randomInt(0, 30);
         rock.position.z = Util.randomInt(0, 30);
-        // scene.add(rock);
+        scene.add(rock);
         bodies.push({mesh: rock});
     }
 
-    scene.add(Terrain(12, 5));
+    terrain = Terrain(4, 10);
+
+    scene.add(terrain);
 
     // scene.add(group);
 

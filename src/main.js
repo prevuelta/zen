@@ -35,6 +35,7 @@ document.body.appendChild( stats.domElement );
 let world,
     mass,
     body,
+    terrain,
     shape,
     plane,
     group,
@@ -75,6 +76,16 @@ function initCannon() {
     groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
     world.add(groundBody);
 
+    let terrainShape = new CANNON.Trimesh(terrain.geometry.vertices.reduce((a, b) => a.concat([b.x, b.y, b.z]), []) , terrain.geometry.thing);
+
+    let terrainBody = new CANNON.Body({
+        mass: 1
+    });
+
+    terrainBody.position.set(0, 0, 0);
+    terrainBody.addShape(terrainShape);
+    world.addBody(terrainBody);
+
     for (let i = 0;i < ROCKS;i++) {
 
         let {geometry} = bodies[i].mesh;
@@ -93,7 +104,6 @@ function initCannon() {
         // debugger;
 
         let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
-
 
         // let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
         let mass = 1;
@@ -133,11 +143,13 @@ function initThree () {
         // group.add(rock);
         rock.position.x = Util.randomInt(0, 30);
         rock.position.z = Util.randomInt(0, 30);
-        // scene.add(rock);
+        scene.add(rock);
         bodies.push({mesh: rock});
     }
 
-    scene.add(Terrain(12, 5));
+    terrain = Terrain(4, 10);
+
+    scene.add(terrain);
 
     // scene.add(group);
 
