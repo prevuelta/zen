@@ -20,7 +20,7 @@ highp float rand(vec2 co)
 
 
 void main() {
-    vec3 light = vec3(0.0, 0.0, 0.0);
+    vec3 light = vec3(0.5, 0.2, 1.0);
 
     // ensure it's normalized
     light = normalize(light);
@@ -29,10 +29,10 @@ void main() {
 
     // calculate the dot product of
     // the light to the vertex normal
-    // float dProd = max(0.0, dot(vNormal, light));
-    // gl_FragColor = vec4(dProd, dProd, dProd, 1.0);
-    // dProd = dProd * 20.0;
-    gl_FragColor = vec4(distance/15.0, distance/15.0, distance/15.0+0.3, 1.0);
+    float dProd = max(0.0, dot(vNormal, light));
+    dProd = dProd * 100.0;
+    gl_FragColor = vec4(dProd, dProd, dProd, 1.0);
+    // gl_FragColor = vec4(distance/10.0, 0.5, 0.5, 1.0);
     // if (vPosition.x > 0.0 && vPosition.x < 0.1) {
     //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     // }
@@ -41,5 +41,5 @@ void main() {
     // }
     // vec3 color = vec3( vUv * ( 1. - 2. * noise ), 0.0 );
     // gl_FragColor = vec4( color.rgb, 1.0 );
-    // gl_FragColor = vec4(vNormal,0,1.0);  // draw red
+    // gl_FragColor = vec4(1.0,0,0,1.0);  // draw red
 }

@@ -35,6 +35,8 @@
     "cannon": "^0.6.2",
     "dat-gui": "^0.5.0",
     "quickhull3d": "^2.0.0",
+    "simplex-noise": "^2.3.0",
+    "stats-js": "^1.0.0-alpha1",
     "three": "^0.81.0",
     "three-subdivision-modifier": "^1.0.5"
   },

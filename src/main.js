@@ -6,7 +6,31 @@ let CANNON = require('cannon');
 let Grass = require('./flora/grass');
 let Cobble = require('./geology/cobble');
 let Rock = require('./geology/rock');
+let Terrain = require('./geology/terrain');
 let Util = require('./util/util');
+
+let Stats = require('stats-js');
+
+var stats = new Stats();
+stats.setMode(0); // 0: fps, 1: ms 
+
+// Align top-left
+stats.domElement.style.position = 'absolute';
+stats.domElement.style.left = '0px';
+stats.domElement.style.top = '0px';
+
+document.body.appendChild( stats.domElement );
+
+// setInterval( function () {
+
+//     stats.begin();
+
+//     // your code goes here 
+
+//     stats.end();
+
+// }, 1000 / 60 );
+
 
 let world,
     mass,
@@ -66,7 +90,6 @@ function initCannon() {
         let y = bbox.max.y - bbox.min.y;
         let z = bbox.max.z - bbox.min.z;
 
-
         // debugger;
 
         let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
@@ -110,9 +133,11 @@ function initThree () {
         // group.add(rock);
         rock.position.x = Util.randomInt(0, 30);
         rock.position.z = Util.randomInt(0, 30);
-        scene.add(rock);
+        // scene.add(rock);
         bodies.push({mesh: rock});
     }
+
+    scene.add(Terrain(12, 5));
 
     // scene.add(group);
 
@@ -127,21 +152,21 @@ function initThree () {
     scene.add(new THREE.AxisHelper(50));
 
     camera.position.z = 100;
-    camera.position.y = 10;
+    camera.position.y =20;
     camera.target = new THREE.Vector3( 0, 0, 0 );
 
     var light = new THREE.AmbientLight( 0x404040 ); // soft white light
     scene.add( light );
 
-    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.4);
-    directionalLight.position.set( 2, 1, 0 );
+    var directionalLight = new THREE.DirectionalLight( 0xFFFFFF, 1);
+    directionalLight.position.set( 0, 10, 0 );
     scene.add( directionalLight );
 
     var geometry = new THREE.PlaneBufferGeometry( 50, 50 );
     let plane = new THREE.Mesh( geometry, material );
     plane.rotation.x = Math.PI/2;
     plane.position.y = 0;
-    scene.add(plane);
+    // scene.add(plane);
 
     renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -154,6 +179,7 @@ function animate () {
     scene.rotateOnAxis(yAxis, Math.PI/480);
     updatePhysics();
     render();
+    stats.update();
 }
 
 
