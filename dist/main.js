@@ -5256,23 +5256,23 @@ function Rock (size) {
 //     // }
 
 //     // material
-    let material = new THREE.MeshLambertMaterial( {
-        color: 0xFF0000,
-        shading: THREE.FlatShading,
-        polygonOffset: true,
-        polygonOffsetFactor: 1, // positive value pushes polygon further away
-        polygonOffsetFactor: 1
-    });
-
-    // var material = new THREE.ShaderMaterial( {
-    //     uniforms: {
-    //         time: { value: 1.0 },
-    //         resolution: { value: new THREE.Vector2() }
-    //     },
-    //     vertexShader: vert,
-    //     fragmentShader: frag
-
+    // let material = new THREE.MeshLambertMaterial( {
+    //     color: 0xFF0000,
+    //     shading: THREE.FlatShading,
+    //     polygonOffset: true,
+    //     polygonOffsetFactor: 1, // positive value pushes polygon further away
+    //     polygonOffsetFactor: 1
     // });
+
+    var material = new THREE.ShaderMaterial( {
+        uniforms: {
+            time: { value: 1.0 },
+            resolution: { value: new THREE.Vector2() }
+        },
+        vertexShader: vert,
+        fragmentShader: frag
+
+    });
 
     // var buffer_g = new THREE.BufferGeometry();
     // buffer_g.fromGeometry(geometry);
@@ -5319,12 +5319,26 @@ let simplex = new SimplexNoise();
 function Terrain (size, amplitude) {
     let geometry = new THREE.Geometry();
 
+    let heights = [[]];
+
+    let j = 0;
+
     for (let i = 0; i < size * size; i++) {
-        let vertice = new THREE.Vector3(i%size, simplex.noise2D(i, i), Math.floor(i/size));
+        let height = simplex.noise2D(i, i);
+        if (i && i % size === 0) {
+            j++;
+            heights[j] = [];
+            heights[j].push(height*amplitude);
+        } else {
+            heights[j].push(height*amplitude);
+        }
+        let vertice = new THREE.Vector3(i%size, height/4, Math.floor(i/size));
         vertice.multiplyScalar(amplitude);
         geometry.vertices.push(vertice);
 
     }
+
+    geometry.heightMap = heights;
 
     let thing = [];
 
@@ -5359,9 +5373,9 @@ function Terrain (size, amplitude) {
 
     let mesh = new THREE.Mesh(geometry, material);
 
-    mesh.position.x = -size*amplitude/2;
-    mesh.position.z = -size*amplitude/2;
-    mesh.position.y = 4;
+    // mesh.position.x = -size*amplitude/2;
+    // mesh.position.z = -size*amplitude/2;
+    // mesh.position.y = 10;
 
     let markers = new THREE.Object3D();
 
@@ -5429,6 +5443,7 @@ let world,
     mass,
     body,
     terrain,
+    terrainBody,
     shape,
     plane,
     group,
@@ -5444,7 +5459,7 @@ let world,
 
 let geos = [];
 
-const ROCKS = 300;
+const ROCKS = 20;
 
 let yAxis = new THREE.Vector3(0,1,0);
 
@@ -5460,24 +5475,77 @@ function initCannon() {
     world = new CANNON.World();
     world.gravity.set(0,-10,0);
     world.broadphase = new CANNON.NaiveBroadphase();
-    world.solver.iterations = 10;
+    world.solver.iterations = 2;
 
     // Ground plane
     let plane = new CANNON.Plane();
     let groundBody = new CANNON.Body({ mass: 0 });
     groundBody.addShape(plane);
     groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
-    world.add(groundBody);
+    // world.add(groundBody);
 
-    let terrainShape = new CANNON.Trimesh(terrain.geometry.vertices.reduce((a, b) => a.concat([b.x, b.y, b.z]), []) , terrain.geometry.thing);
+    // console.log(terrain.geometry.vertices.reduce((a, b) => a.concat([b.x, b.y, b.z]), []));
 
-    let terrainBody = new CANNON.Body({
-        mass: 1
+    // console.log(terrain.geometry.thing);
+    // var matrix = [];
+    // var sizeX = 15,
+    //     sizeY = 15;
+    // for (var i = 0; i < sizeX; i++) {
+    //     matrix.push([]);
+    //     for (var j = 0; j < sizeY; j++) {
+    //         var height = Math.cos(i/sizeX * Math.PI * 2)*Math.cos(j/sizeY * Math.PI * 2) + 2;
+    //         if(i===0 || i === sizeX-1 || j===0 || j === sizeY-1)
+    //             height = 3;
+    //         matrix[i].push(height);
+    //     }
+    // }
+
+            // Create a matrix of height values
+        // var matrix = [];
+        // var sizeX = 30,
+        //     sizeY = 30;
+        // for (var i = 0; i < sizeX; i++) {
+        //     matrix.push([]);
+        //     for (var j = 0; j < sizeY; j++) {
+        //         var height = Math.cos(i/sizeX * Math.PI * 2)*Math.cos(j/sizeY * Math.PI * 2) + 2;
+        //         if(i===0 || i === sizeX-1 || j===0 || j === sizeY-1)
+        //             height = 2;
+        //         matrix[i].push(height);
+        //     }
+        // }
+
+
+    let matrix = terrain.geometry.heightMap;
+
+    console.log(JSON.stringify(matrix))
+
+    // console.log(terrain.geometry.heightMap)
+    // console.log(matrix);
+
+        // Create the heightfield
+    var hfShape = new CANNON.Heightfield(matrix, {
+        elementSize: 4
     });
-
-    terrainBody.position.set(0, 0, 0);
-    terrainBody.addShape(terrainShape);
+    // // Create the heightfield shape
+    // var heightfieldShape = new CANNON.Heightfield([1,2,1,2,1,1,1], {
+        // elementSize: 1 // Distance between the data points in X and Y directions
+    // });
+    terrainBody = new CANNON.Body({
+        mass: 0
+    });
+    terrainBody.addShape(hfShape);
+    terrainBody.position.set(0, 6, 0);
     world.addBody(terrainBody);
+
+    // let terrainShape = new CANNON.Trimesh(terrain.geometry.vertices.reduce((a, b) => a.concat([b.x, b.y, b.z]), []) , terrain.geometry.thing);
+
+    // let terrainShape = new CANNON.Box(new CANNON.Vec3(10, 1, 10));
+
+
+
+    // terrainBody.position.set(-12*4/2, 15, -12*4/2);
+    // terrainBody.addShape(terrainShape);
+    // world.addBody(terrainBody);
 
     for (let i = 0;i < ROCKS;i++) {
 
@@ -5496,18 +5564,23 @@ function initCannon() {
 
         // debugger;
 
-        let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
+        // let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
 
-        // let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
-        let mass = 1;
+        let shape = new CANNON.Sphere(0.4);
+        // let shape = new CANNON.Box(new CANNON.Vec3(1,1,1));
+
+
 
         let body = new CANNON.Body({
             mass: 1
         });
-        body.position.set(Util.randomInt(-20, 20), Util.randomInt(8, 20), Util.randomInt(-20, 20));
+        body.position.set(Util.randomInt(0, 4*12), 20, Util.randomInt(0, 4*12));
         body.addShape(shape);
+        body.position.vadd(terrainBody.position, body.position);
         bodies[i].body = body;
         world.addBody(body);
+
+        // body.angularVelocity.set(0,0,-10);
     }
     // body.angularVelocity.set(0,0,-10);
     // body.angularDamping = 0.5;
@@ -5532,15 +5605,15 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomFloat(0.2, 2));
+        let rock = Rock(Util.randomFloat(0.2, 4));
         // group.add(rock);
-        rock.position.x = Util.randomInt(0, 30);
-        rock.position.z = Util.randomInt(0, 30);
+        // rock.position.x = Util.randomInt(0, 30);
+        // rock.position.z = Util.randomInt(0, 30);
         scene.add(rock);
         bodies.push({mesh: rock});
     }
 
-    terrain = Terrain(4, 10);
+    terrain = Terrain(12, 4);
 
     scene.add(terrain);
 
@@ -5597,6 +5670,9 @@ function updatePhysics () {
       // Step the physics world
     world.step(timeStep);
       // Copy coordinates from Cannon.js to Three.js
+    terrain.position.copy(terrainBody.position);
+    terrain.quaternion.copy(terrainBody.quaternion);
+
     bodies.forEach(b => {
         b.mesh.position.copy(b.body.position);
         b.mesh.quaternion.copy(b.body.quaternion);

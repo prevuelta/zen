@@ -13,12 +13,26 @@ let simplex = new SimplexNoise();
 function Terrain (size, amplitude) {
     let geometry = new THREE.Geometry();
 
+    let heights = [[]];
+
+    let j = 0;
+
     for (let i = 0; i < size * size; i++) {
-        let vertice = new THREE.Vector3(i%size, simplex.noise2D(i, i), Math.floor(i/size));
+        let height = simplex.noise2D(i, i);
+        if (i && i % size === 0) {
+            j++;
+            heights[j] = [];
+            heights[j].push(height*amplitude);
+        } else {
+            heights[j].push(height*amplitude);
+        }
+        let vertice = new THREE.Vector3(i%size, height/4, Math.floor(i/size));
         vertice.multiplyScalar(amplitude);
         geometry.vertices.push(vertice);
 
     }
+
+    geometry.heightMap = heights;
 
     let thing = [];
 
@@ -53,9 +67,9 @@ function Terrain (size, amplitude) {
 
     let mesh = new THREE.Mesh(geometry, material);
 
-    mesh.position.x = -size*amplitude/2;
-    mesh.position.z = -size*amplitude/2;
-    mesh.position.y = 4;
+    // mesh.position.x = -size*amplitude/2;
+    // mesh.position.z = -size*amplitude/2;
+    // mesh.position.y = 10;
 
     let markers = new THREE.Object3D();
 

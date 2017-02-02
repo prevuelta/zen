@@ -172,23 +172,23 @@ function Rock (size) {
 //     // }
 
 //     // material
-    let material = new THREE.MeshLambertMaterial( {
-        color: 0xFF0000,
-        shading: THREE.FlatShading,
-        polygonOffset: true,
-        polygonOffsetFactor: 1, // positive value pushes polygon further away
-        polygonOffsetFactor: 1
-    });
-
-    // var material = new THREE.ShaderMaterial( {
-    //     uniforms: {
-    //         time: { value: 1.0 },
-    //         resolution: { value: new THREE.Vector2() }
-    //     },
-    //     vertexShader: vert,
-    //     fragmentShader: frag
-
+    // let material = new THREE.MeshLambertMaterial( {
+    //     color: 0xFF0000,
+    //     shading: THREE.FlatShading,
+    //     polygonOffset: true,
+    //     polygonOffsetFactor: 1, // positive value pushes polygon further away
+    //     polygonOffsetFactor: 1
     // });
+
+    var material = new THREE.ShaderMaterial( {
+        uniforms: {
+            time: { value: 1.0 },
+            resolution: { value: new THREE.Vector2() }
+        },
+        vertexShader: vert,
+        fragmentShader: frag
+
+    });
 
     // var buffer_g = new THREE.BufferGeometry();
     // buffer_g.fromGeometry(geometry);
