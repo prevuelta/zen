@@ -198,11 +198,11 @@ function Rock (size) {
 
     // let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
 
-    // let helper = new THREE.BoundingBoxHelper(mesh, new THREE.Color(0xFF0000));
+    let helper = new THREE.BoundingBoxHelper(mesh, new THREE.Color(0xFF0000));
 
     // mesh.add(helper);
 
-    // helper.update();
+    helper.update();
 
     // console.log("Helper", helper.box.max.x - helper.box.min.x)
 

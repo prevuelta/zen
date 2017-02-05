@@ -9,9 +9,11 @@ let Rock = require('./geology/rock');
 let Terrain = require('./geology/terrain');
 let Util = require('./util/util');
 
-let Stats = require('stats-js');
+let shape2mesh = require('./util/shape2mesh');
 
-var stats = new Stats();
+const Stats = require('stats-js');
+
+let stats = new Stats();
 stats.setMode(0); // 0: fps, 1: ms 
 
 // Align top-left
@@ -37,8 +39,9 @@ let world,
     body,
     terrain,
     terrainBody,
-    shape,
+    groundBody,
     plane,
+    shape,
     group,
     timeStep = 1/60,
     camera,
@@ -47,16 +50,18 @@ let world,
     geometry,
     material,
     bodies = [],
-    mesh;
+    mesh,
+    terrain2;
 
 
 let geos = [];
 
-const ROCKS = 20;
+const amp = 3;
+const size = 20;
 
-let yAxis = new THREE.Vector3(0,1,0);
+const ROCKS = 100;
+const yAxis = new THREE.Vector3(0,1,0);
 
-// Util.addObjects = addObjects;
 
 initThree();
 initCannon();
@@ -72,53 +77,20 @@ function initCannon() {
 
     // Ground plane
     let plane = new CANNON.Plane();
-    let groundBody = new CANNON.Body({ mass: 0 });
+    groundBody = new CANNON.Body({ mass: 0 });
     groundBody.addShape(plane);
     groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
-    // world.add(groundBody);
-
-    // console.log(terrain.geometry.vertices.reduce((a, b) => a.concat([b.x, b.y, b.z]), []));
-
-    // console.log(terrain.geometry.thing);
-    // var matrix = [];
-    // var sizeX = 15,
-    //     sizeY = 15;
-    // for (var i = 0; i < sizeX; i++) {
-    //     matrix.push([]);
-    //     for (var j = 0; j < sizeY; j++) {
-    //         var height = Math.cos(i/sizeX * Math.PI * 2)*Math.cos(j/sizeY * Math.PI * 2) + 2;
-    //         if(i===0 || i === sizeX-1 || j===0 || j === sizeY-1)
-    //             height = 3;
-    //         matrix[i].push(height);
-    //     }
-    // }
-
-            // Create a matrix of height values
-        // var matrix = [];
-        // var sizeX = 30,
-        //     sizeY = 30;
-        // for (var i = 0; i < sizeX; i++) {
-        //     matrix.push([]);
-        //     for (var j = 0; j < sizeY; j++) {
-        //         var height = Math.cos(i/sizeX * Math.PI * 2)*Math.cos(j/sizeY * Math.PI * 2) + 2;
-        //         if(i===0 || i === sizeX-1 || j===0 || j === sizeY-1)
-        //             height = 2;
-        //         matrix[i].push(height);
-        //     }
-        // }
+    world.add(groundBody);
 
 
     let matrix = terrain.geometry.heightMap;
 
-    console.log(JSON.stringify(matrix))
 
-    // console.log(terrain.geometry.heightMap)
-    // console.log(matrix);
-
-        // Create the heightfield
     var hfShape = new CANNON.Heightfield(matrix, {
-        elementSize: 4
+        elementSize: amp
     });
+    // let hfShape = new CANNON.Box(new CANNON.Vec3(20, 6, 20));
+
     // // Create the heightfield shape
     // var heightfieldShape = new CANNON.Heightfield([1,2,1,2,1,1,1], {
         // elementSize: 1 // Distance between the data points in X and Y directions
@@ -126,14 +98,23 @@ function initCannon() {
     terrainBody = new CANNON.Body({
         mass: 0
     });
+
+
     terrainBody.addShape(hfShape);
-    terrainBody.position.set(0, 6, 0);
+    // terrainBody.position.set(0, 8, 0);
+    terrainBody.shapeOrientations[0].setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI * 0.5);
+    // terrainBody.position.set(-size * hfShape.elementSize / 2, 10, 10);
+    terrainBody.position.set(-size * amp / 2, 0, -size * amp / 2);
+    terrainBody.position.set(-size * amp /2, 0, size * amp / 2);
     world.addBody(terrainBody);
+
+    terrain2 = shape2mesh(terrainBody);
+
+    // scene.add(terrain2);
 
     // let terrainShape = new CANNON.Trimesh(terrain.geometry.vertices.reduce((a, b) => a.concat([b.x, b.y, b.z]), []) , terrain.geometry.thing);
 
     // let terrainShape = new CANNON.Box(new CANNON.Vec3(10, 1, 10));
-
 
 
     // terrainBody.position.set(-12*4/2, 15, -12*4/2);
@@ -159,17 +140,15 @@ function initCannon() {
 
         // let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
 
-        let shape = new CANNON.Sphere(0.4);
-        // let shape = new CANNON.Box(new CANNON.Vec3(1,1,1));
-
-
+        // let shape = new CANNON.Sphere((x/2+y/2+z/2)/3);
+        let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
 
         let body = new CANNON.Body({
             mass: 1
         });
-        body.position.set(Util.randomInt(0, 4*12), 20, Util.randomInt(0, 4*12));
         body.addShape(shape);
-        body.position.vadd(terrainBody.position, body.position);
+        body.position.set(Util.randomInt(-size*amp/2, size*amp/2), Util.randomInt(10, 20), Util.randomInt(-size*amp/2, size*amp/2));
+        // body.position.vadd(terrainBody.position, body.position);
         bodies[i].body = body;
         world.addBody(body);
 
@@ -188,17 +167,12 @@ function initThree () {
     scene.background = new THREE.Color('#ffffff');
     camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
 
-    // if (typeof group !== 'undefined') {
-    //     scene.remove(group);
-    //     return;
-    // }
-
     group = new THREE.Object3D();
 
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomFloat(0.2, 4));
+        let rock = Rock(Util.randomFloat(0.2, 1));
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
         // rock.position.z = Util.randomInt(0, 30);
@@ -206,7 +180,11 @@ function initThree () {
         bodies.push({mesh: rock});
     }
 
-    terrain = Terrain(12, 4);
+    terrain = Terrain(size, amp);
+
+    // terrain.position.set(-size * amp, 0, -size * amp);
+    terrain.rotation.set(0, Math.PI/2, 0);
+    terrain.position.set(-size * amp/2,0,size * amp/2);
 
     scene.add(terrain);
 
@@ -226,18 +204,18 @@ function initThree () {
     camera.position.y =20;
     camera.target = new THREE.Vector3( 0, 0, 0 );
 
-    var light = new THREE.AmbientLight( 0x404040 ); // soft white light
-    scene.add( light );
+    // var light = new THREE.AmbientLight( 0x404040 ); // soft white light
+    // scene.add( light );
 
     var directionalLight = new THREE.DirectionalLight( 0xFFFFFF, 1);
-    directionalLight.position.set( 0, 10, 0 );
+    directionalLight.position.set( 100, 50, 100 );
     scene.add( directionalLight );
 
-    var geometry = new THREE.PlaneBufferGeometry( 50, 50 );
-    let plane = new THREE.Mesh( geometry, material );
+    var geometry = new THREE.PlaneBufferGeometry( amp*size, amp*size );
+    plane = new THREE.Mesh( geometry, material );
     plane.rotation.x = Math.PI/2;
     plane.position.y = 0;
-    // scene.add(plane);
+    scene.add(plane);
 
     renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -263,8 +241,13 @@ function updatePhysics () {
       // Step the physics world
     world.step(timeStep);
       // Copy coordinates from Cannon.js to Three.js
-    terrain.position.copy(terrainBody.position);
-    terrain.quaternion.copy(terrainBody.quaternion);
+    // terrain.position.copy(terrainBody.position);
+    terrain2.position.copy(terrainBody.position);
+    // terrain.quaternion.copy(terrainBody.quaternion);
+    terrain2.quaternion.copy(terrainBody.quaternion);
+
+    plane.position.copy(groundBody.position);
+    plane.quaternion.copy(groundBody.quaternion);
 
     bodies.forEach(b => {
         b.mesh.position.copy(b.body.position);
