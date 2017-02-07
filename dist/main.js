@@ -5254,27 +5254,6 @@ a+"px",m=b,r=0);return b},update:function(){l=this.end()}}};"object"===typeof mo
 },{}],7:[function(require,module,exports){
 'use strict';
 
-function Field (origin, strength) {
-    console.log(strength);
-    return {
-        x: origin.x,
-        y: origin.y,
-        z: origin.z,
-        strength: strength,
-        affect (v) {
-            let dist = v.distanceTo(this);
-            let dir = v.clone();
-            dir.normalize();
-            dir.multiplyScalar(this.strength/dist);
-            v.sub(dir);
-        }
-    }
-}
-
-module.exports = Field;
-},{}],8:[function(require,module,exports){
-'use strict';
-
 let THREE = require('three');
 
 module.exports = {
@@ -5310,7 +5289,28 @@ module.exports = {
         });
     }
 }
-},{"three":"three"}],9:[function(require,module,exports){
+},{"three":"three"}],8:[function(require,module,exports){
+'use strict';
+
+function Field (origin, strength) {
+    console.log(strength);
+    return {
+        x: origin.x,
+        y: origin.y,
+        z: origin.z,
+        strength: strength,
+        affect (v) {
+            let dist = v.distanceTo(this);
+            let dir = v.clone();
+            dir.normalize();
+            dir.multiplyScalar(this.strength/dist);
+            v.sub(dir);
+        }
+    }
+}
+
+module.exports = Field;
+},{}],9:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -5488,7 +5488,7 @@ function Cobble (scene) {
 }
 
 module.exports = Cobble;
-},{"../abstract/Field":7,"../abstract/entropy":8,"../util/cross":16,"three":"three"}],11:[function(require,module,exports){
+},{"../abstract/Field":8,"../abstract/entropy":7,"../util/cross":16,"three":"three"}],11:[function(require,module,exports){
 'use strict';
 
 let THREE = require('../util/patchedThree');
@@ -5710,7 +5710,7 @@ function Rock (size) {
 }
 
 module.exports = Rock;
-},{"../abstract/Field":7,"../abstract/entropy":8,"../shaders/test.frag":14,"../shaders/test.vert":15,"../util/cross":16,"../util/patchedThree":17,"../util/util":19,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],12:[function(require,module,exports){
+},{"../abstract/Field":8,"../abstract/entropy":7,"../shaders/test.frag":14,"../shaders/test.vert":15,"../util/cross":16,"../util/patchedThree":17,"../util/util":19,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],12:[function(require,module,exports){
 'use strict';
 
 let THREE = require('../util/patchedThree');
@@ -5794,6 +5794,17 @@ function Terrain (size, xAmp, yAmp) {
         side: THREE.DoubleSide,
         shading: THREE.FlatShading,
     });
+
+
+    var mS = (new THREE.Matrix4()).identity();
+    //set -1 to the corresponding axis
+    mS.elements[0] = -1;
+    // mS.elements[5] = -1;
+    // mS.elements[10] = -1;
+
+    geometry.applyMatrix(mS);
+    //mesh.applyMatrix(mS);
+    //object.applyMatrix(mS);
 
     let mesh = new THREE.Mesh(geometry, material);
 
@@ -5886,9 +5897,9 @@ let world,
 
 let geos = [];
 
-const xAmp = 1;
+const xAmp = 0.5;
 const yAmp = 20;
-const size = 100;
+const size = 50;
 
 const ROCKS = 100;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -5935,7 +5946,7 @@ function initCannon() {
     // terrainBody.position.set(0, 8, 0);
     terrainBody.shapeOrientations[0].setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI * 0.5);
     // terrainBody.position.set(-size * hfShape.elementSize / 2, 10, 10);
-    terrainBody.position.set(-size * xAmp / 2, 0, -size * xAmp / 2);
+    // terrainBody.position.set(-size * xAmp / 2, 0, -size * xAmp / 2);
     terrainBody.position.set(-size * xAmp /2, 0, size * xAmp / 2);
     world.addBody(terrainBody);
 
@@ -6014,7 +6025,7 @@ function initThree () {
     terrain = Terrain(size, xAmp, yAmp);
 
     // terrain.position.set(-size * amp, 0, -size * amp);
-    terrain.rotation.set(0, Math.PI/2, 0);
+    terrain.rotation.set(0, -Math.PI, 0);
     terrain.position.set(-size * xAmp/2,0,size * xAmp/2);
 
     scene.add(terrain);

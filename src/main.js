@@ -56,9 +56,9 @@ let world,
 
 let geos = [];
 
-const xAmp = 1;
+const xAmp = 0.5;
 const yAmp = 20;
-const size = 100;
+const size = 50;
 
 const ROCKS = 100;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -105,7 +105,7 @@ function initCannon() {
     // terrainBody.position.set(0, 8, 0);
     terrainBody.shapeOrientations[0].setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI * 0.5);
     // terrainBody.position.set(-size * hfShape.elementSize / 2, 10, 10);
-    terrainBody.position.set(-size * xAmp / 2, 0, -size * xAmp / 2);
+    // terrainBody.position.set(-size * xAmp / 2, 0, -size * xAmp / 2);
     terrainBody.position.set(-size * xAmp /2, 0, size * xAmp / 2);
     world.addBody(terrainBody);
 
@@ -184,7 +184,7 @@ function initThree () {
     terrain = Terrain(size, xAmp, yAmp);
 
     // terrain.position.set(-size * amp, 0, -size * amp);
-    terrain.rotation.set(0, Math.PI/2, 0);
+    terrain.rotation.set(0, -Math.PI, 0);
     terrain.position.set(-size * xAmp/2,0,size * xAmp/2);
 
     scene.add(terrain);
