@@ -24,13 +24,23 @@ let Util = {
     imageMap (data) {
         var ctx = img.getContext("2d");
         var imgData = ctx.createImageData(100,100);
-        for (var i=0;i < imgData.data.length;i+=4) {
-            imgData.data[i+0]=0;
-            imgData.data[i+1]=0;
-            imgData.data[i+2]=255;
-            imgData.data[i+3]=255;
-        }
-        ctx.putImageData(imgData,10,10);
+        let index = 0;
+        data.forEach((val, i) => {
+            let r, g, b;
+            r = g = b = val * 255;
+            imgData.data[index]=r;
+            imgData.data[index+1]=g;
+            imgData.data[index+2]=b;
+            imgData.data[index+3]=255;
+            index += 4;
+        });
+        // for (var i=0;i < imgData.data.length;i+=4) {
+        //     imgData.data[i+0]=0;
+        //     imgData.data[i+1]=0;
+        //     imgData.data[i+2]=255;
+        //     imgData.data[i+3]=255;
+        // }
+        ctx.putImageData(imgData,0,0);
     }
 };
 

@@ -5725,9 +5725,8 @@ let SimplexNoise = require('simplex-noise');
 let simplex = new SimplexNoise();
 
 const FastSimplexNoise = require('fast-simplex-noise').default;
-const noiseGen = new FastSimplexNoise({ frequency: 0.01, max: 255, min: 0, octaves: 8 })
+const noiseGen = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
 
-const noiseGen2 = new FastSimplexNoise({ frequency: 0.04, max: 255, min: 0, octaves: 8 })
 
 let ravine = {
     range: 4,
@@ -5736,39 +5735,43 @@ let ravine = {
     depth: 0.5
 }
 
-function Terrain (size, amplitude) {
+function Terrain (size, xAmp, yAmp) {
     let geometry = new THREE.Geometry();
 
     let heights = [[]];
+    let rawHeights = [];
 
     let j = 0;
 
-    for (let i = 0; i < size * size; i++) {
-        // let height = simplex.noise2D(i % size, i);
-        // let height = simplex.noise2D(i, 1);
-        let height = noiseGen.raw([i, i % size]);
-        // height = Math.random()l
-        height += 1;
-        // if (i % size < size/1.5 && i % size > size/3)
-            // height += Math.random();
-        // let height = Math.abs(simplex.noise2D(i, 1));
-        // height += Util.randomFloat(0, i % size / 4);
-        if (i && i % size === 0) {
-            j++;
-            heights[j] = [];
-            heights[j].push(height*amplitude);
-        } else {
-            heights[j].push(height*amplitude);
+    for (let i = 0; i < size; i++) {
+        heights[i] = [];
+        for (let j = 0; j < size; j++) {
+            // let height = simplex.noise2D(i % size, i);
+            // let height = simplex.noise2D(i, j);
+            let height = noiseGen.scaled([i, j]);
+            rawHeights.push(height);
+            // height = Math.random();
+            // console.log(height/2);
+            // height += 1;
+            // if (i % size < size/1.5 && i % size > size/3)
+                // height += Math.random();
+            // let height = Math.abs(simplex.noise2D(i, 1));
+            // height += Util.randomFloat(0, i % size / 4);
+            // if (i && i % size === 0) {
+                // j++;
+            heights[i].push(height*yAmp);
+            // } else {
+                // heights[j].push(height*amplitude);
+            // }
+            let vertice = new THREE.Vector3(i*xAmp, height*yAmp, j*xAmp);
+            geometry.vertices.push(vertice);
         }
-        let vertice = new THREE.Vector3(i%size, height, Math.floor(i/size));
-        vertice.multiplyScalar(amplitude);
-        geometry.vertices.push(vertice);
 
     }
 
     geometry.heightMap = heights;
 
-    Util.imageMap(heights);
+    Util.imageMap(rawHeights);
 
 
     for (let i = 0; i < size * size; i++) {
@@ -5883,8 +5886,9 @@ let world,
 
 let geos = [];
 
-const amp = 3;
-const size = 20;
+const xAmp = 1;
+const yAmp = 20;
+const size = 100;
 
 const ROCKS = 100;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -5914,7 +5918,7 @@ function initCannon() {
 
 
     var hfShape = new CANNON.Heightfield(matrix, {
-        elementSize: amp
+        elementSize: xAmp
     });
     // let hfShape = new CANNON.Box(new CANNON.Vec3(20, 6, 20));
 
@@ -5931,13 +5935,13 @@ function initCannon() {
     // terrainBody.position.set(0, 8, 0);
     terrainBody.shapeOrientations[0].setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI * 0.5);
     // terrainBody.position.set(-size * hfShape.elementSize / 2, 10, 10);
-    terrainBody.position.set(-size * amp / 2, 0, -size * amp / 2);
-    terrainBody.position.set(-size * amp /2, 0, size * amp / 2);
+    terrainBody.position.set(-size * xAmp / 2, 0, -size * xAmp / 2);
+    terrainBody.position.set(-size * xAmp /2, 0, size * xAmp / 2);
     world.addBody(terrainBody);
 
     terrain2 = shape2mesh(terrainBody);
 
-    // scene.add(terrain2);
+    scene.add(terrain2);
 
     // let terrainShape = new CANNON.Trimesh(terrain.geometry.vertices.reduce((a, b) => a.concat([b.x, b.y, b.z]), []) , terrain.geometry.thing);
 
@@ -5974,7 +5978,7 @@ function initCannon() {
             mass: 1
         });
         body.addShape(shape);
-        body.position.set(Util.randomInt(-size*amp/2, size*amp/2), Util.randomInt(10, 20), Util.randomInt(-size*amp/2, size*amp/2));
+        body.position.set(Util.randomInt(-size*xAmp/2, size*xAmp/2), Util.randomInt(30, 50), Util.randomInt(-size*xAmp/2, size*xAmp/2));
         // body.position.vadd(terrainBody.position, body.position);
         bodies[i].body = body;
         world.addBody(body);
@@ -6007,11 +6011,11 @@ function initThree () {
         bodies.push({mesh: rock});
     }
 
-    terrain = Terrain(size, amp);
+    terrain = Terrain(size, xAmp, yAmp);
 
     // terrain.position.set(-size * amp, 0, -size * amp);
     terrain.rotation.set(0, Math.PI/2, 0);
-    terrain.position.set(-size * amp/2,0,size * amp/2);
+    terrain.position.set(-size * xAmp/2,0,size * xAmp/2);
 
     scene.add(terrain);
 
@@ -6038,7 +6042,7 @@ function initThree () {
     directionalLight.position.set( 100, 50, 100 );
     scene.add( directionalLight );
 
-    var geometry = new THREE.PlaneBufferGeometry( amp*size, amp*size );
+    var geometry = new THREE.PlaneBufferGeometry( xAmp*size, xAmp*size );
     plane = new THREE.Mesh( geometry, material );
     plane.rotation.x = Math.PI/2;
     plane.position.y = 0;
@@ -6596,13 +6600,23 @@ let Util = {
     imageMap (data) {
         var ctx = img.getContext("2d");
         var imgData = ctx.createImageData(100,100);
-        for (var i=0;i < imgData.data.length;i+=4) {
-            imgData.data[i+0]=0;
-            imgData.data[i+1]=0;
-            imgData.data[i+2]=255;
-            imgData.data[i+3]=255;
-        }
-        ctx.putImageData(imgData,10,10);
+        let index = 0;
+        data.forEach((val, i) => {
+            let r, g, b;
+            r = g = b = val * 255;
+            imgData.data[index]=r;
+            imgData.data[index+1]=g;
+            imgData.data[index+2]=b;
+            imgData.data[index+3]=255;
+            index += 4;
+        });
+        // for (var i=0;i < imgData.data.length;i+=4) {
+        //     imgData.data[i+0]=0;
+        //     imgData.data[i+1]=0;
+        //     imgData.data[i+2]=255;
+        //     imgData.data[i+3]=255;
+        // }
+        ctx.putImageData(imgData,0,0);
     }
 };
 

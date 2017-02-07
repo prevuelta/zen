@@ -12,9 +12,8 @@ let SimplexNoise = require('simplex-noise');
 let simplex = new SimplexNoise();
 
 const FastSimplexNoise = require('fast-simplex-noise').default;
-const noiseGen = new FastSimplexNoise({ frequency: 0.01, max: 255, min: 0, octaves: 8 })
+const noiseGen = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
 
-const noiseGen2 = new FastSimplexNoise({ frequency: 0.04, max: 255, min: 0, octaves: 8 })
 
 let ravine = {
     range: 4,
@@ -23,39 +22,43 @@ let ravine = {
     depth: 0.5
 }
 
-function Terrain (size, amplitude) {
+function Terrain (size, xAmp, yAmp) {
     let geometry = new THREE.Geometry();
 
     let heights = [[]];
+    let rawHeights = [];
 
     let j = 0;
 
-    for (let i = 0; i < size * size; i++) {
-        // let height = simplex.noise2D(i % size, i);
-        // let height = simplex.noise2D(i, 1);
-        let height = noiseGen.raw([i, i % size]);
-        // height = Math.random()l
-        height += 1;
-        // if (i % size < size/1.5 && i % size > size/3)
-            // height += Math.random();
-        // let height = Math.abs(simplex.noise2D(i, 1));
-        // height += Util.randomFloat(0, i % size / 4);
-        if (i && i % size === 0) {
-            j++;
-            heights[j] = [];
-            heights[j].push(height*amplitude);
-        } else {
-            heights[j].push(height*amplitude);
+    for (let i = 0; i < size; i++) {
+        heights[i] = [];
+        for (let j = 0; j < size; j++) {
+            // let height = simplex.noise2D(i % size, i);
+            // let height = simplex.noise2D(i, j);
+            let height = noiseGen.scaled([i, j]);
+            rawHeights.push(height);
+            // height = Math.random();
+            // console.log(height/2);
+            // height += 1;
+            // if (i % size < size/1.5 && i % size > size/3)
+                // height += Math.random();
+            // let height = Math.abs(simplex.noise2D(i, 1));
+            // height += Util.randomFloat(0, i % size / 4);
+            // if (i && i % size === 0) {
+                // j++;
+            heights[i].push(height*yAmp);
+            // } else {
+                // heights[j].push(height*amplitude);
+            // }
+            let vertice = new THREE.Vector3(i*xAmp, height*yAmp, j*xAmp);
+            geometry.vertices.push(vertice);
         }
-        let vertice = new THREE.Vector3(i%size, height, Math.floor(i/size));
-        vertice.multiplyScalar(amplitude);
-        geometry.vertices.push(vertice);
 
     }
 
     geometry.heightMap = heights;
 
-    Util.imageMap(heights);
+    Util.imageMap(rawHeights);
 
 
     for (let i = 0; i < size * size; i++) {

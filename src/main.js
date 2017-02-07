@@ -56,8 +56,9 @@ let world,
 
 let geos = [];
 
-const amp = 3;
-const size = 20;
+const xAmp = 1;
+const yAmp = 20;
+const size = 100;
 
 const ROCKS = 100;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -87,7 +88,7 @@ function initCannon() {
 
 
     var hfShape = new CANNON.Heightfield(matrix, {
-        elementSize: amp
+        elementSize: xAmp
     });
     // let hfShape = new CANNON.Box(new CANNON.Vec3(20, 6, 20));
 
@@ -104,13 +105,13 @@ function initCannon() {
     // terrainBody.position.set(0, 8, 0);
     terrainBody.shapeOrientations[0].setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI * 0.5);
     // terrainBody.position.set(-size * hfShape.elementSize / 2, 10, 10);
-    terrainBody.position.set(-size * amp / 2, 0, -size * amp / 2);
-    terrainBody.position.set(-size * amp /2, 0, size * amp / 2);
+    terrainBody.position.set(-size * xAmp / 2, 0, -size * xAmp / 2);
+    terrainBody.position.set(-size * xAmp /2, 0, size * xAmp / 2);
     world.addBody(terrainBody);
 
     terrain2 = shape2mesh(terrainBody);
 
-    // scene.add(terrain2);
+    scene.add(terrain2);
 
     // let terrainShape = new CANNON.Trimesh(terrain.geometry.vertices.reduce((a, b) => a.concat([b.x, b.y, b.z]), []) , terrain.geometry.thing);
 
@@ -147,7 +148,7 @@ function initCannon() {
             mass: 1
         });
         body.addShape(shape);
-        body.position.set(Util.randomInt(-size*amp/2, size*amp/2), Util.randomInt(10, 20), Util.randomInt(-size*amp/2, size*amp/2));
+        body.position.set(Util.randomInt(-size*xAmp/2, size*xAmp/2), Util.randomInt(30, 50), Util.randomInt(-size*xAmp/2, size*xAmp/2));
         // body.position.vadd(terrainBody.position, body.position);
         bodies[i].body = body;
         world.addBody(body);
@@ -180,11 +181,11 @@ function initThree () {
         bodies.push({mesh: rock});
     }
 
-    terrain = Terrain(size, amp);
+    terrain = Terrain(size, xAmp, yAmp);
 
     // terrain.position.set(-size * amp, 0, -size * amp);
     terrain.rotation.set(0, Math.PI/2, 0);
-    terrain.position.set(-size * amp/2,0,size * amp/2);
+    terrain.position.set(-size * xAmp/2,0,size * xAmp/2);
 
     scene.add(terrain);
 
@@ -211,7 +212,7 @@ function initThree () {
     directionalLight.position.set( 100, 50, 100 );
     scene.add( directionalLight );
 
-    var geometry = new THREE.PlaneBufferGeometry( amp*size, amp*size );
+    var geometry = new THREE.PlaneBufferGeometry( xAmp*size, xAmp*size );
     plane = new THREE.Mesh( geometry, material );
     plane.rotation.x = Math.PI/2;
     plane.position.y = 0;
