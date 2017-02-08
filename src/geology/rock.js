@@ -59,10 +59,10 @@ function Rock (size) {
         // return new THREE.Vector3(p[0], p[1], p[2]);
     // });
 
-    var vertices = new Float32Array(points.reduce((a,b) => a.concat(b)));
+    let vertices = new Float32Array(points.reduce((a,b) => a.concat(b)));
     geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
 
-    var indices = new Uint16Array(outline.reduce((a,b) => a.concat(b)));
+    let indices = new Uint16Array(outline.reduce((a,b) => a.concat(b)));
     geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
 
@@ -180,14 +180,13 @@ function Rock (size) {
     //     polygonOffsetFactor: 1
     // });
 
-    var material = new THREE.ShaderMaterial( {
+    let material = new THREE.ShaderMaterial( {
         uniforms: {
             time: { value: 1.0 },
             resolution: { value: new THREE.Vector2() }
         },
         vertexShader: vert,
         fragmentShader: frag
-
     });
 
     // var buffer_g = new THREE.BufferGeometry();
