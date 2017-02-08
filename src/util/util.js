@@ -23,7 +23,8 @@ let Util = {
     gui: gui,
     imageMap (data) {
         var ctx = img.getContext("2d");
-        var imgData = ctx.createImageData(100,100);
+        let size = Math.floor(Math.sqrt(data.length));
+        var imgData = ctx.createImageData(size,size);
         let index = 0;
         data.forEach((val, i) => {
             let r, g, b;
