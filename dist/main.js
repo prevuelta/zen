@@ -5254,6 +5254,27 @@ a+"px",m=b,r=0);return b},update:function(){l=this.end()}}};"object"===typeof mo
 },{}],7:[function(require,module,exports){
 'use strict';
 
+function Field (origin, strength) {
+    console.log(strength);
+    return {
+        x: origin.x,
+        y: origin.y,
+        z: origin.z,
+        strength: strength,
+        affect (v) {
+            let dist = v.distanceTo(this);
+            let dir = v.clone();
+            dir.normalize();
+            dir.multiplyScalar(this.strength/dist);
+            v.sub(dir);
+        }
+    }
+}
+
+module.exports = Field;
+},{}],8:[function(require,module,exports){
+'use strict';
+
 let THREE = require('three');
 
 module.exports = {
@@ -5289,28 +5310,7 @@ module.exports = {
         });
     }
 }
-},{"three":"three"}],8:[function(require,module,exports){
-'use strict';
-
-function Field (origin, strength) {
-    console.log(strength);
-    return {
-        x: origin.x,
-        y: origin.y,
-        z: origin.z,
-        strength: strength,
-        affect (v) {
-            let dist = v.distanceTo(this);
-            let dir = v.clone();
-            dir.normalize();
-            dir.multiplyScalar(this.strength/dist);
-            v.sub(dir);
-        }
-    }
-}
-
-module.exports = Field;
-},{}],9:[function(require,module,exports){
+},{"three":"three"}],9:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -5488,7 +5488,7 @@ function Cobble (scene) {
 }
 
 module.exports = Cobble;
-},{"../abstract/Field":8,"../abstract/entropy":7,"../util/cross":16,"three":"three"}],11:[function(require,module,exports){
+},{"../abstract/Field":7,"../abstract/entropy":8,"../util/cross":16,"three":"three"}],11:[function(require,module,exports){
 'use strict';
 
 let THREE = require('../util/patchedThree');
@@ -5519,8 +5519,6 @@ function Rock (size) {
         ]);
     }
 
-
-
     // let geometry = new THREE.ConvexGeometry(points);
 
     // console.log(points);
@@ -5545,15 +5543,15 @@ function Rock (size) {
         // attributes: {
         //     vertexOpacity: { value: [] }
         // },
-    // debugger;
     // geometry.vertices = points.map(p => {
         // return new THREE.Vector3(p[0], p[1], p[2]);
     // });
 
-    var vertices = new Float32Array(points.reduce((a,b) => a.concat(b)));
+    let vertices = new Float32Array(points.reduce((a,b) => a.concat(b)));
+
     geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
 
-    var indices = new Uint16Array(outline.reduce((a,b) => a.concat(b)));
+    let indices = new Uint16Array(outline.reduce((a,b) => a.concat(b)));
     geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
 
@@ -5588,7 +5586,6 @@ function Rock (size) {
 
 
     /* Roughen */
-
 
     // var modifier = new SubdivisionModifier(2);
     // modifier.modify( geometry );
@@ -5663,22 +5660,19 @@ function Rock (size) {
 //     // }
 
 //     // material
+
     // let material = new THREE.MeshLambertMaterial( {
-    //     color: 0xFF0000,
-    //     shading: THREE.FlatShading,
-    //     polygonOffset: true,
-    //     polygonOffsetFactor: 1, // positive value pushes polygon further away
-    //     polygonOffsetFactor: 1
+    //     color: 0xFFFFFF,
+    //     shading: THREE.FlatShading
     // });
 
-    var material = new THREE.ShaderMaterial( {
+    let material = new THREE.ShaderMaterial( {
         uniforms: {
             time: { value: 1.0 },
             resolution: { value: new THREE.Vector2() }
         },
         vertexShader: vert,
         fragmentShader: frag
-
     });
 
     // var buffer_g = new THREE.BufferGeometry();
@@ -5710,7 +5704,7 @@ function Rock (size) {
 }
 
 module.exports = Rock;
-},{"../abstract/Field":8,"../abstract/entropy":7,"../shaders/test.frag":14,"../shaders/test.vert":15,"../util/cross":16,"../util/patchedThree":17,"../util/util":19,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],12:[function(require,module,exports){
+},{"../abstract/Field":7,"../abstract/entropy":8,"../shaders/test.frag":14,"../shaders/test.vert":15,"../util/cross":16,"../util/patchedThree":17,"../util/util":19,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],12:[function(require,module,exports){
 'use strict';
 
 let THREE = require('../util/patchedThree');
@@ -5793,7 +5787,7 @@ function Terrain (size, xAmp, yAmp) {
 
     let material = new THREE.MeshLambertMaterial( {
         color: 0xFFFFFF,
-        side: THREE.FrontSide,
+        side: THREE.DoubleSide,
         shading: THREE.FlatShading,
     });
 
@@ -5812,7 +5806,7 @@ function Terrain (size, xAmp, yAmp) {
 
     let normals = new THREE.FaceNormalsHelper( mesh );
 
-    mesh.add(normals);
+    // mesh.add(normals);
 
     // mesh.position.x = -size*amplitude/2;
     // mesh.position.z = -size*amplitude/2;
@@ -5903,9 +5897,9 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.5;
-const yAmp = 10;
-const size = 20;
+const xAmp = 1;
+const yAmp = 20;
+const size = 50;
 
 const ROCKS = 100;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -5943,6 +5937,7 @@ function initCannon() {
     // var heightfieldShape = new CANNON.Heightfield([1,2,1,2,1,1,1], {
         // elementSize: 1 // Distance between the data points in X and Y directions
     // });
+
     terrainBody = new CANNON.Body({
         mass: 0
     });
@@ -5958,7 +5953,7 @@ function initCannon() {
 
     terrain2 = shape2mesh(terrainBody);
 
-    scene.add(terrain2);
+    // scene.add(terrain2);
 
     // let terrainShape = new CANNON.Trimesh(terrain.geometry.vertices.reduce((a, b) => a.concat([b.x, b.y, b.z]), []) , terrain.geometry.thing);
 
@@ -5984,8 +5979,6 @@ function initCannon() {
         let y = bbox.max.y - bbox.min.y;
         let z = bbox.max.z - bbox.min.z;
 
-        // debugger;
-
         // let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
 
         // let shape = new CANNON.Sphere((x/2+y/2+z/2)/3);
@@ -5995,7 +5988,7 @@ function initCannon() {
             mass: 1
         });
         body.addShape(shape);
-        body.position.set(Util.randomInt(-size*xAmp/2, size*xAmp/2), Util.randomInt(10, 30), Util.randomInt(-size*xAmp/2, size*xAmp/2));
+        body.position.set(Util.randomInt(-size*xAmp/2, size*xAmp/2), 30, Util.randomInt(-size*xAmp/2, size*xAmp/2));
         // body.position.vadd(terrainBody.position, body.position);
         bodies[i].body = body;
         world.addBody(body);
@@ -6020,7 +6013,7 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomFloat(0.1, 0.4));
+        let rock = Rock(Util.randomFloat(0.2, 2));
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
         // rock.position.z = Util.randomInt(0, 30);
@@ -6056,7 +6049,7 @@ function initThree () {
     var light = new THREE.AmbientLight( 0x404040 ); // soft white light
     scene.add( light );
 
-    var directionalLight = new THREE.DirectionalLight( 0xFF0000, 1);
+    var directionalLight = new THREE.DirectionalLight( 0x000000, 1);
     directionalLight.position.set( 10, 100, 10 );
     scene.add( directionalLight );
 
@@ -6620,7 +6613,8 @@ let Util = {
     gui: gui,
     imageMap (data) {
         var ctx = img.getContext("2d");
-        var imgData = ctx.createImageData(100,100);
+        let size = Math.floor(Math.sqrt(data.length));
+        var imgData = ctx.createImageData(size,size);
         let index = 0;
         data.forEach((val, i) => {
             let r, g, b;

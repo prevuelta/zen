@@ -56,9 +56,9 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.5;
-const yAmp = 10;
-const size = 20;
+const xAmp = 1;
+const yAmp = 20;
+const size = 50;
 
 const ROCKS = 100;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -96,6 +96,7 @@ function initCannon() {
     // var heightfieldShape = new CANNON.Heightfield([1,2,1,2,1,1,1], {
         // elementSize: 1 // Distance between the data points in X and Y directions
     // });
+
     terrainBody = new CANNON.Body({
         mass: 0
     });
@@ -111,7 +112,7 @@ function initCannon() {
 
     terrain2 = shape2mesh(terrainBody);
 
-    scene.add(terrain2);
+    // scene.add(terrain2);
 
     // let terrainShape = new CANNON.Trimesh(terrain.geometry.vertices.reduce((a, b) => a.concat([b.x, b.y, b.z]), []) , terrain.geometry.thing);
 
@@ -137,8 +138,6 @@ function initCannon() {
         let y = bbox.max.y - bbox.min.y;
         let z = bbox.max.z - bbox.min.z;
 
-        // debugger;
-
         // let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
 
         // let shape = new CANNON.Sphere((x/2+y/2+z/2)/3);
@@ -148,7 +147,7 @@ function initCannon() {
             mass: 1
         });
         body.addShape(shape);
-        body.position.set(Util.randomInt(-size*xAmp/2, size*xAmp/2), Util.randomInt(10, 30), Util.randomInt(-size*xAmp/2, size*xAmp/2));
+        body.position.set(Util.randomInt(-size*xAmp/2, size*xAmp/2), 30, Util.randomInt(-size*xAmp/2, size*xAmp/2));
         // body.position.vadd(terrainBody.position, body.position);
         bodies[i].body = body;
         world.addBody(body);
@@ -173,7 +172,7 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomFloat(0.1, 0.4));
+        let rock = Rock(Util.randomFloat(0.2, 2));
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
         // rock.position.z = Util.randomInt(0, 30);
@@ -209,7 +208,7 @@ function initThree () {
     var light = new THREE.AmbientLight( 0x404040 ); // soft white light
     scene.add( light );
 
-    var directionalLight = new THREE.DirectionalLight( 0xFF0000, 1);
+    var directionalLight = new THREE.DirectionalLight( 0x000000, 1);
     directionalLight.position.set( 10, 100, 10 );
     scene.add( directionalLight );
 

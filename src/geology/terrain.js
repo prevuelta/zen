@@ -80,7 +80,7 @@ function Terrain (size, xAmp, yAmp) {
 
     let material = new THREE.MeshLambertMaterial( {
         color: 0xFFFFFF,
-        side: THREE.FrontSide,
+        side: THREE.DoubleSide,
         shading: THREE.FlatShading,
     });
 
@@ -99,7 +99,7 @@ function Terrain (size, xAmp, yAmp) {
 
     let normals = new THREE.FaceNormalsHelper( mesh );
 
-    mesh.add(normals);
+    // mesh.add(normals);
 
     // mesh.position.x = -size*amplitude/2;
     // mesh.position.z = -size*amplitude/2;

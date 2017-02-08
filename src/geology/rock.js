@@ -28,8 +28,6 @@ function Rock (size) {
         ]);
     }
 
-
-
     // let geometry = new THREE.ConvexGeometry(points);
 
     // console.log(points);
@@ -54,12 +52,12 @@ function Rock (size) {
         // attributes: {
         //     vertexOpacity: { value: [] }
         // },
-    // debugger;
     // geometry.vertices = points.map(p => {
         // return new THREE.Vector3(p[0], p[1], p[2]);
     // });
 
     let vertices = new Float32Array(points.reduce((a,b) => a.concat(b)));
+
     geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
 
     let indices = new Uint16Array(outline.reduce((a,b) => a.concat(b)));
@@ -97,7 +95,6 @@ function Rock (size) {
 
 
     /* Roughen */
-
 
     // var modifier = new SubdivisionModifier(2);
     // modifier.modify( geometry );
@@ -172,12 +169,10 @@ function Rock (size) {
 //     // }
 
 //     // material
+
     // let material = new THREE.MeshLambertMaterial( {
-    //     color: 0xFF0000,
-    //     shading: THREE.FlatShading,
-    //     polygonOffset: true,
-    //     polygonOffsetFactor: 1, // positive value pushes polygon further away
-    //     polygonOffsetFactor: 1
+    //     color: 0xFFFFFF,
+    //     shading: THREE.FlatShading
     // });
 
     let material = new THREE.ShaderMaterial( {
