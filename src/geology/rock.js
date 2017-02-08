@@ -16,7 +16,7 @@ const frag = require('../shaders/test.frag');
 function Rock (size) {
 
     size = size || 2;
-    let pointCount = Util.randomInt(4, 30);
+    let pointCount = Util.randomInt(4, 10);
 
     let points = [];
     let min = -size, max = size;

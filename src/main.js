@@ -60,7 +60,7 @@ const xAmp = 1;
 const yAmp = 20;
 const size = 50;
 
-const ROCKS = 100;
+const ROCKS = 300;
 const yAxis = new THREE.Vector3(0,1,0);
 
 
@@ -140,8 +140,8 @@ function initCannon() {
 
         // let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
 
-        // let shape = new CANNON.Sphere((x/2+y/2+z/2)/3);
-        let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
+        let shape = new CANNON.Sphere((x/2+y/2+z/2)/3);
+        // let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
 
         let body = new CANNON.Body({
             mass: 1
@@ -172,7 +172,7 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomFloat(0.2, 2));
+        let rock = Rock(Util.randomFloat(0.2, 1));
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
         // rock.position.z = Util.randomInt(0, 30);
@@ -208,8 +208,8 @@ function initThree () {
     var light = new THREE.AmbientLight( 0x404040 ); // soft white light
     scene.add( light );
 
-    var directionalLight = new THREE.DirectionalLight( 0x000000, 1);
-    directionalLight.position.set( 10, 100, 10 );
+    var directionalLight = new THREE.DirectionalLight( 0x999999, 1);
+    directionalLight.position.set( 10, 200, 10 );
     scene.add( directionalLight );
 
     let directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 50);

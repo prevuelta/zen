@@ -32,7 +32,7 @@ void main() {
     // float dProd = max(0.0, dot(vNormal, light));
     // dProd = dProd * 100.0;
     // gl_FragColor = vec4(dProd, dProd, dProd, 1.0);
-    gl_FragColor = vec4(distance/30.0, 1, 0.5, 1.0);
+    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
     // if (vPosition.x > 0.0 && vPosition.x < 0.1) {
     //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     // }
