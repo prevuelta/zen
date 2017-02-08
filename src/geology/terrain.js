@@ -56,7 +56,7 @@ function Terrain (size, xAmp, yAmp) {
 
     }
 
-    geometry.heightMap = heights;
+    geometry.heightMap = heights.reverse();
 
     Util.imageMap(rawHeights);
 
@@ -65,6 +65,8 @@ function Terrain (size, xAmp, yAmp) {
         if ((i+1)%size !== 0 && i < (size * size) - size) {
             geometry.faces.push(new THREE.Face3(i, i+1, i+size));
             geometry.faces.push(new THREE.Face3(i+1, i+size+1, i+size));
+            // geometry.faces.push(new THREE.Face3(i+size, i+1, i));
+            // geometry.faces.push(new THREE.Face3(i+size, i+size+1, i+1));
         }
     }
 
@@ -78,22 +80,26 @@ function Terrain (size, xAmp, yAmp) {
 
     let material = new THREE.MeshLambertMaterial( {
         color: 0xFFFFFF,
-        side: THREE.DoubleSide,
+        side: THREE.FrontSide,
         shading: THREE.FlatShading,
     });
 
 
-    var mS = (new THREE.Matrix4()).identity();
+    // var mS = (new THREE.Matrix4()).identity();
     //set -1 to the corresponding axis
-    mS.elements[0] = -1;
+    // mS.elements[0] = -1;
     // mS.elements[5] = -1;
     // mS.elements[10] = -1;
 
-    geometry.applyMatrix(mS);
+    // geometry.applyMatrix(mS);
     //mesh.applyMatrix(mS);
     //object.applyMatrix(mS);
 
     let mesh = new THREE.Mesh(geometry, material);
+
+    let normals = new THREE.FaceNormalsHelper( mesh );
+
+    mesh.add(normals);
 
     // mesh.position.x = -size*amplitude/2;
     // mesh.position.z = -size*amplitude/2;

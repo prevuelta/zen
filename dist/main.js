@@ -5769,7 +5769,7 @@ function Terrain (size, xAmp, yAmp) {
 
     }
 
-    geometry.heightMap = heights;
+    geometry.heightMap = heights.reverse();
 
     Util.imageMap(rawHeights);
 
@@ -5778,6 +5778,8 @@ function Terrain (size, xAmp, yAmp) {
         if ((i+1)%size !== 0 && i < (size * size) - size) {
             geometry.faces.push(new THREE.Face3(i, i+1, i+size));
             geometry.faces.push(new THREE.Face3(i+1, i+size+1, i+size));
+            // geometry.faces.push(new THREE.Face3(i+size, i+1, i));
+            // geometry.faces.push(new THREE.Face3(i+size, i+size+1, i+1));
         }
     }
 
@@ -5791,22 +5793,26 @@ function Terrain (size, xAmp, yAmp) {
 
     let material = new THREE.MeshLambertMaterial( {
         color: 0xFFFFFF,
-        side: THREE.DoubleSide,
+        side: THREE.FrontSide,
         shading: THREE.FlatShading,
     });
 
 
-    var mS = (new THREE.Matrix4()).identity();
+    // var mS = (new THREE.Matrix4()).identity();
     //set -1 to the corresponding axis
-    mS.elements[0] = -1;
+    // mS.elements[0] = -1;
     // mS.elements[5] = -1;
     // mS.elements[10] = -1;
 
-    geometry.applyMatrix(mS);
+    // geometry.applyMatrix(mS);
     //mesh.applyMatrix(mS);
     //object.applyMatrix(mS);
 
     let mesh = new THREE.Mesh(geometry, material);
+
+    let normals = new THREE.FaceNormalsHelper( mesh );
+
+    mesh.add(normals);
 
     // mesh.position.x = -size*amplitude/2;
     // mesh.position.z = -size*amplitude/2;
@@ -5898,8 +5904,8 @@ let world,
 let geos = [];
 
 const xAmp = 0.5;
-const yAmp = 20;
-const size = 50;
+const yAmp = 10;
+const size = 20;
 
 const ROCKS = 100;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -5989,7 +5995,7 @@ function initCannon() {
             mass: 1
         });
         body.addShape(shape);
-        body.position.set(Util.randomInt(-size*xAmp/2, size*xAmp/2), Util.randomInt(30, 50), Util.randomInt(-size*xAmp/2, size*xAmp/2));
+        body.position.set(Util.randomInt(-size*xAmp/2, size*xAmp/2), Util.randomInt(10, 30), Util.randomInt(-size*xAmp/2, size*xAmp/2));
         // body.position.vadd(terrainBody.position, body.position);
         bodies[i].body = body;
         world.addBody(body);
@@ -6014,7 +6020,7 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomFloat(0.2, 1));
+        let rock = Rock(Util.randomFloat(0.1, 0.4));
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
         // rock.position.z = Util.randomInt(0, 30);
@@ -6026,7 +6032,8 @@ function initThree () {
 
     // terrain.position.set(-size * amp, 0, -size * amp);
     terrain.rotation.set(0, -Math.PI, 0);
-    terrain.position.set(-size * xAmp/2,0,size * xAmp/2);
+    // terrain.position.set(-size * xAmp/2,0,size * xAmp/2);
+    terrain.position.set(size * xAmp/2,0,size * xAmp/2);
 
     scene.add(terrain);
 
@@ -6046,12 +6053,15 @@ function initThree () {
     camera.position.y =20;
     camera.target = new THREE.Vector3( 0, 0, 0 );
 
-    // var light = new THREE.AmbientLight( 0x404040 ); // soft white light
-    // scene.add( light );
+    var light = new THREE.AmbientLight( 0x404040 ); // soft white light
+    scene.add( light );
 
-    var directionalLight = new THREE.DirectionalLight( 0xFFFFFF, 1);
-    directionalLight.position.set( 100, 50, 100 );
+    var directionalLight = new THREE.DirectionalLight( 0xFF0000, 1);
+    directionalLight.position.set( 10, 100, 10 );
     scene.add( directionalLight );
+
+    let directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 50);
+    scene.add( directionalLightHelper);
 
     var geometry = new THREE.PlaneBufferGeometry( xAmp*size, xAmp*size );
     plane = new THREE.Mesh( geometry, material );
