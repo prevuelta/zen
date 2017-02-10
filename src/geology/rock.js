@@ -16,7 +16,7 @@ const frag = require('../shaders/test.frag');
 function Rock (size) {
 
     size = size || 2;
-    let pointCount = Util.randomInt(4, 10);
+    let pointCount = Util.randomInt(6, 20);
 
     let points = [];
     let min = -size, max = size;
@@ -28,15 +28,15 @@ function Rock (size) {
         ]);
     }
 
-    // let geometry = new THREE.ConvexGeometry(points);
 
     // console.log(points);
 
     // let outline = qh(points, {skipTriangulation: true });
     let outline = qh(points);//.reduce((a, b) => a.concat(b)).map(i => points[i]).reduce((a, b) => a.concat(b));
 
-    let geometry = new THREE.BufferGeometry();
+    // let geometry = new THREE.BufferGeometry();
 
+    let geometry = new THREE.Geometry();
 
     // let vertices = new Float32Array(outline);
 
@@ -52,23 +52,24 @@ function Rock (size) {
         // attributes: {
         //     vertexOpacity: { value: [] }
         // },
-    // geometry.vertices = points.map(p => {
-        // return new THREE.Vector3(p[0], p[1], p[2]);
-    // });
+    geometry.vertices = points.map(p => {
+        return new THREE.Vector3(p[0], p[1], p[2]);
+    });
 
-    let vertices = new Float32Array(points.reduce((a,b) => a.concat(b)));
+    // let vertices = new Float32Array(points.reduce((a,b) => a.concat(b)));
 
-    geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    // geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
 
-    let indices = new Uint16Array(outline.reduce((a,b) => a.concat(b)));
-    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+    // let indices = new Uint16Array(outline.reduce((a,b) => a.concat(b)));
+    // geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
 
-    // outline.forEach((p, i) => {
-    //     let [i1, i2, i3] = p;
-    //     geometry.faces.push(new THREE.Face3(i1, i2, i3));
-    // });
-    // geometry.computeFaceNormals();
+    outline.forEach((p, i) => {
+        let [i1, i2, i3] = p;
+        geometry.faces.push(new THREE.Face3(i1, i2, i3));
+    });
+
+    geometry.computeFaceNormals();
     // geometry.mergeVertices();
     // geometry.computeVertexNormals();
 
@@ -96,8 +97,8 @@ function Rock (size) {
 
     /* Roughen */
 
-    // var modifier = new SubdivisionModifier(2);
-    // modifier.modify( geometry );
+    var modifier = new SubdivisionModifier(Util.randomInt(2, 3));
+    modifier.modify( geometry );
 
     // geo.mergeVertices();
 
@@ -170,19 +171,19 @@ function Rock (size) {
 
 //     // material
 
-    // let material = new THREE.MeshLambertMaterial( {
-    //     color: 0xFFFFFF,
-    //     shading: THREE.FlatShading
-    // });
-
-    let material = new THREE.ShaderMaterial( {
-        uniforms: {
-            time: { value: 1.0 },
-            resolution: { value: new THREE.Vector2() }
-        },
-        vertexShader: vert,
-        fragmentShader: frag
+    let material = new THREE.MeshLambertMaterial( {
+        color: 0xF4E0C5,
+        shading: THREE.FlatShading
     });
+
+    // let material = new THREE.ShaderMaterial( {
+    //     uniforms: {
+    //         time: { value: 1.0 },
+    //         resolution: { value: new THREE.Vector2() }
+    //     },
+    //     vertexShader: vert,
+    //     fragmentShader: frag
+    // });
 
     // var buffer_g = new THREE.BufferGeometry();
     // buffer_g.fromGeometry(geometry);

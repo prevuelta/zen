@@ -12,45 +12,56 @@ let SimplexNoise = require('simplex-noise');
 let simplex = new SimplexNoise();
 
 const FastSimplexNoise = require('fast-simplex-noise').default;
+
 const noiseGen = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
+const noiseGen2 = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
 
-
-let ravine = {
-    range: 4,
-    descent: 3,
-    ascent: 3,
-    depth: 0.5
-}
 
 function Terrain (size, xAmp, yAmp) {
+
+    let ravine = {
+        start: Util.randomInt(3, 15),
+        range: Util.randomInt(0, size/2),
+        descent: 2,
+        ascent: 2,
+        depth: 0.2
+    }
+
     let geometry = new THREE.Geometry();
 
     let heights = [[]];
     let rawHeights = [];
 
     let j = 0;
+    let height,vertice,x,y,z;
 
     for (let i = 0; i < size; i++) {
         heights[i] = [];
+
+        let offset = Math.floor(noiseGen2.scaled([i, 0]) * 10);
+        let offset2 = Math.floor(noiseGen2.scaled([i, 1]) * 10);
+        console.log("Offset", offset)
         for (let j = 0; j < size; j++) {
-            // let height = simplex.noise2D(i % size, i);
-            // let height = simplex.noise2D(i, j);
-            let height = noiseGen.scaled([i, j]);
+            if (i === 0) {
+                height = 0;
+                x = (i+1)*xAmp;
+                y = 0;
+            } else if (i === size -1) {
+                height = 0;
+                x = (i-1)*xAmp;
+            } else {
+                height = noiseGen.scaled([i, j]);
+                if (j > ravine.start+offset && j < ravine.start + ravine.range - offset2) {
+                    height -= ravine.depth * noiseGen2.scaled([i, j]);
+                }
+                x = i*xAmp;
+                y = j && j < size-1 ? height*yAmp : 0;
+            }
+
+            z = j && j < size -1 ? j*xAmp : j === size -1 ? (j-1) * xAmp : xAmp;
+            vertice = new THREE.Vector3(x,y,z);
             rawHeights.push(height);
-            // height = Math.random();
-            // console.log(height/2);
-            // height += 1;
-            // if (i % size < size/1.5 && i % size > size/3)
-                // height += Math.random();
-            // let height = Math.abs(simplex.noise2D(i, 1));
-            // height += Util.randomFloat(0, i % size / 4);
-            // if (i && i % size === 0) {
-                // j++;
             heights[i].push(height*yAmp);
-            // } else {
-                // heights[j].push(height*amplitude);
-            // }
-            let vertice = new THREE.Vector3(i*xAmp, height*yAmp, j*xAmp);
             geometry.vertices.push(vertice);
         }
 
@@ -73,17 +84,20 @@ function Terrain (size, xAmp, yAmp) {
 
     geometry.computeFaceNormals();
     geometry.mergeVertices();
-    geometry.computeVertexNormals();
+    // geometry.computeVertexNormals();
 
     // var modifier = new SubdivisionModifier(2);
     // modifier.modify( geometry );
 
     let material = new THREE.MeshLambertMaterial( {
-        color: 0xFFFFFF,
+        color: 0xF5CF9A,
         side: THREE.DoubleSide,
         shading: THREE.FlatShading,
     });
 
+    // let material = new THREE.MeshBasicMaterial( {
+    //     color: 0x333333
+    // });
 
     // var mS = (new THREE.Matrix4()).identity();
     //set -1 to the corresponding axis

@@ -56,13 +56,15 @@ let world,
 
 let geos = [];
 
-const xAmp = 1;
+const xAmp = 2;
 const yAmp = 20;
-const size = 50;
+const size = 30;
 
-const ROCKS = 300;
+const ROCKS = 100;
 const yAxis = new THREE.Vector3(0,1,0);
 
+let step = 0;
+let stepLimit = 600;
 
 initThree();
 initCannon();
@@ -96,6 +98,16 @@ function initCannon() {
     // var heightfieldShape = new CANNON.Heightfield([1,2,1,2,1,1,1], {
         // elementSize: 1 // Distance between the data points in X and Y directions
     // });
+
+    // let boundsShape = new CANNON.Box(new CANNON.Vec3(xAmp*size, 100, xAmp*size));
+
+    // let boundsBody = new CANNON.Body({
+    //     mass: 0
+    // });
+
+    // boundsBody.addShape(boundsShape);
+
+    // world.addBody(boundsBody);
 
     terrainBody = new CANNON.Body({
         mass: 0
@@ -172,7 +184,7 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomFloat(0.2, 1));
+        let rock = Rock(Util.randomFloat(0.2, 2));
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
         // rock.position.z = Util.randomInt(0, 30);
@@ -209,7 +221,7 @@ function initThree () {
     scene.add( light );
 
     var directionalLight = new THREE.DirectionalLight( 0x999999, 1);
-    directionalLight.position.set( 10, 200, 10 );
+    directionalLight.position.set( 10, 100, 60 );
     scene.add( directionalLight );
 
     let directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 50);
@@ -243,7 +255,9 @@ function render() {
 
 function updatePhysics () {
       // Step the physics world
-    world.step(timeStep);
+    if (step < stepLimit)
+        world.step(timeStep);
+    step++;
       // Copy coordinates from Cannon.js to Three.js
     // terrain.position.copy(terrainBody.position);
     terrain2.position.copy(terrainBody.position);
