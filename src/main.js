@@ -56,11 +56,11 @@ let world,
 
 let geos = [];
 
-const xAmp = 2;
-const yAmp = 20;
-const size = 30;
+const xAmp = 0.5;
+const yAmp = 10;
+const size = 100;
 
-const ROCKS = 100;
+const ROCKS = 1000;
 const yAxis = new THREE.Vector3(0,1,0);
 
 let step = 0;
@@ -184,7 +184,7 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomFloat(0.2, 2));
+        let rock = Rock(Util.randomFloat(0.2, 1));
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
         // rock.position.z = Util.randomInt(0, 30);
