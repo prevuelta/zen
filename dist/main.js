@@ -4826,424 +4826,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FastSimplexNoise;
 
 },{}],5:[function(require,module,exports){
-/*
- * A fast javascript implementation of simplex noise by Jonas Wagner
- *
- * Based on a speed-improved simplex noise algorithm for 2D, 3D and 4D in Java.
- * Which is based on example code by Stefan Gustavson (stegu@itn.liu.se).
- * With Optimisations by Peter Eastman (peastman@drizzle.stanford.edu).
- * Better rank ordering method by Stefan Gustavson in 2012.
- *
- *
- * Copyright (C) 2016 Jonas Wagner
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- */
-(function() {
-'use strict';
-
-var F2 = 0.5 * (Math.sqrt(3.0) - 1.0);
-var G2 = (3.0 - Math.sqrt(3.0)) / 6.0;
-var F3 = 1.0 / 3.0;
-var G3 = 1.0 / 6.0;
-var F4 = (Math.sqrt(5.0) - 1.0) / 4.0;
-var G4 = (5.0 - Math.sqrt(5.0)) / 20.0;
-
-function SimplexNoise(random) {
-  if (!random) random = Math.random;
-  this.p = buildPermutationTable(random);
-  this.perm = new Uint8Array(512);
-  this.permMod12 = new Uint8Array(512);
-  for (var i = 0; i < 512; i++) {
-    this.perm[i] = this.p[i & 255];
-    this.permMod12[i] = this.perm[i] % 12;
-  }
-
-}
-SimplexNoise.prototype = {
-    grad3: new Float32Array([1, 1, 0,
-                            -1, 1, 0,
-                            1, -1, 0,
-
-                            -1, -1, 0,
-                            1, 0, 1,
-                            -1, 0, 1,
-
-                            1, 0, -1,
-                            -1, 0, -1,
-                            0, 1, 1,
-
-                            0, -1, 1,
-                            0, 1, -1,
-                            0, -1, -1]),
-    grad4: new Float32Array([0, 1, 1, 1, 0, 1, 1, -1, 0, 1, -1, 1, 0, 1, -1, -1,
-                            0, -1, 1, 1, 0, -1, 1, -1, 0, -1, -1, 1, 0, -1, -1, -1,
-                            1, 0, 1, 1, 1, 0, 1, -1, 1, 0, -1, 1, 1, 0, -1, -1,
-                            -1, 0, 1, 1, -1, 0, 1, -1, -1, 0, -1, 1, -1, 0, -1, -1,
-                            1, 1, 0, 1, 1, 1, 0, -1, 1, -1, 0, 1, 1, -1, 0, -1,
-                            -1, 1, 0, 1, -1, 1, 0, -1, -1, -1, 0, 1, -1, -1, 0, -1,
-                            1, 1, 1, 0, 1, 1, -1, 0, 1, -1, 1, 0, 1, -1, -1, 0,
-                            -1, 1, 1, 0, -1, 1, -1, 0, -1, -1, 1, 0, -1, -1, -1, 0]),
-    noise2D: function(xin, yin) {
-        var permMod12 = this.permMod12;
-        var perm = this.perm;
-        var grad3 = this.grad3;
-        var n0 = 0; // Noise contributions from the three corners
-        var n1 = 0;
-        var n2 = 0;
-        // Skew the input space to determine which simplex cell we're in
-        var s = (xin + yin) * F2; // Hairy factor for 2D
-        var i = Math.floor(xin + s);
-        var j = Math.floor(yin + s);
-        var t = (i + j) * G2;
-        var X0 = i - t; // Unskew the cell origin back to (x,y) space
-        var Y0 = j - t;
-        var x0 = xin - X0; // The x,y distances from the cell origin
-        var y0 = yin - Y0;
-        // For the 2D case, the simplex shape is an equilateral triangle.
-        // Determine which simplex we are in.
-        var i1, j1; // Offsets for second (middle) corner of simplex in (i,j) coords
-        if (x0 > y0) {
-          i1 = 1;
-          j1 = 0;
-        } // lower triangle, XY order: (0,0)->(1,0)->(1,1)
-        else {
-          i1 = 0;
-          j1 = 1;
-        } // upper triangle, YX order: (0,0)->(0,1)->(1,1)
-        // A step of (1,0) in (i,j) means a step of (1-c,-c) in (x,y), and
-        // a step of (0,1) in (i,j) means a step of (-c,1-c) in (x,y), where
-        // c = (3-sqrt(3))/6
-        var x1 = x0 - i1 + G2; // Offsets for middle corner in (x,y) unskewed coords
-        var y1 = y0 - j1 + G2;
-        var x2 = x0 - 1.0 + 2.0 * G2; // Offsets for last corner in (x,y) unskewed coords
-        var y2 = y0 - 1.0 + 2.0 * G2;
-        // Work out the hashed gradient indices of the three simplex corners
-        var ii = i & 255;
-        var jj = j & 255;
-        // Calculate the contribution from the three corners
-        var t0 = 0.5 - x0 * x0 - y0 * y0;
-        if (t0 >= 0) {
-          var gi0 = permMod12[ii + perm[jj]] * 3;
-          t0 *= t0;
-          n0 = t0 * t0 * (grad3[gi0] * x0 + grad3[gi0 + 1] * y0); // (x,y) of grad3 used for 2D gradient
-        }
-        var t1 = 0.5 - x1 * x1 - y1 * y1;
-        if (t1 >= 0) {
-          var gi1 = permMod12[ii + i1 + perm[jj + j1]] * 3;
-          t1 *= t1;
-          n1 = t1 * t1 * (grad3[gi1] * x1 + grad3[gi1 + 1] * y1);
-        }
-        var t2 = 0.5 - x2 * x2 - y2 * y2;
-        if (t2 >= 0) {
-          var gi2 = permMod12[ii + 1 + perm[jj + 1]] * 3;
-          t2 *= t2;
-          n2 = t2 * t2 * (grad3[gi2] * x2 + grad3[gi2 + 1] * y2);
-        }
-        // Add contributions from each corner to get the final noise value.
-        // The result is scaled to return values in the interval [-1,1].
-        return 70.0 * (n0 + n1 + n2);
-      },
-    // 3D simplex noise
-    noise3D: function(xin, yin, zin) {
-        var permMod12 = this.permMod12;
-        var perm = this.perm;
-        var grad3 = this.grad3;
-        var n0, n1, n2, n3; // Noise contributions from the four corners
-        // Skew the input space to determine which simplex cell we're in
-        var s = (xin + yin + zin) * F3; // Very nice and simple skew factor for 3D
-        var i = Math.floor(xin + s);
-        var j = Math.floor(yin + s);
-        var k = Math.floor(zin + s);
-        var t = (i + j + k) * G3;
-        var X0 = i - t; // Unskew the cell origin back to (x,y,z) space
-        var Y0 = j - t;
-        var Z0 = k - t;
-        var x0 = xin - X0; // The x,y,z distances from the cell origin
-        var y0 = yin - Y0;
-        var z0 = zin - Z0;
-        // For the 3D case, the simplex shape is a slightly irregular tetrahedron.
-        // Determine which simplex we are in.
-        var i1, j1, k1; // Offsets for second corner of simplex in (i,j,k) coords
-        var i2, j2, k2; // Offsets for third corner of simplex in (i,j,k) coords
-        if (x0 >= y0) {
-          if (y0 >= z0) {
-            i1 = 1;
-            j1 = 0;
-            k1 = 0;
-            i2 = 1;
-            j2 = 1;
-            k2 = 0;
-          } // X Y Z order
-          else if (x0 >= z0) {
-            i1 = 1;
-            j1 = 0;
-            k1 = 0;
-            i2 = 1;
-            j2 = 0;
-            k2 = 1;
-          } // X Z Y order
-          else {
-            i1 = 0;
-            j1 = 0;
-            k1 = 1;
-            i2 = 1;
-            j2 = 0;
-            k2 = 1;
-          } // Z X Y order
-        }
-        else { // x0<y0
-          if (y0 < z0) {
-            i1 = 0;
-            j1 = 0;
-            k1 = 1;
-            i2 = 0;
-            j2 = 1;
-            k2 = 1;
-          } // Z Y X order
-          else if (x0 < z0) {
-            i1 = 0;
-            j1 = 1;
-            k1 = 0;
-            i2 = 0;
-            j2 = 1;
-            k2 = 1;
-          } // Y Z X order
-          else {
-            i1 = 0;
-            j1 = 1;
-            k1 = 0;
-            i2 = 1;
-            j2 = 1;
-            k2 = 0;
-          } // Y X Z order
-        }
-        // A step of (1,0,0) in (i,j,k) means a step of (1-c,-c,-c) in (x,y,z),
-        // a step of (0,1,0) in (i,j,k) means a step of (-c,1-c,-c) in (x,y,z), and
-        // a step of (0,0,1) in (i,j,k) means a step of (-c,-c,1-c) in (x,y,z), where
-        // c = 1/6.
-        var x1 = x0 - i1 + G3; // Offsets for second corner in (x,y,z) coords
-        var y1 = y0 - j1 + G3;
-        var z1 = z0 - k1 + G3;
-        var x2 = x0 - i2 + 2.0 * G3; // Offsets for third corner in (x,y,z) coords
-        var y2 = y0 - j2 + 2.0 * G3;
-        var z2 = z0 - k2 + 2.0 * G3;
-        var x3 = x0 - 1.0 + 3.0 * G3; // Offsets for last corner in (x,y,z) coords
-        var y3 = y0 - 1.0 + 3.0 * G3;
-        var z3 = z0 - 1.0 + 3.0 * G3;
-        // Work out the hashed gradient indices of the four simplex corners
-        var ii = i & 255;
-        var jj = j & 255;
-        var kk = k & 255;
-        // Calculate the contribution from the four corners
-        var t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0;
-        if (t0 < 0) n0 = 0.0;
-        else {
-          var gi0 = permMod12[ii + perm[jj + perm[kk]]] * 3;
-          t0 *= t0;
-          n0 = t0 * t0 * (grad3[gi0] * x0 + grad3[gi0 + 1] * y0 + grad3[gi0 + 2] * z0);
-        }
-        var t1 = 0.6 - x1 * x1 - y1 * y1 - z1 * z1;
-        if (t1 < 0) n1 = 0.0;
-        else {
-          var gi1 = permMod12[ii + i1 + perm[jj + j1 + perm[kk + k1]]] * 3;
-          t1 *= t1;
-          n1 = t1 * t1 * (grad3[gi1] * x1 + grad3[gi1 + 1] * y1 + grad3[gi1 + 2] * z1);
-        }
-        var t2 = 0.6 - x2 * x2 - y2 * y2 - z2 * z2;
-        if (t2 < 0) n2 = 0.0;
-        else {
-          var gi2 = permMod12[ii + i2 + perm[jj + j2 + perm[kk + k2]]] * 3;
-          t2 *= t2;
-          n2 = t2 * t2 * (grad3[gi2] * x2 + grad3[gi2 + 1] * y2 + grad3[gi2 + 2] * z2);
-        }
-        var t3 = 0.6 - x3 * x3 - y3 * y3 - z3 * z3;
-        if (t3 < 0) n3 = 0.0;
-        else {
-          var gi3 = permMod12[ii + 1 + perm[jj + 1 + perm[kk + 1]]] * 3;
-          t3 *= t3;
-          n3 = t3 * t3 * (grad3[gi3] * x3 + grad3[gi3 + 1] * y3 + grad3[gi3 + 2] * z3);
-        }
-        // Add contributions from each corner to get the final noise value.
-        // The result is scaled to stay just inside [-1,1]
-        return 32.0 * (n0 + n1 + n2 + n3);
-      },
-    // 4D simplex noise, better simplex rank ordering method 2012-03-09
-    noise4D: function(x, y, z, w) {
-        var permMod12 = this.permMod12;
-        var perm = this.perm;
-        var grad4 = this.grad4;
-
-        var n0, n1, n2, n3, n4; // Noise contributions from the five corners
-        // Skew the (x,y,z,w) space to determine which cell of 24 simplices we're in
-        var s = (x + y + z + w) * F4; // Factor for 4D skewing
-        var i = Math.floor(x + s);
-        var j = Math.floor(y + s);
-        var k = Math.floor(z + s);
-        var l = Math.floor(w + s);
-        var t = (i + j + k + l) * G4; // Factor for 4D unskewing
-        var X0 = i - t; // Unskew the cell origin back to (x,y,z,w) space
-        var Y0 = j - t;
-        var Z0 = k - t;
-        var W0 = l - t;
-        var x0 = x - X0; // The x,y,z,w distances from the cell origin
-        var y0 = y - Y0;
-        var z0 = z - Z0;
-        var w0 = w - W0;
-        // For the 4D case, the simplex is a 4D shape I won't even try to describe.
-        // To find out which of the 24 possible simplices we're in, we need to
-        // determine the magnitude ordering of x0, y0, z0 and w0.
-        // Six pair-wise comparisons are performed between each possible pair
-        // of the four coordinates, and the results are used to rank the numbers.
-        var rankx = 0;
-        var ranky = 0;
-        var rankz = 0;
-        var rankw = 0;
-        if (x0 > y0) rankx++;
-        else ranky++;
-        if (x0 > z0) rankx++;
-        else rankz++;
-        if (x0 > w0) rankx++;
-        else rankw++;
-        if (y0 > z0) ranky++;
-        else rankz++;
-        if (y0 > w0) ranky++;
-        else rankw++;
-        if (z0 > w0) rankz++;
-        else rankw++;
-        var i1, j1, k1, l1; // The integer offsets for the second simplex corner
-        var i2, j2, k2, l2; // The integer offsets for the third simplex corner
-        var i3, j3, k3, l3; // The integer offsets for the fourth simplex corner
-        // simplex[c] is a 4-vector with the numbers 0, 1, 2 and 3 in some order.
-        // Many values of c will never occur, since e.g. x>y>z>w makes x<z, y<w and x<w
-        // impossible. Only the 24 indices which have non-zero entries make any sense.
-        // We use a thresholding to set the coordinates in turn from the largest magnitude.
-        // Rank 3 denotes the largest coordinate.
-        i1 = rankx >= 3 ? 1 : 0;
-        j1 = ranky >= 3 ? 1 : 0;
-        k1 = rankz >= 3 ? 1 : 0;
-        l1 = rankw >= 3 ? 1 : 0;
-        // Rank 2 denotes the second largest coordinate.
-        i2 = rankx >= 2 ? 1 : 0;
-        j2 = ranky >= 2 ? 1 : 0;
-        k2 = rankz >= 2 ? 1 : 0;
-        l2 = rankw >= 2 ? 1 : 0;
-        // Rank 1 denotes the second smallest coordinate.
-        i3 = rankx >= 1 ? 1 : 0;
-        j3 = ranky >= 1 ? 1 : 0;
-        k3 = rankz >= 1 ? 1 : 0;
-        l3 = rankw >= 1 ? 1 : 0;
-        // The fifth corner has all coordinate offsets = 1, so no need to compute that.
-        var x1 = x0 - i1 + G4; // Offsets for second corner in (x,y,z,w) coords
-        var y1 = y0 - j1 + G4;
-        var z1 = z0 - k1 + G4;
-        var w1 = w0 - l1 + G4;
-        var x2 = x0 - i2 + 2.0 * G4; // Offsets for third corner in (x,y,z,w) coords
-        var y2 = y0 - j2 + 2.0 * G4;
-        var z2 = z0 - k2 + 2.0 * G4;
-        var w2 = w0 - l2 + 2.0 * G4;
-        var x3 = x0 - i3 + 3.0 * G4; // Offsets for fourth corner in (x,y,z,w) coords
-        var y3 = y0 - j3 + 3.0 * G4;
-        var z3 = z0 - k3 + 3.0 * G4;
-        var w3 = w0 - l3 + 3.0 * G4;
-        var x4 = x0 - 1.0 + 4.0 * G4; // Offsets for last corner in (x,y,z,w) coords
-        var y4 = y0 - 1.0 + 4.0 * G4;
-        var z4 = z0 - 1.0 + 4.0 * G4;
-        var w4 = w0 - 1.0 + 4.0 * G4;
-        // Work out the hashed gradient indices of the five simplex corners
-        var ii = i & 255;
-        var jj = j & 255;
-        var kk = k & 255;
-        var ll = l & 255;
-        // Calculate the contribution from the five corners
-        var t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0 - w0 * w0;
-        if (t0 < 0) n0 = 0.0;
-        else {
-          var gi0 = (perm[ii + perm[jj + perm[kk + perm[ll]]]] % 32) * 4;
-          t0 *= t0;
-          n0 = t0 * t0 * (grad4[gi0] * x0 + grad4[gi0 + 1] * y0 + grad4[gi0 + 2] * z0 + grad4[gi0 + 3] * w0);
-        }
-        var t1 = 0.6 - x1 * x1 - y1 * y1 - z1 * z1 - w1 * w1;
-        if (t1 < 0) n1 = 0.0;
-        else {
-          var gi1 = (perm[ii + i1 + perm[jj + j1 + perm[kk + k1 + perm[ll + l1]]]] % 32) * 4;
-          t1 *= t1;
-          n1 = t1 * t1 * (grad4[gi1] * x1 + grad4[gi1 + 1] * y1 + grad4[gi1 + 2] * z1 + grad4[gi1 + 3] * w1);
-        }
-        var t2 = 0.6 - x2 * x2 - y2 * y2 - z2 * z2 - w2 * w2;
-        if (t2 < 0) n2 = 0.0;
-        else {
-          var gi2 = (perm[ii + i2 + perm[jj + j2 + perm[kk + k2 + perm[ll + l2]]]] % 32) * 4;
-          t2 *= t2;
-          n2 = t2 * t2 * (grad4[gi2] * x2 + grad4[gi2 + 1] * y2 + grad4[gi2 + 2] * z2 + grad4[gi2 + 3] * w2);
-        }
-        var t3 = 0.6 - x3 * x3 - y3 * y3 - z3 * z3 - w3 * w3;
-        if (t3 < 0) n3 = 0.0;
-        else {
-          var gi3 = (perm[ii + i3 + perm[jj + j3 + perm[kk + k3 + perm[ll + l3]]]] % 32) * 4;
-          t3 *= t3;
-          n3 = t3 * t3 * (grad4[gi3] * x3 + grad4[gi3 + 1] * y3 + grad4[gi3 + 2] * z3 + grad4[gi3 + 3] * w3);
-        }
-        var t4 = 0.6 - x4 * x4 - y4 * y4 - z4 * z4 - w4 * w4;
-        if (t4 < 0) n4 = 0.0;
-        else {
-          var gi4 = (perm[ii + 1 + perm[jj + 1 + perm[kk + 1 + perm[ll + 1]]]] % 32) * 4;
-          t4 *= t4;
-          n4 = t4 * t4 * (grad4[gi4] * x4 + grad4[gi4 + 1] * y4 + grad4[gi4 + 2] * z4 + grad4[gi4 + 3] * w4);
-        }
-        // Sum up and scale the result to cover the range [-1,1]
-        return 27.0 * (n0 + n1 + n2 + n3 + n4);
-      }
-  };
-
-function buildPermutationTable(random) {
-  var i;
-  var p = new Uint8Array(256);
-  for (i = 0; i < 256; i++) {
-    p[i] = i;
-  }
-  for (i = 0; i < 255; i++) {
-    var r = i + 1 + ~~(random() * (255 - i));
-    var aux = p[i];
-    p[i] = p[r];
-    p[r] = aux;
-  }
-  return p;
-}
-SimplexNoise._buildPermutationTable = buildPermutationTable;
-
-// amd
-if (typeof define !== 'undefined' && define.amd) define(function() {return SimplexNoise;});
-// common js
-if (typeof exports !== 'undefined') exports.SimplexNoise = SimplexNoise;
-// browser
-else if (typeof window !== 'undefined') window.SimplexNoise = SimplexNoise;
-// nodejs
-if (typeof module !== 'undefined') {
-  module.exports = SimplexNoise;
-}
-
-})();
-
-},{}],6:[function(require,module,exports){
 // stats.js - http://github.com/mrdoob/stats.js
 var Stats=function(){var l=Date.now(),m=l,g=0,n=Infinity,o=0,h=0,p=Infinity,q=0,r=0,s=0,f=document.createElement("div");f.id="stats";f.addEventListener("mousedown",function(b){b.preventDefault();t(++s%2)},!1);f.style.cssText="width:80px;opacity:0.9;cursor:pointer";var a=document.createElement("div");a.id="fps";a.style.cssText="padding:0 0 3px 3px;text-align:left;background-color:#002";f.appendChild(a);var i=document.createElement("div");i.id="fpsText";i.style.cssText="color:#0ff;font-family:Helvetica,Arial,sans-serif;font-size:9px;font-weight:bold;line-height:15px";
 i.innerHTML="FPS";a.appendChild(i);var c=document.createElement("div");c.id="fpsGraph";c.style.cssText="position:relative;width:74px;height:30px;background-color:#0ff";for(a.appendChild(c);74>c.children.length;){var j=document.createElement("span");j.style.cssText="width:1px;height:30px;float:left;background-color:#113";c.appendChild(j)}var d=document.createElement("div");d.id="ms";d.style.cssText="padding:0 0 3px 3px;text-align:left;background-color:#020;display:none";f.appendChild(d);var k=document.createElement("div");
@@ -5251,7 +4833,7 @@ k.id="msText";k.style.cssText="color:#0f0;font-family:Helvetica,Arial,sans-serif
 "block";d.style.display="none";break;case 1:a.style.display="none",d.style.display="block"}};return{REVISION:12,domElement:f,setMode:t,begin:function(){l=Date.now()},end:function(){var b=Date.now();g=b-l;n=Math.min(n,g);o=Math.max(o,g);k.textContent=g+" MS ("+n+"-"+o+")";var a=Math.min(30,30-30*(g/200));e.appendChild(e.firstChild).style.height=a+"px";r++;b>m+1E3&&(h=Math.round(1E3*r/(b-m)),p=Math.min(p,h),q=Math.max(q,h),i.textContent=h+" FPS ("+p+"-"+q+")",a=Math.min(30,30-30*(h/100)),c.appendChild(c.firstChild).style.height=
 a+"px",m=b,r=0);return b},update:function(){l=this.end()}}};"object"===typeof module&&(module.exports=Stats);
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 
 function Field (origin, strength) {
@@ -5310,7 +4892,32 @@ module.exports = {
         });
     }
 }
+<<<<<<< HEAD
 },{"three":"three"}],9:[function(require,module,exports){
+=======
+},{"three":"three"}],7:[function(require,module,exports){
+'use strict';
+
+function Field (origin, strength) {
+    console.log(strength);
+    return {
+        x: origin.x,
+        y: origin.y,
+        z: origin.z,
+        strength: strength,
+        affect (v) {
+            let dist = v.distanceTo(this);
+            let dir = v.clone();
+            dir.normalize();
+            dir.multiplyScalar(this.strength/dist);
+            v.sub(dir);
+        }
+    }
+}
+
+module.exports = Field;
+},{}],8:[function(require,module,exports){
+>>>>>>> 42720af70c8c14dd8b68c1bdb23c4c4e23081180
 'use strict';
 
 let THREE = require('three');
@@ -5377,7 +4984,7 @@ function Grass (options) {
 
 
 module.exports = Grass;
-},{"three":"three"}],10:[function(require,module,exports){
+},{"three":"three"}],9:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -5488,7 +5095,11 @@ function Cobble (scene) {
 }
 
 module.exports = Cobble;
+<<<<<<< HEAD
 },{"../abstract/Field":7,"../abstract/entropy":8,"../util/cross":16,"three":"three"}],11:[function(require,module,exports){
+=======
+},{"../abstract/Field":7,"../abstract/entropy":6,"../util/cross":15,"three":"three"}],10:[function(require,module,exports){
+>>>>>>> 42720af70c8c14dd8b68c1bdb23c4c4e23081180
 'use strict';
 
 let THREE = require('../util/patchedThree');
@@ -5705,28 +5316,85 @@ function Rock (size) {
 }
 
 module.exports = Rock;
+<<<<<<< HEAD
 },{"../abstract/Field":7,"../abstract/entropy":8,"../shaders/test.frag":14,"../shaders/test.vert":15,"../util/cross":16,"../util/patchedThree":17,"../util/util":19,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],12:[function(require,module,exports){
+=======
+},{"../abstract/Field":7,"../abstract/entropy":6,"../shaders/test.frag":13,"../shaders/test.vert":14,"../util/cross":15,"../util/patchedThree":16,"../util/util":18,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],11:[function(require,module,exports){
+>>>>>>> 42720af70c8c14dd8b68c1bdb23c4c4e23081180
 'use strict';
 
-let THREE = require('../util/patchedThree');
-
+const THREE = require('../util/patchedThree');
 const SubdivisionModifier = require('three-subdivision-modifier');
-
-const Util = require('../util/util');
-
-let Cross = require('../util/cross');
-let SimplexNoise = require('simplex-noise');
-
-let simplex = new SimplexNoise();
-
 const FastSimplexNoise = require('fast-simplex-noise').default;
 
-const noiseGen = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
-const noiseGen2 = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
+let Util = require('../util/util');
+
+const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
+
+function HeightMap (size) {
+    let heights = [];
+    for (let i = 0; i < size; i++) for (let j = 0; j < size; j++) {
+        if (!j)
+            heights[i] = [];
+        heights[i][j] = noiseGenerator.scaled([i, j]);
+    }
+    return heightMap;
+}
+
+            // if (i === 0) {
+            //     height = 0;
+            //     x = (i+1)*baseAmp;
+            //     y = 0;
+            // } else if (i === size -1) {
+            //     height = 0;
+            //     x = (i-1)*baseAmp;
+            // } else {
+            //     height = noiseGenerator.scaled([i, j]);
+            //     x = i*baseAmp;
+            //     y = j && j < size-1 ? height*yAmp : 0;
+            // }
+   //          // z = j && j < size -1 ? j*baseAmp : j === size -1 ? (j-1) * baseAmp : baseAmp;
+   // let heights = [[]];
+   //  let rawHeights = [];
+
+   //  let j = 0;
+   //  let height,vertice,x,y,z;
+
+   //  for (let i = 0; i < size; i++) {
+   //      heights[i] = [];
+
+   //      for (let j = 0; j < size; j++) {
+   //          if (i === 0) {
+   //              height = 0;
+   //              x = (i+1)*xAmp;
+   //              y = 0;
+   //          } else if (i === size -1) {
+   //              height = 0;
+   //              x = (i-1)*xAmp;
+   //          } else {
+   //              height = noiseGenerator.scaled([i, j]);
+   //              x = i*xAmp;
+   //              y = j && j < size-1 ? height*yAmp : 0;
+   //          }
+
+   //          z = j && j < size -1 ? j*xAmp : j === size -1 ? (j-1) * xAmp : xAmp;
+   //          vertice = new THREE.Vector3(x,y,z);
+   //          rawHeights.push(height);
+   //          heights[i].push(height*yAmp);
+   //          geometry.vertices.push(vertice);
+   //      }
+
+   //  }
+       // geometry.heightMap = heights.reverse();
+
+    // Util.imageMap(rawHeights);
+//
 
 
-function Terrain (size, xAmp, yAmp) {
 
+function TerrainGeometry (size, baseAmp, heightAmp, rawFn) {
+
+<<<<<<< HEAD
     let ravine = {
         start: 20,
         range: 10,
@@ -5734,16 +5402,19 @@ function Terrain (size, xAmp, yAmp) {
         ascent: 2,
         depth: 0.5
     }
+=======
+    let vertice,
+        height,
+        x,y,z;
+>>>>>>> 42720af70c8c14dd8b68c1bdb23c4c4e23081180
 
     let geometry = new THREE.Geometry();
 
-    let heights = [[]];
-    let rawHeights = [];
+    let heightMap = HeightMap(size);
 
-    let j = 0;
-    let height,vertice,x,y,z;
-
+    /* Vertices */
     for (let i = 0; i < size; i++) {
+<<<<<<< HEAD
         heights[i] = [];
 
         let offset = Math.floor(noiseGen2.scaled([i, 0]) * size);
@@ -5767,35 +5438,42 @@ function Terrain (size, xAmp, yAmp) {
             }
 
             z = j && j < size -1 ? j*xAmp : j === size -1 ? (j-1) * xAmp : xAmp;
+=======
+        for (let j = 0; j < size; j++) {
+            x = i*baseAmp;
+            y = heightMap[i][j] * heightAmp;
+            z = j*baseAmp;
+>>>>>>> 42720af70c8c14dd8b68c1bdb23c4c4e23081180
             vertice = new THREE.Vector3(x,y,z);
-            rawHeights.push(height);
-            heights[i].push(height*yAmp);
             geometry.vertices.push(vertice);
         }
-
     }
 
-    geometry.heightMap = heights.reverse();
-
-    Util.imageMap(rawHeights);
-
-
+    /* Faces */
     for (let i = 0; i < size * size; i++) {
         if ((i+1)%size !== 0 && i < (size * size) - size) {
             geometry.faces.push(new THREE.Face3(i, i+1, i+size));
             geometry.faces.push(new THREE.Face3(i+1, i+size+1, i+size));
-            // geometry.faces.push(new THREE.Face3(i+size, i+1, i));
-            // geometry.faces.push(new THREE.Face3(i+size, i+size+1, i+1));
         }
     }
 
-
     geometry.computeFaceNormals();
     geometry.mergeVertices();
-    // geometry.computeVertexNormals();
+
+ // geometry.computeVertexNormals();
 
     // var modifier = new SubdivisionModifier(2);
     // modifier.modify( geometry );
+
+    return geometry;
+
+}
+
+function Terrain (size, baseAmp, heightAmp) {
+
+    let geometry = TerrainGeometry(size, baseAmp, heightAmp, function (u, v, val) {
+        heights[u][v] = val;
+    });
 
     let material = new THREE.MeshLambertMaterial( {
         color: 0xF5CF9A,
@@ -5807,53 +5485,18 @@ function Terrain (size, xAmp, yAmp) {
     //     color: 0x333333
     // });
 
-    // var mS = (new THREE.Matrix4()).identity();
-    //set -1 to the corresponding axis
-    // mS.elements[0] = -1;
-    // mS.elements[5] = -1;
-    // mS.elements[10] = -1;
-
-    // geometry.applyMatrix(mS);
-    //mesh.applyMatrix(mS);
-    //object.applyMatrix(mS);
 
     let mesh = new THREE.Mesh(geometry, material);
 
-    let normals = new THREE.FaceNormalsHelper( mesh );
-
-    // mesh.add(normals);
-
-    // mesh.position.x = -size*amplitude/2;
-    // mesh.position.z = -size*amplitude/2;
-    // mesh.position.y = 10;
-
-    let markers = new THREE.Object3D();
-
-    let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
-    var line = new THREE.LineSegments( wireframe );
-    line.material.depthTest = false;
-    line.material.opacity = 0.5;
-    line.material.transparent = true;
-
-    // mesh.add( line );
-
-    geometry.vertices.forEach(f => {
-        let cross = Cross(0.5);
-
-        cross.position.x = f.x;
-        cross.position.y = f.y;
-        cross.position.z = f.z;
-
-        markers.add(cross);
-    });
-
-    // mesh.add(markers);
-
-    return mesh;
+    return {
+        mesh: mesh,
+        geometry: geometry,
+        heightMap: heightMap
+    };
 }
 
 module.exports = Terrain;
-},{"../util/cross":16,"../util/patchedThree":17,"../util/util":19,"fast-simplex-noise":4,"simplex-noise":5,"three-subdivision-modifier":"three-subdivision-modifier"}],13:[function(require,module,exports){
+},{"../util/patchedThree":16,"../util/util":18,"fast-simplex-noise":4,"three-subdivision-modifier":"three-subdivision-modifier"}],12:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -5912,11 +5555,19 @@ let world,
 
 let geos = [];
 
+<<<<<<< HEAD
 const xAmp = 1;
 const yAmp = 20;
 const size = 60;
 
 const ROCKS = 500;
+=======
+const xAmp = 0.5;
+const yAmp = 10;
+const size = 100;
+
+const ROCKS = 1000;
+>>>>>>> 42720af70c8c14dd8b68c1bdb23c4c4e23081180
 const yAxis = new THREE.Vector3(0,1,0);
 
 let step = 0;
@@ -6040,6 +5691,7 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
+<<<<<<< HEAD
         // let rock = Rock(Util.randomFloat(0.2, 2));
         let geo = new THREE.SphereGeometry(0.6, 5, 5);
 
@@ -6048,6 +5700,9 @@ function initThree () {
             shading: THREE.FlatShading
         }));
 
+=======
+        let rock = Rock(Util.randomFloat(0.2, 1));
+>>>>>>> 42720af70c8c14dd8b68c1bdb23c4c4e23081180
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
         // rock.position.z = Util.randomInt(0, 30);
@@ -6136,13 +5791,13 @@ function updatePhysics () {
     });
 }
 
-},{"./flora/grass":9,"./geology/cobble":10,"./geology/rock":11,"./geology/terrain":12,"./util/shape2mesh":18,"./util/util":19,"cannon":"cannon","stats-js":6,"three":"three"}],14:[function(require,module,exports){
+},{"./flora/grass":8,"./geology/cobble":9,"./geology/rock":10,"./geology/terrain":11,"./util/shape2mesh":17,"./util/util":18,"cannon":"cannon","stats-js":5,"three":"three"}],13:[function(require,module,exports){
 module.exports = "#ifdef GL_ES\nprecision highp float;\n#endif\n\nvarying vec3 vNormal;\nvarying vec3 vPosition;\n\nvarying vec2 vUv;\nvarying float noise;\n\nhighp float rand(vec2 co)\n{\n    highp float a = 12.9898;\n    highp float b = 78.233;\n    highp float c = 43758.5453;\n    highp float dt= dot(co.xy ,vec2(a,b));\n    highp float sn= mod(dt,3.14);\n    return fract(sin(sn) * c);\n}\n\n\nvoid main() {\n    vec3 light = vec3(0.5, 0.2, 1.0);\n\n    // ensure it's normalized\n    light = normalize(light);\n\n    float distance = length(vPosition);\n\n    // calculate the dot product of\n    // the light to the vertex normal\n    // float dProd = max(0.0, dot(vNormal, light));\n    // dProd = dProd * 100.0;\n    // gl_FragColor = vec4(dProd, dProd, dProd, 1.0);\n    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // if (vPosition.x > 0.0 && vPosition.x < 0.1) {\n    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // }\n    // if (vPosition.y > 0.0 && vPosition.y < 0.1) {\n    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // }\n    // vec3 color = vec3( vUv * ( 1. - 2. * noise ), 0.0 );\n    // gl_FragColor = vec4( color.rgb, 1.0 );\n    // gl_FragColor = vec4(1.0,0,0,1.0);  // draw red\n}";
 
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 module.exports = "// switch on high precision floats\n#ifdef GL_ES\nprecision highp float;\n#endif\n\n//\n// GLSL textureless classic 3D noise \"cnoise\",\n// with an RSL-style periodic variant \"pnoise\".\n// Author:  Stefan Gustavson (stefan.gustavson@liu.se)\n// Version: 2011-10-11\n//\n// Many thanks to Ian McEwan of Ashima Arts for the\n// ideas for permutation and gradient selection.\n//\n// Copyright (c) 2011 Stefan Gustavson. All rights reserved.\n// Distributed under the MIT license. See LICENSE file.\n// https://github.com/stegu/webgl-noise\n//\n\nvec3 mod289(vec3 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289(vec4 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute(vec4 x)\n{\n  return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nvec3 fade(vec3 t) {\n  return t*t*t*(t*(t*6.0-15.0)+10.0);\n}\n\n// Classic Perlin noise\nfloat cnoise(vec3 P)\n{\n  vec3 Pi0 = floor(P); // Integer part for indexing\n  vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1\n  Pi0 = mod289(Pi0);\n  Pi1 = mod289(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute(permute(ix) + iy);\n  vec4 ixy0 = permute(ixy + iz0);\n  vec4 ixy1 = permute(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n  return 2.2 * n_xyz;\n}\n\n// Classic Perlin noise, periodic variant\nfloat pnoise(vec3 P, vec3 rep)\n{\n  vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period\n  vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period\n  Pi0 = mod289(Pi0);\n  Pi1 = mod289(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute(permute(ix) + iy);\n  vec4 ixy0 = permute(ixy + iz0);\n  vec4 ixy1 = permute(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n  return 2.2 * n_xyz;\n}\n\nvarying vec2 vUv;\nvarying float noise;\n\nfloat turbulence( vec3 p ) {\n    float w = 100.0;\n    float t = -.5;\n    for (float f = 1.0 ; f <= 10.0 ; f++ ){\n        float power = pow( 2.0, f );\n        t += abs( pnoise( vec3( power * p ), vec3( 10.0, 10.0, 10.0 ) ) / power );\n    }\n    return t;\n}\n\nvarying vec3 vNormal;\nvarying vec3 vPosition;\n\nvoid main() {\n\n    vNormal = normal;\n    vPosition = position;\n    vUv = uv;\n\n    // get a turbulent 3d noise using the normal, normal to high freq\n    noise = 10.0 *  -.10 * turbulence( 0.2 * normal );\n    // get a 3d noise using the position, low frequency\n    float b = 5.0 * pnoise( 0.05 * position, vec3( 100.0 ) );\n    // compose both noises\n    float displacement = -10. * noise + b;\n    // float displacement = -20. * cnoise( vec3( 10.0, 10.0, 10.0 ) );\n\n    // move the position along the normal and transform it\n    vec3 newPosition = position + normal * displacement;\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n}";
 
-},{}],16:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -6185,7 +5840,7 @@ function Cross (size) {
 }
 
 module.exports = Cross;
-},{"three":"three"}],17:[function(require,module,exports){
+},{"three":"three"}],16:[function(require,module,exports){
 /**
  * Break faces with edges longer than maxEdgeLength
  * - not recursive
@@ -6427,7 +6082,7 @@ THREE.TessellateModifier.prototype.modify = function ( geometry ) {
 };
 
 module.exports = THREE;
-},{"three":"three"}],18:[function(require,module,exports){
+},{"three":"three"}],17:[function(require,module,exports){
 let THREE = require('three');
 let CANNON = require('cannon');
 
@@ -6623,12 +6278,29 @@ module.exports = function (body) {
 
     return obj;
 };
-},{"cannon":"cannon","three":"three"}],19:[function(require,module,exports){
+},{"cannon":"cannon","three":"three"}],18:[function(require,module,exports){
 'use strict';
 
 let DAT = require('dat-gui');
 
 let img = document.getElementById("noise-map");
+
+function imageMap (data, element) {
+    let ctx = img.getContext("2d");
+    let size = Math.floor(Math.sqrt(data.length));
+    let imgData = ctx.createImageData(size,size);
+    let index = 0;
+    data.forEach((val, i) => {
+        let r, g, b;
+        r = g = b = val * 255;
+        imgData.data[index]=r;
+        imgData.data[index+1]=g;
+        imgData.data[index+2]=b;
+        imgData.data[index+3]=255;
+        index += 4;
+    });
+    ctx.putImageData(imgData,0,0);
+}
 
 var gui = new DAT.GUI({
     height : 5 * 32 - 1
@@ -6661,12 +6333,6 @@ let Util = {
             imgData.data[index+3]=255;
             index += 4;
         });
-        // for (var i=0;i < imgData.data.length;i+=4) {
-        //     imgData.data[i+0]=0;
-        //     imgData.data[i+1]=0;
-        //     imgData.data[i+2]=255;
-        //     imgData.data[i+3]=255;
-        // }
         ctx.putImageData(imgData,0,0);
     }
 };
@@ -6678,4 +6344,4 @@ gui.add(params, 'wireframe').name('Wireframe').onFinishChange(function(){
 });
 
 module.exports = Util;
-},{"dat-gui":1}]},{},[13]);
+},{"dat-gui":1}]},{},[12]);

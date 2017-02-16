@@ -4,6 +4,23 @@ let DAT = require('dat-gui');
 
 let img = document.getElementById("noise-map");
 
+function imageMap (data, element) {
+    let ctx = img.getContext("2d");
+    let size = Math.floor(Math.sqrt(data.length));
+    let imgData = ctx.createImageData(size,size);
+    let index = 0;
+    data.forEach((val, i) => {
+        let r, g, b;
+        r = g = b = val * 255;
+        imgData.data[index]=r;
+        imgData.data[index+1]=g;
+        imgData.data[index+2]=b;
+        imgData.data[index+3]=255;
+        index += 4;
+    });
+    ctx.putImageData(imgData,0,0);
+}
+
 var gui = new DAT.GUI({
     height : 5 * 32 - 1
 });
@@ -35,12 +52,6 @@ let Util = {
             imgData.data[index+3]=255;
             index += 4;
         });
-        // for (var i=0;i < imgData.data.length;i+=4) {
-        //     imgData.data[i+0]=0;
-        //     imgData.data[i+1]=0;
-        //     imgData.data[i+2]=255;
-        //     imgData.data[i+3]=255;
-        // }
         ctx.putImageData(imgData,0,0);
     }
 };

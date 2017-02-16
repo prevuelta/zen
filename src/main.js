@@ -56,12 +56,13 @@ let world,
 
 let geos = [];
 
-const xAmp = 1;
-const yAmp = 20;
-const size = 60;
+const xAmp = 0.5;
+const yAmp = 10;
+const size = 100;
 
-const ROCKS = 500;
+const ROCKS = 1000;
 const yAxis = new THREE.Vector3(0,1,0);
+
 
 let step = 0;
 let stepLimit = 600;
@@ -184,6 +185,7 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
+<<<<<<< HEAD
         // let rock = Rock(Util.randomFloat(0.2, 2));
         let geo = new THREE.SphereGeometry(0.6, 5, 5);
 
@@ -192,6 +194,9 @@ function initThree () {
             shading: THREE.FlatShading
         }));
 
+=======
+        let rock = Rock(Util.randomFloat(0.2, 1));
+>>>>>>> 42720af70c8c14dd8b68c1bdb23c4c4e23081180
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
         // rock.position.z = Util.randomInt(0, 30);
