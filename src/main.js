@@ -2,11 +2,14 @@
 
 let THREE = require('three');
 let CANNON = require('cannon');
+let OrbitControls = require('three-orbit-controls')(THREE);
 
 let Grass = require('./flora/grass');
 let Cobble = require('./geology/cobble');
 let Rock = require('./geology/rock');
 let Terrain = require('./geology/terrain');
+let Water = require('./elements/water');
+
 let Util = require('./util/util');
 
 let shape2mesh = require('./util/shape2mesh');
@@ -53,16 +56,14 @@ let world,
     mesh,
     terrain2;
 
-
 let geos = [];
 
 const xAmp = 0.5;
 const yAmp = 10;
 const size = 100;
 
-const ROCKS = 1000;
+const ROCKS = 10;
 const yAxis = new THREE.Vector3(0,1,0);
-
 
 let step = 0;
 let stepLimit = 600;
@@ -86,17 +87,14 @@ function initCannon() {
     groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
     world.add(groundBody);
 
-
-    let matrix = terrain.geometry.heightMap;
-
+    let matrix = terrain.heightMap.map(h => h.map(v => v*yAmp)).reverse();
 
     var hfShape = new CANNON.Heightfield(matrix, {
         elementSize: xAmp
     });
     // let hfShape = new CANNON.Box(new CANNON.Vec3(20, 6, 20));
-
     // // Create the heightfield shape
-    // var heightfieldShape = new CANNON.Heightfield([1,2,1,2,1,1,1], {
+    // var hfShape = new CANNON.Heightfield([[1,2,3], [4,5,6], [1,2,3]], {
         // elementSize: 1 // Distance between the data points in X and Y directions
     // });
 
@@ -185,7 +183,6 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-<<<<<<< HEAD
         // let rock = Rock(Util.randomFloat(0.2, 2));
         let geo = new THREE.SphereGeometry(0.6, 5, 5);
 
@@ -194,9 +191,7 @@ function initThree () {
             shading: THREE.FlatShading
         }));
 
-=======
-        let rock = Rock(Util.randomFloat(0.2, 1));
->>>>>>> 42720af70c8c14dd8b68c1bdb23c4c4e23081180
+        // let rock = Rock(Util.randomFloat(0.2, 1));
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
         // rock.position.z = Util.randomInt(0, 30);
@@ -207,11 +202,13 @@ function initThree () {
     terrain = Terrain(size, xAmp, yAmp);
 
     // terrain.position.set(-size * amp, 0, -size * amp);
-    terrain.rotation.set(0, -Math.PI, 0);
+    terrain.mesh.rotation.set(0, -Math.PI, 0);
     // terrain.position.set(-size * xAmp/2,0,size * xAmp/2);
-    terrain.position.set(size * xAmp/2,0,size * xAmp/2);
+    terrain.mesh.position.set(size * xAmp/2,0,size * xAmp/2);
 
-    scene.add(terrain);
+    scene.add(terrain.mesh);
+
+     scene.add(Water(xAmp * size, yAmp ));
 
     // scene.add(group);
 
@@ -249,11 +246,13 @@ function initThree () {
     renderer.setSize( window.innerWidth, window.innerHeight );
     document.body.appendChild( renderer.domElement );
 
+    let controls = new OrbitControls( camera );
+
 }
 
 function animate () {
     requestAnimationFrame( animate );
-    scene.rotateOnAxis(yAxis, Math.PI/480);
+    // scene.rotateOnAxis(yAxis, Math.PI/480);
     updatePhysics();
     render();
     stats.update();

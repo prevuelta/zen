@@ -69,8 +69,7 @@ function HeightMap (size) {
 //
 
 
-
-function TerrainGeometry (size, baseAmp, heightAmp, rawFn) {
+function Terrain (size, baseAmp, heightAmp) {
 
     let vertice,
         height,
@@ -84,10 +83,14 @@ function TerrainGeometry (size, baseAmp, heightAmp, rawFn) {
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
             x = i*baseAmp;
-            y = heightMap[i][j] * heightAmp;
+            y = Math.floor(heightMap[i][j] * heightAmp);
             z = j*baseAmp;
+            // if (!j)
+                // geometry.vertices.push(new THREE.Vector3(x, 0, z));
             vertice = new THREE.Vector3(x,y,z);
             geometry.vertices.push(vertice);
+            // if (j === size -1)
+                // geometry.vertices.push(new THREE.Vector3(0, 0, 0));
         }
     }
 
@@ -107,16 +110,6 @@ function TerrainGeometry (size, baseAmp, heightAmp, rawFn) {
     // var modifier = new SubdivisionModifier(2);
     // modifier.modify( geometry );
 
-    return geometry;
-
-}
-
-function Terrain (size, baseAmp, heightAmp) {
-
-    let geometry = TerrainGeometry(size, baseAmp, heightAmp, function (u, v, val) {
-        heights[u][v] = val;
-    });
-
     let material = new THREE.MeshLambertMaterial( {
         color: 0xF5CF9A,
         side: THREE.DoubleSide,
@@ -126,7 +119,6 @@ function Terrain (size, baseAmp, heightAmp) {
     // let material = new THREE.MeshBasicMaterial( {
     //     color: 0x333333
     // });
-
 
     let mesh = new THREE.Mesh(geometry, material);
 

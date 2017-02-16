@@ -39,6 +39,7 @@
     "simplex-noise": "^2.3.0",
     "stats-js": "^1.0.0-alpha1",
     "three": "^0.81.0",
+    "three-orbit-controls": "^82.1.0",
     "three-subdivision-modifier": "^1.0.5"
   },
   "devDependencies": {
