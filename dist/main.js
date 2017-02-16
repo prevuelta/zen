@@ -5254,6 +5254,27 @@ a+"px",m=b,r=0);return b},update:function(){l=this.end()}}};"object"===typeof mo
 },{}],7:[function(require,module,exports){
 'use strict';
 
+function Field (origin, strength) {
+    console.log(strength);
+    return {
+        x: origin.x,
+        y: origin.y,
+        z: origin.z,
+        strength: strength,
+        affect (v) {
+            let dist = v.distanceTo(this);
+            let dir = v.clone();
+            dir.normalize();
+            dir.multiplyScalar(this.strength/dist);
+            v.sub(dir);
+        }
+    }
+}
+
+module.exports = Field;
+},{}],8:[function(require,module,exports){
+'use strict';
+
 let THREE = require('three');
 
 module.exports = {
@@ -5289,28 +5310,7 @@ module.exports = {
         });
     }
 }
-},{"three":"three"}],8:[function(require,module,exports){
-'use strict';
-
-function Field (origin, strength) {
-    console.log(strength);
-    return {
-        x: origin.x,
-        y: origin.y,
-        z: origin.z,
-        strength: strength,
-        affect (v) {
-            let dist = v.distanceTo(this);
-            let dir = v.clone();
-            dir.normalize();
-            dir.multiplyScalar(this.strength/dist);
-            v.sub(dir);
-        }
-    }
-}
-
-module.exports = Field;
-},{}],9:[function(require,module,exports){
+},{"three":"three"}],9:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -5488,7 +5488,7 @@ function Cobble (scene) {
 }
 
 module.exports = Cobble;
-},{"../abstract/Field":8,"../abstract/entropy":7,"../util/cross":16,"three":"three"}],11:[function(require,module,exports){
+},{"../abstract/Field":7,"../abstract/entropy":8,"../util/cross":16,"three":"three"}],11:[function(require,module,exports){
 'use strict';
 
 let THREE = require('../util/patchedThree');
@@ -5705,7 +5705,7 @@ function Rock (size) {
 }
 
 module.exports = Rock;
-},{"../abstract/Field":8,"../abstract/entropy":7,"../shaders/test.frag":14,"../shaders/test.vert":15,"../util/cross":16,"../util/patchedThree":17,"../util/util":19,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],12:[function(require,module,exports){
+},{"../abstract/Field":7,"../abstract/entropy":8,"../shaders/test.frag":14,"../shaders/test.vert":15,"../util/cross":16,"../util/patchedThree":17,"../util/util":19,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],12:[function(require,module,exports){
 'use strict';
 
 let THREE = require('../util/patchedThree');
@@ -5728,11 +5728,11 @@ const noiseGen2 = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octave
 function Terrain (size, xAmp, yAmp) {
 
     let ravine = {
-        start: Util.randomInt(3, 15),
-        range: Util.randomInt(0, size/2),
+        start: 20,
+        range: 10,
         descent: 2,
         ascent: 2,
-        depth: 0.2
+        depth: 0.5
     }
 
     let geometry = new THREE.Geometry();
@@ -5746,9 +5746,8 @@ function Terrain (size, xAmp, yAmp) {
     for (let i = 0; i < size; i++) {
         heights[i] = [];
 
-        let offset = Math.floor(noiseGen2.scaled([i, 0]) * 10);
-        let offset2 = Math.floor(noiseGen2.scaled([i, 1]) * 10);
-        console.log("Offset", offset)
+        let offset = Math.floor(noiseGen2.scaled([i, 0]) * size);
+        let offset2 = Util.randomInt(-3, 3);
         for (let j = 0; j < size; j++) {
             if (i === 0) {
                 height = 0;
@@ -5759,8 +5758,9 @@ function Terrain (size, xAmp, yAmp) {
                 x = (i-1)*xAmp;
             } else {
                 height = noiseGen.scaled([i, j]);
-                if (j > ravine.start+offset && j < ravine.start + ravine.range - offset2) {
+                if (j > offset && j < offset + ravine.range + offset2) {
                     height -= ravine.depth * noiseGen2.scaled([i, j]);
+                    height = Math.max(0, height);
                 }
                 x = i*xAmp;
                 y = j && j < size-1 ? height*yAmp : 0;
@@ -5912,11 +5912,11 @@ let world,
 
 let geos = [];
 
-const xAmp = 2;
+const xAmp = 1;
 const yAmp = 20;
-const size = 30;
+const size = 60;
 
-const ROCKS = 100;
+const ROCKS = 500;
 const yAxis = new THREE.Vector3(0,1,0);
 
 let step = 0;
@@ -5994,25 +5994,25 @@ function initCannon() {
     for (let i = 0;i < ROCKS;i++) {
 
         let {geometry} = bodies[i].mesh;
-        geometry.computeBoundingBox();
+        // geometry.computeBoundingBox();
         // let bbox = geometry.boundingBox;
-        let bbox = new THREE.Box3().setFromObject(bodies[i].mesh);
+        // let bbox = new THREE.Box3().setFromObject(bodies[i].mesh);
 
         // console.log(bbox.size())
         // let [x, y, z] = bbox.size();
         // debugger;
 
-        let x = bbox.max.x - bbox.min.x;
-        let y = bbox.max.y - bbox.min.y;
-        let z = bbox.max.z - bbox.min.z;
+        // let x = bbox.max.x - bbox.min.x;
+        // let y = bbox.max.y - bbox.min.y;
+        // let z = bbox.max.z - bbox.min.z;
 
         // let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
 
-        let shape = new CANNON.Sphere((x/2+y/2+z/2)/3);
+        let shape = new CANNON.Sphere(0.3);
         // let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
 
         let body = new CANNON.Body({
-            mass: 1
+            mass: 10
         });
         body.addShape(shape);
         body.position.set(Util.randomInt(-size*xAmp/2, size*xAmp/2), 30, Util.randomInt(-size*xAmp/2, size*xAmp/2));
@@ -6040,7 +6040,14 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomFloat(0.2, 2));
+        // let rock = Rock(Util.randomFloat(0.2, 2));
+        let geo = new THREE.SphereGeometry(0.6, 5, 5);
+
+        let rock = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({
+            color: 0xF4E0C5,
+            shading: THREE.FlatShading
+        }));
+
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
         // rock.position.z = Util.randomInt(0, 30);

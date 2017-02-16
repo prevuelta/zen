@@ -20,11 +20,11 @@ const noiseGen2 = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octave
 function Terrain (size, xAmp, yAmp) {
 
     let ravine = {
-        start: Util.randomInt(3, 15),
-        range: Util.randomInt(0, size/2),
+        start: 20,
+        range: 10,
         descent: 2,
         ascent: 2,
-        depth: 0.2
+        depth: 0.5
     }
 
     let geometry = new THREE.Geometry();
@@ -38,9 +38,8 @@ function Terrain (size, xAmp, yAmp) {
     for (let i = 0; i < size; i++) {
         heights[i] = [];
 
-        let offset = Math.floor(noiseGen2.scaled([i, 0]) * 10);
-        let offset2 = Math.floor(noiseGen2.scaled([i, 1]) * 10);
-        console.log("Offset", offset)
+        let offset = Math.floor(noiseGen2.scaled([i, 0]) * size);
+        let offset2 = Util.randomInt(-3, 3);
         for (let j = 0; j < size; j++) {
             if (i === 0) {
                 height = 0;
@@ -51,8 +50,9 @@ function Terrain (size, xAmp, yAmp) {
                 x = (i-1)*xAmp;
             } else {
                 height = noiseGen.scaled([i, j]);
-                if (j > ravine.start+offset && j < ravine.start + ravine.range - offset2) {
+                if (j > offset && j < offset + ravine.range + offset2) {
                     height -= ravine.depth * noiseGen2.scaled([i, j]);
+                    height = Math.max(0, height);
                 }
                 x = i*xAmp;
                 y = j && j < size-1 ? height*yAmp : 0;
