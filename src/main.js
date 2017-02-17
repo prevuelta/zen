@@ -58,11 +58,11 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.5;
+const xAmp = 0.2;
 const yAmp = 10;
-const size = 100;
+const size = 200;
 
-const ROCKS = 10;
+const ROCKS = 0;
 const yAxis = new THREE.Vector3(0,1,0);
 
 let step = 0;
@@ -139,20 +139,20 @@ function initCannon() {
         let {geometry} = bodies[i].mesh;
         // geometry.computeBoundingBox();
         // let bbox = geometry.boundingBox;
-        // let bbox = new THREE.Box3().setFromObject(bodies[i].mesh);
+        let bbox = new THREE.Box3().setFromObject(bodies[i].mesh);
 
         // console.log(bbox.size())
         // let [x, y, z] = bbox.size();
         // debugger;
 
-        // let x = bbox.max.x - bbox.min.x;
-        // let y = bbox.max.y - bbox.min.y;
-        // let z = bbox.max.z - bbox.min.z;
+        let x = bbox.max.x - bbox.min.x;
+        let y = bbox.max.y - bbox.min.y;
+        let z = bbox.max.z - bbox.min.z;
 
         // let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
 
-        let shape = new CANNON.Sphere(0.3);
-        // let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
+        // let shape = new CANNON.Sphere(0.3);
+        let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
 
         let body = new CANNON.Body({
             mass: 10
@@ -183,13 +183,13 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        // let rock = Rock(Util.randomFloat(0.2, 2));
-        let geo = new THREE.SphereGeometry(0.6, 5, 5);
+        let rock = Rock(Util.randomFloat(0.2, 2));
+        // let geo = new THREE.SphereGeometry(0.6, 5, 5);
 
-        let rock = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({
-            color: 0xF4E0C5,
-            shading: THREE.FlatShading
-        }));
+        // let rock = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({
+            // color: 0xF4E0C5,
+            // shading: THREE.FlatShading
+        // }));
 
         // let rock = Rock(Util.randomFloat(0.2, 1));
         // group.add(rock);
@@ -208,7 +208,10 @@ function initThree () {
 
     scene.add(terrain.mesh);
 
-     scene.add(Water(xAmp * size, yAmp ));
+    let water = Water(xAmp * size, yAmp / 2);
+    water.position.set(0, 0, 0);
+
+     scene.add(water);
 
     // scene.add(group);
 

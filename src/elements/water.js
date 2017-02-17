@@ -22,7 +22,8 @@ function Water (size, height) {
             resolution: { value: new THREE.Vector2() }
         },
         vertexShader: vert,
-        fragmentShader: waterFrag
+        fragmentShader: waterFrag,
+        transparent: true
     });
 
     let mesh = new THREE.Mesh(geometry, material);
