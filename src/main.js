@@ -62,7 +62,7 @@ const xAmp = 0.5;
 const yAmp = 10;
 const size = 100;
 
-const ROCKS = 10;
+const ROCKS = 0;
 const yAxis = new THREE.Vector3(0,1,0);
 
 let step = 0;
@@ -201,6 +201,8 @@ function initThree () {
 
     terrain = Terrain(size, xAmp, yAmp);
 
+    Util.imageMap(terrain.heightMap);
+
     // terrain.position.set(-size * amp, 0, -size * amp);
     terrain.mesh.rotation.set(0, -Math.PI, 0);
     // terrain.position.set(-size * xAmp/2,0,size * xAmp/2);
@@ -208,7 +210,7 @@ function initThree () {
 
     scene.add(terrain.mesh);
 
-     scene.add(Water(xAmp * size, yAmp ));
+     // scene.add(Water(xAmp * size, yAmp ));
 
     // scene.add(group);
 
@@ -230,7 +232,7 @@ function initThree () {
     scene.add( light );
 
     var directionalLight = new THREE.DirectionalLight( 0x999999, 1);
-    directionalLight.position.set( 10, 100, 60 );
+    directionalLight.position.set( 10, 50, 60 );
     scene.add( directionalLight );
 
     let directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 50);

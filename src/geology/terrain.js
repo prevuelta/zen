@@ -6,8 +6,10 @@ const FastSimplexNoise = require('fast-simplex-noise').default;
 
 let Util = require('../util/util');
 
-const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
+let Materials = require('../util/materials');
+let Field = require('../abstract/field');
 
+const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
 
 function HeightMap (size) {
     let heights = [];
@@ -83,7 +85,7 @@ function Terrain (size, baseAmp, heightAmp) {
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
             x = i*baseAmp;
-            y = Math.floor(heightMap[i][j] * heightAmp);
+            y = heightMap[i][j] * heightAmp;
             z = j*baseAmp;
             // if (!j)
                 // geometry.vertices.push(new THREE.Vector3(x, 0, z));
@@ -105,22 +107,20 @@ function Terrain (size, baseAmp, heightAmp) {
     geometry.computeFaceNormals();
     geometry.mergeVertices();
 
+    // debugger;
  // geometry.computeVertexNormals();
 
     // var modifier = new SubdivisionModifier(2);
     // modifier.modify( geometry );
+    let fields = [];
+    for (let i = 0; i < 5;i ++)  {
+        fields[i] = Field({x: Util.randomInt(0, size), y: 0, z: Util.randomInt(0, size)}, Util.randomInt(-70, 70));
+    }
+    geometry.vertices.forEach(v => fields.forEach(f => f.affect(v)));
+    geometry.vertices.forEach(v => Math.floor(v.y));
 
-    let material = new THREE.MeshLambertMaterial( {
-        color: 0xF5CF9A,
-        side: THREE.DoubleSide,
-        shading: THREE.FlatShading,
-    });
 
-    // let material = new THREE.MeshBasicMaterial( {
-    //     color: 0x333333
-    // });
-
-    let mesh = new THREE.Mesh(geometry, material);
+    let mesh = new THREE.Mesh(geometry, Materials.EARTH);
 
     return {
         mesh: mesh,

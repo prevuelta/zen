@@ -1,5 +1,7 @@
 'use strict';
 
+let THREE = require('three');
+
 function Field (origin, strength) {
     console.log(strength);
     return {
@@ -12,9 +14,29 @@ function Field (origin, strength) {
             let dir = v.clone();
             dir.normalize();
             dir.multiplyScalar(this.strength/dist);
-            v.sub(dir);
+            // dir.x = 0;
+            // dir.z = 0;
+            // v.add(dir);
+            v.add(new THREE.Vector3(0, this.strength/dist, 0));
         }
     }
 }
 
 module.exports = Field;
+
+// class Field extends PVector{
+
+//     void affect(PVector affectedLocation, float multiplier) {
+
+//         float distance = PVector.dist(affectedLocation, this);
+
+//         PVector v = PVector.sub(affectedLocation, this);
+
+//         v.normalize();
+
+//         v.mult( _strength * multiplier / distance);
+
+//         affectedLocation.add(v);
+
+//     }
+// }
