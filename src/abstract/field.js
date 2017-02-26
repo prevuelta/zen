@@ -12,7 +12,7 @@ function Field (origin, strength) {
             let dir = v.clone();
             dir.normalize();
             dir.multiplyScalar(this.strength/dist);
-            v.sub(dir);
+            v.add(dir);
         }
     }
 }

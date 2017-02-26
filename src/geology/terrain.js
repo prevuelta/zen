@@ -2,22 +2,10 @@
 
 const THREE = require('../util/patchedThree');
 const SubdivisionModifier = require('three-subdivision-modifier');
-const FastSimplexNoise = require('fast-simplex-noise').default;
 
 let Util = require('../util/util');
+let Displacement = require('../util/displacement');
 
-const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
-
-
-function HeightMap (size) {
-    let heights = [];
-    for (let i = 0; i < size; i++) for (let j = 0; j < size; j++) {
-        if (!j)
-            heights[i] = [];
-        heights[i][j] = noiseGenerator.scaled([i, j]);
-    }
-    return heights;
-}
 
             // if (i === 0) {
             //     height = 0;
@@ -77,13 +65,13 @@ function Terrain (size, baseAmp, heightAmp) {
 
     let geometry = new THREE.Geometry();
 
-    let heightMap = HeightMap(size);
+    let heightMap = Displacement.noiseMatrix(size);
 
     /* Vertices */
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
             x = i*baseAmp;
-            y = Math.floor(heightMap[i][j] * heightAmp);
+            y = 4;//Math.floor(heightMap[i][j] * heightAmp);
             z = j*baseAmp;
             // if (!j)
                 // geometry.vertices.push(new THREE.Vector3(x, 0, z));
