@@ -58,9 +58,9 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.2;
+const xAmp = 0.1;
 const yAmp = 10;
-const size = 200;
+const size = 100;
 
 const ROCKS = 0;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -210,11 +210,11 @@ function initThree () {
 
     scene.add(terrain.mesh);
 
-     // scene.add(Water(xAmp * size, yAmp ));
-    let water = Water(xAmp * size, yAmp / 2);
-    water.position.set(0, 0, 0);
+    // scene.add(Water(xAmp * size, yAmp ));
+    let water = Water(xAmp * size, yAmp * 4);
+    water.position.set(0, -yAmp*2, 0);
 
-     scene.add(water);
+    scene.add(water);
 
     // scene.add(group);
 
@@ -233,10 +233,10 @@ function initThree () {
     camera.target = new THREE.Vector3( 0, 0, 0 );
 
     var light = new THREE.AmbientLight( 0x404040 ); // soft white light
-    scene.add( light );
+    // scene.add( light );
 
-    var directionalLight = new THREE.DirectionalLight( 0x999999, 1);
-    directionalLight.position.set( 10, 50, 60 );
+    var directionalLight = new THREE.DirectionalLight( 0xFFFFFF, 1);
+    directionalLight.position.set( 10, 150, 100 );
     scene.add( directionalLight );
 
     let directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 50);
@@ -246,7 +246,7 @@ function initThree () {
     plane = new THREE.Mesh( geometry, material );
     plane.rotation.x = Math.PI/2;
     plane.position.y = 0;
-    scene.add(plane);
+    // scene.add(plane);
 
     renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setSize( window.innerWidth, window.innerHeight );

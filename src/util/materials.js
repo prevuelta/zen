@@ -3,7 +3,7 @@
 let THREE = require('three');
 
 let earth = new THREE.MeshLambertMaterial( {
-    color: 0x999999,
+    color: 0xFFFFFF,
     side: THREE.DoubleSide,
     shading: THREE.FlatShading
 });

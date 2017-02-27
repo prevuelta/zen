@@ -104,20 +104,27 @@ function Terrain (size, baseAmp, heightAmp) {
         }
     }
 
-    geometry.computeFaceNormals();
-    geometry.mergeVertices();
-
     // debugger;
  // geometry.computeVertexNormals();
 
     // var modifier = new SubdivisionModifier(2);
     // modifier.modify( geometry );
     let fields = [];
-    for (let i = 0; i < 5;i ++)  {
-        fields[i] = Field({x: Util.randomInt(0, size), y: 0, z: Util.randomInt(0, size)}, Util.randomInt(-70, 70));
+    for (let i = 0; i < 20;i ++)  {
+        fields[i] = Field({x: Util.randomInt(0, size), y: 0, z: Util.randomInt(0, size)}, Util.randomInt(-20, 20));
     }
-    geometry.vertices.forEach(v => fields.forEach(f => f.affect(v)));
-    geometry.vertices.forEach(v => Math.floor(v.y));
+
+    geometry.vertices.forEach(v => {
+        fields.forEach(f => f.affect(v));
+        v.y = Math.floor(v.y) / 2;
+    });
+
+
+    geometry.computeFaceNormals();
+    geometry.mergeVertices();
+
+
+    // geometry.vertice.foreach(v => { console.log(v);Math.floor(v.y);console.log(v);return v;});
 
 
     let mesh = new THREE.Mesh(geometry, Materials.EARTH);
