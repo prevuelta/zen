@@ -2,8 +2,8 @@
 
 const THREE = require('../util/patchedThree');
 
-let waterFrag = require('../shaders/water.frag');
-let vert = require('../shaders/test.vert');
+let frag = require('../shaders/water.frag');
+let vert = require('../shaders/water.vert');
 
 function Water (size, height) {
 
@@ -22,7 +22,7 @@ function Water (size, height) {
             resolution: { value: new THREE.Vector2() }
         },
         vertexShader: vert,
-        fragmentShader: waterFrag,
+        fragmentShader: frag,
         transparent: true
     });
 

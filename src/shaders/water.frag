@@ -8,6 +8,8 @@ varying vec3 vPosition;
 varying vec2 vUv;
 varying float noise;
 
+varying vec3 col;
+
 highp float rand(vec2 co)
 {
     highp float a = 12.9898;
@@ -21,5 +23,7 @@ highp float rand(vec2 co)
 
 void main() {
 
-    gl_FragColor = vec4(vPosition, 0.5);
+    // gl_FragColor = vec4(vPosition, 0.5);
+      gl_FragColor = vec4(col, 0.5);
 }
+
