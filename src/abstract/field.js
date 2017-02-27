@@ -3,7 +3,6 @@
 let THREE = require('three');
 
 function Field (origin, strength) {
-    console.log(strength);
     return {
         x: origin.x,
         y: origin.y,
@@ -11,12 +10,12 @@ function Field (origin, strength) {
         strength: strength,
         affect (v) {
             let dist = v.distanceTo(this);
-            let dir = v.clone();
-            dir.normalize();
-            dir.multiplyScalar(this.strength/dist);
+            // let dir = v.clone();
+            // dir.normalize();
+            // dir.multiplyScalar(this.strength/dist);
             // dir.x = 0;
             // dir.z = 0;
-            // v.add(dir);
+            // v.sub(dir);
             v.add(new THREE.Vector3(0, this.strength/dist, 0));
         }
     }

@@ -58,9 +58,9 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.1;
-const yAmp = 10;
-const size = 100;
+const xAmp = 2;
+const yAmp = 1;
+const size = 30;
 
 const ROCKS = 0;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -206,12 +206,12 @@ function initThree () {
     // terrain.position.set(-size * amp, 0, -size * amp);
     terrain.mesh.rotation.set(0, -Math.PI, 0);
     // terrain.position.set(-size * xAmp/2,0,size * xAmp/2);
-    terrain.mesh.position.set(size * xAmp/2,0,size * xAmp/2);
+    terrain.mesh.position.set(size * xAmp/2, 0, size * xAmp/2);
 
     scene.add(terrain.mesh);
 
     // scene.add(Water(xAmp * size, yAmp ));
-    let water = Water(xAmp * size, yAmp * 4);
+    let water = Water(xAmp * size, 2);
     water.position.set(0, -yAmp*2, 0);
 
     scene.add(water);

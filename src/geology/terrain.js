@@ -5,24 +5,10 @@ const SubdivisionModifier = require('three-subdivision-modifier');
 
 let Util = require('../util/util');
 let Displacement = require('../util/displacement');
+let Matrix = require('../util/matrix');
 
-<<<<<<< HEAD
 let Materials = require('../util/materials');
 let Field = require('../abstract/field');
-
-const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
-
-function HeightMap (size) {
-    let heights = [];
-    for (let i = 0; i < size; i++) for (let j = 0; j < size; j++) {
-        if (!j)
-            heights[i] = [];
-        heights[i][j] = noiseGenerator.scaled([i, j]);
-    }
-    return heights;
-}
-=======
->>>>>>> 07376a8ef68ac01a17ea1bd61a6aacb4e5ce2a03
 
             // if (i === 0) {
             //     height = 0;
@@ -82,7 +68,11 @@ function Terrain (size, baseAmp, heightAmp) {
 
     let geometry = new THREE.Geometry();
 
-    let heightMap = Displacement.noiseMatrix(size);
+    let trench = Matrix(size);
+
+    let heightMap = Matrix(size);
+
+    // let heightMap = Displacement.noise(matrix);
 
     /* Vertices */
     for (let i = 0; i < size; i++) {
@@ -113,13 +103,13 @@ function Terrain (size, baseAmp, heightAmp) {
     // var modifier = new SubdivisionModifier(2);
     // modifier.modify( geometry );
     let fields = [];
-    for (let i = 0; i < 20;i ++)  {
-        fields[i] = Field({x: Util.randomInt(0, size), y: 0, z: Util.randomInt(0, size)}, Util.randomInt(-20, 20));
+    for (let i = 0; i < 10;i ++)  {
+        fields[i] = Field({x: Util.randomInt(0, size*2), y: 0, z: Util.randomInt(0, size*2)}, Util.randomInt(-4, 5));
     }
 
     geometry.vertices.forEach(v => {
         fields.forEach(f => f.affect(v));
-        v.y = Math.floor(v.y) / 2;
+        // v.y = Math.floor(v.y) / 2;
     });
 
 
