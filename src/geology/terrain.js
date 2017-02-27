@@ -2,10 +2,11 @@
 
 const THREE = require('../util/patchedThree');
 const SubdivisionModifier = require('three-subdivision-modifier');
-const FastSimplexNoise = require('fast-simplex-noise').default;
 
 let Util = require('../util/util');
+let Displacement = require('../util/displacement');
 
+<<<<<<< HEAD
 let Materials = require('../util/materials');
 let Field = require('../abstract/field');
 
@@ -20,6 +21,8 @@ function HeightMap (size) {
     }
     return heights;
 }
+=======
+>>>>>>> 07376a8ef68ac01a17ea1bd61a6aacb4e5ce2a03
 
             // if (i === 0) {
             //     height = 0;
@@ -79,7 +82,7 @@ function Terrain (size, baseAmp, heightAmp) {
 
     let geometry = new THREE.Geometry();
 
-    let heightMap = HeightMap(size);
+    let heightMap = Displacement.noiseMatrix(size);
 
     /* Vertices */
     for (let i = 0; i < size; i++) {
