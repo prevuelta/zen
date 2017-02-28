@@ -212,7 +212,7 @@ function initThree () {
 
     // scene.add(Water(xAmp * size, yAmp ));
     let water = Water(xAmp * size, 2);
-    water.position.set(0, -yAmp*2, 0);
+    water.position.set(0, 0, 0);
 
     scene.add(water);
 

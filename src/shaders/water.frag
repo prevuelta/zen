@@ -23,8 +23,8 @@ highp float rand(vec2 co)
 
 void main() {
 
-    // gl_FragColor = vec4(vPosition, 0.5);
+    gl_FragColor = vec4(0, 1, 1, 0.8);
     // gl_FragColor = vec4(0, 0, 0, 1);
-      gl_FragColor = vec4(col, 0.5);
+      // gl_FragColor = vec4(col[1], 0, 0, 0.5);
 }
 
