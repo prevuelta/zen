@@ -58,9 +58,9 @@ let world,
 
 let geos = [];
 
-const xAmp = 2;
-const yAmp = 1;
-const size = 30;
+const xAmp = 0.5;
+const yAmp = 10;
+const size = 40;
 
 const ROCKS = 0;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -214,7 +214,7 @@ function initThree () {
     let water = Water(xAmp * size, 2);
     water.position.set(0, 0, 0);
 
-    scene.add(water);
+    // scene.add(water);
 
     // scene.add(group);
 

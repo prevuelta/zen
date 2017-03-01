@@ -9,7 +9,6 @@ module.exports = {
         for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {
             matrix[i][j] *= noiseGenerator.scaled([i, j]);
         }
-        return matrix
     },
     multiply (matrix, scalar) {
         for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {

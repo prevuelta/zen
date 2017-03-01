@@ -6441,22 +6441,27 @@ function Terrain (size, baseAmp, heightAmp) {
 
     let heightMap = Matrix(size);
 
-    // let heightMap = Displacement.noise(matrix);
+    // Displacement.noise(heightMap);
+
+    let edge = new Array(size).fill([0,0,0]).map((v, i) => new THREE.Vector3(i*baseAmp, 0, 0));
+    // let edge2 = new Array(size).fill([0,0,0]).map((v, i) => {v[0] = i*baseAmp;v[2] = (size-1)*baseAmp;return v;});
+    console.log(edge);
+    geometry.vertices.push(...edge);
 
     /* Vertices */
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
-            x = i*baseAmp;
-            y = heightMap[i][j] * heightAmp;
-            z = j*baseAmp;
-            // if (!j)
-                // geometry.vertices.push(new THREE.Vector3(x, 0, z));
-            vertice = new THREE.Vector3(x,y,z);
-            geometry.vertices.push(vertice);
-            // if (j === size -1)
-                // geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+            if (i && i < size - 1) {
+                x = i*baseAmp;
+                y = heightMap[i][j] * heightAmp;
+                z = j*baseAmp;
+                vertice = new THREE.Vector3(x,y,z);
+                geometry.vertices.push(vertice);
+            }
         }
     }
+
+    // geometry.vertices.push(...edge2);
 
     /* Faces */
     for (let i = 0; i < size * size; i++) {
@@ -6482,8 +6487,8 @@ function Terrain (size, baseAmp, heightAmp) {
     });
 
 
-    geometry.computeFaceNormals();
-    geometry.mergeVertices();
+    // geometry.computeFaceNormals();
+    // geometry.mergeVertices();
 
 
     // geometry.vertice.foreach(v => { console.log(v);Math.floor(v.y);console.log(v);return v;});
@@ -6560,9 +6565,9 @@ let world,
 
 let geos = [];
 
-const xAmp = 2;
-const yAmp = 1;
-const size = 30;
+const xAmp = 0.5;
+const yAmp = 10;
+const size = 40;
 
 const ROCKS = 0;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -6716,7 +6721,7 @@ function initThree () {
     let water = Water(xAmp * size, 2);
     water.position.set(0, 0, 0);
 
-    scene.add(water);
+    // scene.add(water);
 
     // scene.add(group);
 
@@ -6859,7 +6864,6 @@ module.exports = {
         for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {
             matrix[i][j] *= noiseGenerator.scaled([i, j]);
         }
-        return matrix
     },
     multiply (matrix, scalar) {
         for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {
