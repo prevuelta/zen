@@ -16,7 +16,11 @@ function Field (origin, strength) {
             // dir.x = 0;
             // dir.z = 0;
             // v.sub(dir);
-            v.add(new THREE.Vector3(0, this.strength/dist, 0));
+            // if (dist < 1) {
+                // v.add(new THREE.Vector3(0, this.strength, 0));
+            // } else {
+                v.add(new THREE.Vector3(0, Math.sin(dist)*this.strength/dist, 0));
+            // }
         }
     }
 }

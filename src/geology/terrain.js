@@ -4,6 +4,7 @@ const THREE = require('../util/patchedThree');
 const SubdivisionModifier = require('three-subdivision-modifier');
 
 let Util = require('../util/util');
+let Helpers = require('../util/helpers');
 let Displacement = require('../util/displacement');
 let Matrix = require('../util/matrix');
 
@@ -72,27 +73,27 @@ function Terrain (size, baseAmp, heightAmp) {
 
     let heightMap = Matrix(size);
 
-    // Displacement.noise(heightMap);
-
-    let edge = new Array(size).fill([0,0,0]).map((v, i) => new THREE.Vector3(i*baseAmp, 0, 0));
-    // let edge2 = new Array(size).fill([0,0,0]).map((v, i) => {v[0] = i*baseAmp;v[2] = (size-1)*baseAmp;return v;});
-    console.log(edge);
-    geometry.vertices.push(...edge);
+    Displacement.noise(heightMap);
 
     /* Vertices */
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
-            if (i && i < size - 1) {
-                x = i*baseAmp;
-                y = heightMap[i][j] * heightAmp;
-                z = j*baseAmp;
-                vertice = new THREE.Vector3(x,y,z);
-                geometry.vertices.push(vertice);
-            }
+            x = i*baseAmp;
+            y = heightMap[i][j] * heightAmp;
+            z = j*baseAmp;
+            vertice = new THREE.Vector3(x,y,z);
+            geometry.vertices.push(vertice);
         }
     }
 
-    // geometry.vertices.push(...edge2);
+    Displacement.turbulence(geometry.vertices, size*baseAmp, 45, -2, 2);
+
+    geometry.vertices.forEach((v, i) => {
+        if (!(i % size) || i % size === size-1 || i < size || i > size * size - size) {
+            v.y = 0;
+        }
+        return v;
+    });
 
     /* Faces */
     for (let i = 0; i < size * size; i++) {
@@ -102,30 +103,12 @@ function Terrain (size, baseAmp, heightAmp) {
         }
     }
 
-    // debugger;
- // geometry.computeVertexNormals();
-
-    // var modifier = new SubdivisionModifier(2);
-    // modifier.modify( geometry );
-    let fields = [];
-    for (let i = 0; i < 10;i ++)  {
-        fields[i] = Field({x: Util.randomInt(0, size*2), y: 0, z: Util.randomInt(0, size*2)}, Util.randomInt(-4, 5));
-    }
-
-    geometry.vertices.forEach(v => {
-        fields.forEach(f => f.affect(v));
-        // v.y = Math.floor(v.y) / 2;
-    });
-
-
-    // geometry.computeFaceNormals();
-    // geometry.mergeVertices();
-
-
-    // geometry.vertice.foreach(v => { console.log(v);Math.floor(v.y);console.log(v);return v;});
-
+    geometry.computeFaceNormals();
+    geometry.mergeVertices();
 
     let mesh = new THREE.Mesh(geometry, Materials.EARTH);
+
+    console.log('Terrain created...')
 
     return {
         mesh: mesh,

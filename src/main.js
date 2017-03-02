@@ -10,7 +10,8 @@ let Rock = require('./geology/rock');
 let Terrain = require('./geology/terrain');
 let Water = require('./elements/water');
 
-let Util = require('./util/util');
+const Util = require('./util/util');
+const Displacement = require('./util/displacement');
 
 let shape2mesh = require('./util/shape2mesh');
 
@@ -58,9 +59,9 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.5;
-const yAmp = 10;
-const size = 40;
+const xAmp = 0.2;
+const yAmp = 4;
+const size = 100;
 
 const ROCKS = 0;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -203,20 +204,17 @@ function initThree () {
 
     Util.imageMap(terrain.heightMap);
 
-    // terrain.position.set(-size * amp, 0, -size * amp);
     terrain.mesh.rotation.set(0, -Math.PI, 0);
-    // terrain.position.set(-size * xAmp/2,0,size * xAmp/2);
     terrain.mesh.position.set(size * xAmp/2, 0, size * xAmp/2);
 
     scene.add(terrain.mesh);
 
-    // scene.add(Water(xAmp * size, yAmp ));
-    let water = Water(xAmp * size, 2);
-    water.position.set(0, 0, 0);
+    let water = Water(xAmp * size, yAmp);
+    water.position.set(0, yAmp/2, 0);
+    Displacement.turbulence(water.geometry.vertices, xAmp * size);
 
-    // scene.add(water);
+    scene.add(water);
 
-    // scene.add(group);
 
 // texture.load('assets/stone_texture.jpg', function (texture){
     // The actual texture is returned in the event.content
@@ -239,7 +237,7 @@ function initThree () {
     directionalLight.position.set( 10, 150, 100 );
     scene.add( directionalLight );
 
-    let directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 50);
+    let directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 0);
     scene.add( directionalLightHelper);
 
     var geometry = new THREE.PlaneBufferGeometry( xAmp*size, xAmp*size );

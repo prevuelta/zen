@@ -1,5 +1,5 @@
 
-// let Cross = require('../util/cross');
+let Cross = require('./cross');
     // let normals = new THREE.FaceNormalsHelper( mesh );
 
     // mesh.add(normals)
@@ -38,3 +38,26 @@
     // geometry.applyMatrix(mS);
     //mesh.applyMatrix(mS);
     //object.applyMatrix(mS);
+
+module.exports = {
+    // let markers = new THREE.Object3D();
+    marker (pos, weight = 0.5) {
+        let cross = Cross(weight);
+
+        cross.position.x = pos.x;
+        cross.position.y = pos.y;
+        cross.position.z = pos.z;
+
+        return cross;
+    }
+
+    // geometry.vertices.forEach(f => {
+    //     let cross = Cross(0.5);
+
+    //     cross.position.x = f.x;
+    //     cross.position.y = f.y;
+    //     cross.position.z = f.z;
+
+    //     markers.add(cross);
+    // });
+}

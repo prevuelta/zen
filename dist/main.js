@@ -5912,7 +5912,11 @@ function Field (origin, strength) {
             // dir.x = 0;
             // dir.z = 0;
             // v.sub(dir);
-            v.add(new THREE.Vector3(0, this.strength/dist, 0));
+            // if (dist < 1) {
+                // v.add(new THREE.Vector3(0, this.strength, 0));
+            // } else {
+                v.add(new THREE.Vector3(0, Math.sin(dist)*this.strength/dist, 0));
+            // }
         }
     }
 }
@@ -5940,9 +5944,7 @@ module.exports = Field;
 'use strict';
 
 const THREE = require('../util/patchedThree');
-
-let frag = require('../shaders/water.frag');
-let vert = require('../shaders/water.vert');
+const Materials = require('../util/materials');
 
 function Water (size, height) {
 
@@ -5955,23 +5957,14 @@ function Water (size, height) {
     //     opacity: 0.3
     // });
 
-    let material = new THREE.ShaderMaterial( {
-        uniforms: {
-            time: { value: 1.0 },
-            resolution: { value: new THREE.Vector2() }
-        },
-        vertexShader: vert,
-        fragmentShader: frag,
-        transparent: true
-    });
 
-    let mesh = new THREE.Mesh(geometry, material);
+    let mesh = new THREE.Mesh(geometry, Materials.WATER);
 
     return mesh;
 }
 
 module.exports = Water;
-},{"../shaders/water.frag":17,"../shaders/water.vert":18,"../util/patchedThree":23}],10:[function(require,module,exports){
+},{"../util/materials":22,"../util/patchedThree":24}],10:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -6366,13 +6359,14 @@ function Rock (size) {
 }
 
 module.exports = Rock;
-},{"../abstract/Field":8,"../abstract/entropy":7,"../shaders/test.frag":15,"../shaders/test.vert":16,"../util/cross":19,"../util/patchedThree":23,"../util/util":25,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],13:[function(require,module,exports){
+},{"../abstract/Field":8,"../abstract/entropy":7,"../shaders/test.frag":15,"../shaders/test.vert":16,"../util/cross":19,"../util/patchedThree":24,"../util/util":26,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],13:[function(require,module,exports){
 'use strict';
 
 const THREE = require('../util/patchedThree');
 const SubdivisionModifier = require('three-subdivision-modifier');
 
 let Util = require('../util/util');
+let Helpers = require('../util/helpers');
 let Displacement = require('../util/displacement');
 let Matrix = require('../util/matrix');
 
@@ -6441,27 +6435,27 @@ function Terrain (size, baseAmp, heightAmp) {
 
     let heightMap = Matrix(size);
 
-    // Displacement.noise(heightMap);
-
-    let edge = new Array(size).fill([0,0,0]).map((v, i) => new THREE.Vector3(i*baseAmp, 0, 0));
-    // let edge2 = new Array(size).fill([0,0,0]).map((v, i) => {v[0] = i*baseAmp;v[2] = (size-1)*baseAmp;return v;});
-    console.log(edge);
-    geometry.vertices.push(...edge);
+    Displacement.noise(heightMap);
 
     /* Vertices */
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
-            if (i && i < size - 1) {
-                x = i*baseAmp;
-                y = heightMap[i][j] * heightAmp;
-                z = j*baseAmp;
-                vertice = new THREE.Vector3(x,y,z);
-                geometry.vertices.push(vertice);
-            }
+            x = i*baseAmp;
+            y = heightMap[i][j] * heightAmp;
+            z = j*baseAmp;
+            vertice = new THREE.Vector3(x,y,z);
+            geometry.vertices.push(vertice);
         }
     }
 
-    // geometry.vertices.push(...edge2);
+    Displacement.turbulence(geometry.vertices, size*baseAmp, 45, -2, 2);
+
+    geometry.vertices.forEach((v, i) => {
+        if (!(i % size) || i % size === size-1 || i < size || i > size * size - size) {
+            v.y = 0;
+        }
+        return v;
+    });
 
     /* Faces */
     for (let i = 0; i < size * size; i++) {
@@ -6471,30 +6465,12 @@ function Terrain (size, baseAmp, heightAmp) {
         }
     }
 
-    // debugger;
- // geometry.computeVertexNormals();
-
-    // var modifier = new SubdivisionModifier(2);
-    // modifier.modify( geometry );
-    let fields = [];
-    for (let i = 0; i < 10;i ++)  {
-        fields[i] = Field({x: Util.randomInt(0, size*2), y: 0, z: Util.randomInt(0, size*2)}, Util.randomInt(-4, 5));
-    }
-
-    geometry.vertices.forEach(v => {
-        fields.forEach(f => f.affect(v));
-        // v.y = Math.floor(v.y) / 2;
-    });
-
-
-    // geometry.computeFaceNormals();
-    // geometry.mergeVertices();
-
-
-    // geometry.vertice.foreach(v => { console.log(v);Math.floor(v.y);console.log(v);return v;});
-
+    geometry.computeFaceNormals();
+    geometry.mergeVertices();
 
     let mesh = new THREE.Mesh(geometry, Materials.EARTH);
+
+    console.log('Terrain created...')
 
     return {
         mesh: mesh,
@@ -6504,7 +6480,7 @@ function Terrain (size, baseAmp, heightAmp) {
 }
 
 module.exports = Terrain;
-},{"../abstract/field":8,"../util/displacement":20,"../util/materials":21,"../util/matrix":22,"../util/patchedThree":23,"../util/util":25,"three-subdivision-modifier":"three-subdivision-modifier"}],14:[function(require,module,exports){
+},{"../abstract/field":8,"../util/displacement":20,"../util/helpers":21,"../util/materials":22,"../util/matrix":23,"../util/patchedThree":24,"../util/util":26,"three-subdivision-modifier":"three-subdivision-modifier"}],14:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -6517,7 +6493,8 @@ let Rock = require('./geology/rock');
 let Terrain = require('./geology/terrain');
 let Water = require('./elements/water');
 
-let Util = require('./util/util');
+const Util = require('./util/util');
+const Displacement = require('./util/displacement');
 
 let shape2mesh = require('./util/shape2mesh');
 
@@ -6565,9 +6542,9 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.5;
-const yAmp = 10;
-const size = 40;
+const xAmp = 0.2;
+const yAmp = 4;
+const size = 100;
 
 const ROCKS = 0;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -6710,20 +6687,17 @@ function initThree () {
 
     Util.imageMap(terrain.heightMap);
 
-    // terrain.position.set(-size * amp, 0, -size * amp);
     terrain.mesh.rotation.set(0, -Math.PI, 0);
-    // terrain.position.set(-size * xAmp/2,0,size * xAmp/2);
     terrain.mesh.position.set(size * xAmp/2, 0, size * xAmp/2);
 
     scene.add(terrain.mesh);
 
-    // scene.add(Water(xAmp * size, yAmp ));
-    let water = Water(xAmp * size, 2);
-    water.position.set(0, 0, 0);
+    let water = Water(xAmp * size, yAmp);
+    water.position.set(0, yAmp/2, 0);
+    Displacement.turbulence(water.geometry.vertices, xAmp * size);
 
-    // scene.add(water);
+    scene.add(water);
 
-    // scene.add(group);
 
 // texture.load('assets/stone_texture.jpg', function (texture){
     // The actual texture is returned in the event.content
@@ -6746,7 +6720,7 @@ function initThree () {
     directionalLight.position.set( 10, 150, 100 );
     scene.add( directionalLight );
 
-    let directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 50);
+    let directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 0);
     scene.add( directionalLightHelper);
 
     var geometry = new THREE.PlaneBufferGeometry( xAmp*size, xAmp*size );
@@ -6797,7 +6771,7 @@ function updatePhysics () {
     });
 }
 
-},{"./elements/water":9,"./flora/grass":10,"./geology/cobble":11,"./geology/rock":12,"./geology/terrain":13,"./util/shape2mesh":24,"./util/util":25,"cannon":"cannon","stats-js":5,"three":"three","three-orbit-controls":6}],15:[function(require,module,exports){
+},{"./elements/water":9,"./flora/grass":10,"./geology/cobble":11,"./geology/rock":12,"./geology/terrain":13,"./util/displacement":20,"./util/shape2mesh":25,"./util/util":26,"cannon":"cannon","stats-js":5,"three":"three","three-orbit-controls":6}],15:[function(require,module,exports){
 module.exports = "#ifdef GL_ES\nprecision highp float;\n#endif\n\nvarying vec3 vNormal;\nvarying vec3 vPosition;\n\nvarying vec2 vUv;\nvarying float noise;\n\nhighp float rand(vec2 co)\n{\n    highp float a = 12.9898;\n    highp float b = 78.233;\n    highp float c = 43758.5453;\n    highp float dt= dot(co.xy ,vec2(a,b));\n    highp float sn= mod(dt,3.14);\n    return fract(sin(sn) * c);\n}\n\n\nvoid main() {\n    vec3 light = vec3(0.5, 0.2, 1.0);\n\n    // ensure it's normalized\n    light = normalize(light);\n\n    float distance = length(vPosition);\n\n    // calculate the dot product of\n    // the light to the vertex normal\n    // float dProd = max(0.0, dot(vNormal, light));\n    // dProd = dProd * 100.0;\n    // gl_FragColor = vec4(dProd, dProd, dProd, 1.0);\n    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // if (vPosition.x > 0.0 && vPosition.x < 0.1) {\n    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // }\n    // if (vPosition.y > 0.0 && vPosition.y < 0.1) {\n    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // }\n    // vec3 color = vec3( vUv * ( 1. - 2. * noise ), 0.0 );\n    // gl_FragColor = vec4( color.rgb, 1.0 );\n    // gl_FragColor = vec4(1.0,0,0,1.0);  // draw red\n}";
 
 },{}],16:[function(require,module,exports){
@@ -6856,26 +6830,118 @@ module.exports = Cross;
 'use strict';
 
 const FastSimplexNoise = require('fast-simplex-noise').default;
-const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
+
+const Util = require('./util');
+const Field = require('../abstract/field');
 
 module.exports = {
     noise (matrix) {
+        const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
         let max = matrix.length
         for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {
             matrix[i][j] *= noiseGenerator.scaled([i, j]);
         }
     },
-    multiply (matrix, scalar) {
+    multiply (matrix, scalar = 1) {
         for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {
             matrix[i][j] *= scalar;
         }
         return matrix;
+    },
+    turbulence (vertices, size, fieldCount = 2, min = -4, max = 4) {
+        let fields = [];
+        for (let i = 0; i < fieldCount;i ++)  {
+            fields[i] = Field({
+                x: Util.randomInt(0, size),
+                y: 0,
+                z: Util.randomInt(0, size)
+            },
+            Util.randomInt(min, max));
+        }
+
+        vertices.forEach(v => {
+            fields.forEach(f => f.affect(v));
+        });
+
+        return vertices;
+    },
+    step () {
+
+    // geometry.vertice.foreach(v => { console.log(v);Math.floor(v.y);console.log(v);return v;});
+
     }
 }
-},{"fast-simplex-noise":4}],21:[function(require,module,exports){
+},{"../abstract/field":8,"./util":26,"fast-simplex-noise":4}],21:[function(require,module,exports){
+
+let Cross = require('./cross');
+    // let normals = new THREE.FaceNormalsHelper( mesh );
+
+    // mesh.add(normals)
+
+    //     let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
+    // var line = new THREE.LineSegments( wireframe );
+    // line.material.depthTest = false;
+    // line.material.opacity = 0.5;
+    // line.material.transparent = true;
+
+    // mesh.add( line );
+
+
+    // let markers = new THREE.Object3D();
+
+
+
+    // geometry.vertices.forEach(f => {
+    //     let cross = Cross(0.5);
+
+    //     cross.position.x = f.x;
+    //     cross.position.y = f.y;
+    //     cross.position.z = f.z;
+
+    //     markers.add(cross);
+    // });
+
+    // mesh.add(markers);;
+
+        // var mS = (new THREE.Matrix4()).identity();
+    //set -1 to the corresponding axis
+    // mS.elements[0] = -1;
+    // mS.elements[5] = -1;
+    // mS.elements[10] = -1;
+
+    // geometry.applyMatrix(mS);
+    //mesh.applyMatrix(mS);
+    //object.applyMatrix(mS);
+
+module.exports = {
+    // let markers = new THREE.Object3D();
+    marker (pos, weight = 0.5) {
+        let cross = Cross(weight);
+
+        cross.position.x = pos.x;
+        cross.position.y = pos.y;
+        cross.position.z = pos.z;
+
+        return cross;
+    }
+
+    // geometry.vertices.forEach(f => {
+    //     let cross = Cross(0.5);
+
+    //     cross.position.x = f.x;
+    //     cross.position.y = f.y;
+    //     cross.position.z = f.z;
+
+    //     markers.add(cross);
+    // });
+}
+},{"./cross":19}],22:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
+
+let frag = require('../shaders/water.frag');
+let vert = require('../shaders/water.vert');
 
 let earth = new THREE.MeshLambertMaterial( {
     color: 0xFFFFFF,
@@ -6883,10 +6949,22 @@ let earth = new THREE.MeshLambertMaterial( {
     shading: THREE.FlatShading
 });
 
+let water =  new THREE.ShaderMaterial( {
+    uniforms: {
+        time: { value: 1.0 },
+        resolution: { value: new THREE.Vector2() }
+    },
+    vertexShader: vert,
+    fragmentShader: frag,
+    transparent: true
+});
+
+
 module.exports = {
-    EARTH: earth
+    EARTH: earth,
+    WATER: water,
 };
-},{"three":"three"}],22:[function(require,module,exports){
+},{"../shaders/water.frag":17,"../shaders/water.vert":18,"three":"three"}],23:[function(require,module,exports){
 'use strict';
 
 function Matrix (size) {
@@ -6900,7 +6978,7 @@ function Matrix (size) {
 }
 
 module.exports = Matrix;
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * Break faces with edges longer than maxEdgeLength
  * - not recursive
@@ -7142,7 +7220,7 @@ THREE.TessellateModifier.prototype.modify = function ( geometry ) {
 };
 
 module.exports = THREE;
-},{"three":"three"}],24:[function(require,module,exports){
+},{"three":"three"}],25:[function(require,module,exports){
 let THREE = require('three');
 let CANNON = require('cannon');
 
@@ -7338,7 +7416,7 @@ module.exports = function (body) {
 
     return obj;
 };
-},{"cannon":"cannon","three":"three"}],25:[function(require,module,exports){
+},{"cannon":"cannon","three":"three"}],26:[function(require,module,exports){
 'use strict';
 
 let DAT = require('dat-gui');
