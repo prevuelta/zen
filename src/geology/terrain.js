@@ -5,7 +5,7 @@ const SubdivisionModifier = require('three-subdivision-modifier');
 
 let Util = require('../util/util');
 let Helpers = require('../util/helpers');
-let Displacement = require('../util/displacement');
+let Displacement = require('../abstract/displacement');
 let Matrix = require('../util/matrix');
 
 let Materials = require('../util/materials');
@@ -68,8 +68,8 @@ function Terrain (size, baseAmp, heightAmp) {
         x,y,z;
 
     let geometry = new THREE.Geometry();
+    // let geometry = new Three.PlaneBufferGeometry(size*baseAmp, size*baseAmp, size, size);
 
-    let trench = Matrix(size);
 
     let heightMap = Matrix(size);
 
@@ -86,7 +86,7 @@ function Terrain (size, baseAmp, heightAmp) {
         }
     }
 
-    Displacement.turbulence(geometry.vertices, size*baseAmp, 45, -2, 2);
+    Displacement.turbulence(geometry.vertices, size*baseAmp, 10, -2, 2);
 
     geometry.vertices.forEach((v, i) => {
         if (!(i % size) || i % size === size-1 || i < size || i > size * size - size) {
@@ -101,12 +101,18 @@ function Terrain (size, baseAmp, heightAmp) {
             geometry.faces.push(new THREE.Face3(i, i+1, i+size));
             geometry.faces.push(new THREE.Face3(i+1, i+size+1, i+size));
         }
+        // geometry.faces.push(new THREE.Face3(size * size-1, size-1, 0));
+        // geometry.faces.push(new THREE.Face3(size * size - size, size * size - 1, 0));
     }
 
     geometry.computeFaceNormals();
     geometry.mergeVertices();
 
-    let mesh = new THREE.Mesh(geometry, Materials.EARTH);
+
+    var buffer_g = new THREE.BufferGeometry();
+    buffer_g.fromGeometry(geometry);
+
+    let mesh = new THREE.Mesh(buffer_g, Materials.EARTH);
 
     console.log('Terrain created...')
 

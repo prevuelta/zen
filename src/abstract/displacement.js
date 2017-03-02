@@ -2,7 +2,7 @@
 
 const FastSimplexNoise = require('fast-simplex-noise').default;
 
-const Util = require('./util');
+const Util = require('../util/util');
 const Field = require('../abstract/field');
 
 module.exports = {

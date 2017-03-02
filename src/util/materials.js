@@ -7,7 +7,7 @@ let vert = require('../shaders/water.vert');
 
 let earth = new THREE.MeshLambertMaterial( {
     color: 0xFFFFFF,
-    side: THREE.DoubleSide,
+    side: THREE.FrontSide,
     shading: THREE.FlatShading
 });
 

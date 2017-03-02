@@ -11,7 +11,7 @@ let Terrain = require('./geology/terrain');
 let Water = require('./elements/water');
 
 const Util = require('./util/util');
-const Displacement = require('./util/displacement');
+const Displacement = require('./abstract/displacement');
 
 let shape2mesh = require('./util/shape2mesh');
 
@@ -59,9 +59,9 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.2;
-const yAmp = 4;
-const size = 100;
+const xAmp = 0.5;
+const yAmp = 10;
+const size = 60;
 
 const ROCKS = 0;
 const yAxis = new THREE.Vector3(0,1,0);
@@ -213,7 +213,7 @@ function initThree () {
     water.position.set(0, yAmp/2, 0);
     Displacement.turbulence(water.geometry.vertices, xAmp * size);
 
-    scene.add(water);
+    // scene.add(water);
 
 
 // texture.load('assets/stone_texture.jpg', function (texture){
