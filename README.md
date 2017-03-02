@@ -2,4 +2,4 @@
 
 
 Current:
-![](https://github.com/prevuelta/zen/preview.jpg "Zen garden current render")
+![](https://raw.githubusercontent.com/prevuelta/zen/master/preview.png "Zen garden current render")
