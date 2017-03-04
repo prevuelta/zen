@@ -105,6 +105,22 @@ function Terrain (size, baseAmp, heightAmp) {
         // geometry.faces.push(new THREE.Face3(size * size - size, size * size - 1, 0));
     }
 
+    // debugger;
+ // geometry.computeVertexNormals();
+
+    // var modifier = new SubdivisionModifier(2);
+    // modifier.modify( geometry );
+    let fields = [];
+    for (let i = 0; i < 40;i ++)  {
+        fields[i] = Field({x: Util.randomInt(0, size*2), y: 0, z: Util.randomInt(0, size*2)}, Util.randomInt(-4, 5));
+    }
+
+    geometry.vertices.forEach(v => {
+        fields.forEach(f => f.affect(v));
+        // v.y = Math.floor(v.y) / 2;
+    });
+
+
     geometry.computeFaceNormals();
     geometry.mergeVertices();
 

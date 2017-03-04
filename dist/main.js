@@ -6512,6 +6512,30 @@ function Terrain (size, baseAmp, heightAmp) {
         // geometry.faces.push(new THREE.Face3(size * size - size, size * size - 1, 0));
     }
 
+<<<<<<< Updated upstream
+=======
+    // debugger;
+ // geometry.computeVertexNormals();
+
+    // var modifier = new SubdivisionModifier(2);
+    // modifier.modify( geometry );
+    let fields = [];
+    for (let i = 0; i < 40;i ++)  {
+        fields[i] = Field({x: Util.randomInt(0, size*2), y: 0, z: Util.randomInt(0, size*2)}, Util.randomInt(-4, 5));
+    }
+
+    geometry.vertices.forEach(v => {
+        fields.forEach(f => f.affect(v));
+        // v.y = Math.floor(v.y) / 2;
+    });
+
+    geometry.vertices.forEach(v => {
+        fields.forEach(f => f.affect(v));
+        // v.y = Math.floor(v.y) / 2;
+    });
+
+
+>>>>>>> Stashed changes
     geometry.computeFaceNormals();
     geometry.mergeVertices();
 
@@ -6743,9 +6767,15 @@ function initThree () {
 
     scene.add(terrain.mesh);
 
+<<<<<<< Updated upstream
     let water = Water(xAmp * size, yAmp);
     water.position.set(0, yAmp/2, 0);
     Displacement.turbulence(water.geometry.vertices, xAmp * size);
+=======
+    // scene.add(Water(xAmp * size, yAmp ));
+    let water = Water(xAmp * size, 2);
+    water.position.set(0, 0, 0);
+>>>>>>> Stashed changes
 
     // scene.add(water);
 
