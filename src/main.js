@@ -59,11 +59,11 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.5;
-const yAmp = 10;
-const size = 60;
+const xAmp = 0.6;
+const yAmp = 20;
+const size = 120;
 
-const ROCKS = 0;
+const ROCKS = 50;
 const yAxis = new THREE.Vector3(0,1,0);
 
 let step = 0;
@@ -150,10 +150,10 @@ function initCannon() {
         let y = bbox.max.y - bbox.min.y;
         let z = bbox.max.z - bbox.min.z;
 
-        // let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
+        let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
 
         // let shape = new CANNON.Sphere(0.3);
-        let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
+        // let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
 
         let body = new CANNON.Body({
             mass: 10
@@ -184,7 +184,7 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomFloat(0.2, 2));
+        let rock = Rock(Util.randomFloat(0.2, 5));
         // let geo = new THREE.SphereGeometry(0.6, 5, 5);
 
         // let rock = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({
@@ -209,11 +209,11 @@ function initThree () {
 
     scene.add(terrain.mesh);
 
-    let water = Water(xAmp * size, yAmp);
-    water.position.set(0, yAmp/2, 0);
+    let water = Water(xAmp * size, yAmp/4);
+    water.position.set(0, 0, 0);
     Displacement.turbulence(water.geometry.vertices, xAmp * size);
 
-    // scene.add(water);
+    scene.add(water);
 
 
 // texture.load('assets/stone_texture.jpg', function (texture){
@@ -270,9 +270,9 @@ function render() {
 
 function updatePhysics () {
       // Step the physics world
-    if (step < stepLimit)
+    // if (step < stepLimit)
         world.step(timeStep);
-    step++;
+    // step++;
       // Copy coordinates from Cannon.js to Three.js
     // terrain.position.copy(terrainBody.position);
     terrain2.position.copy(terrainBody.position);

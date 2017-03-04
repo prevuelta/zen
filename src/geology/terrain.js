@@ -74,6 +74,7 @@ function Terrain (size, baseAmp, heightAmp) {
     let heightMap = Matrix(size);
 
     Displacement.noise(heightMap);
+    Displacement.cellNoise(heightMap);
 
     /* Vertices */
     for (let i = 0; i < size; i++) {
@@ -86,12 +87,13 @@ function Terrain (size, baseAmp, heightAmp) {
         }
     }
 
-    Displacement.turbulence(geometry.vertices, size*baseAmp, 10, -2, 2);
+    Displacement.turbulence(geometry.vertices, size*baseAmp, 10, -3, 3);
 
     geometry.vertices.forEach((v, i) => {
         if (!(i % size) || i % size === size-1 || i < size || i > size * size - size) {
             v.y = 0;
         }
+        v.y = v.y < 0 ? 0 : v.y > 8 ? 8 : v.y;
         return v;
     });
 
@@ -105,21 +107,11 @@ function Terrain (size, baseAmp, heightAmp) {
         // geometry.faces.push(new THREE.Face3(size * size - size, size * size - 1, 0));
     }
 
-    // debugger;
- // geometry.computeVertexNormals();
+    /* Will smooth terrain */
+    // geometry.computeVertexNormals();
 
-    // var modifier = new SubdivisionModifier(2);
+    // var modifier = new SubdivisionModifier(5);
     // modifier.modify( geometry );
-    let fields = [];
-    for (let i = 0; i < 40;i ++)  {
-        fields[i] = Field({x: Util.randomInt(0, size*2), y: 0, z: Util.randomInt(0, size*2)}, Util.randomInt(-4, 5));
-    }
-
-    geometry.vertices.forEach(v => {
-        fields.forEach(f => f.affect(v));
-        // v.y = Math.floor(v.y) / 2;
-    });
-
 
     geometry.computeFaceNormals();
     geometry.mergeVertices();

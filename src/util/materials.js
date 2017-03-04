@@ -6,7 +6,7 @@ let frag = require('../shaders/water.frag');
 let vert = require('../shaders/water.vert');
 
 let earth = new THREE.MeshLambertMaterial( {
-    color: 0xFFFFFF,
+    color: 0xCD9A67,
     side: THREE.FrontSide,
     shading: THREE.FlatShading
 });

@@ -40,7 +40,8 @@
     "stats-js": "^1.0.0-alpha1",
     "three": "^0.81.0",
     "three-orbit-controls": "^82.1.0",
-    "three-subdivision-modifier": "^1.0.5"
+    "three-subdivision-modifier": "^1.0.5",
+    "worley-noise": "^1.0.1"
   },
   "devDependencies": {
     "babelify": "^7.3.0",

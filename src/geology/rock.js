@@ -16,7 +16,7 @@ const frag = require('../shaders/test.frag');
 function Rock (size) {
 
     size = size || 2;
-    let pointCount = Util.randomInt(6, 20);
+    let pointCount = 10;//Util.randomInt(10, 10);
 
     let points = [];
     let min = -size, max = size;
@@ -34,9 +34,9 @@ function Rock (size) {
     // let outline = qh(points, {skipTriangulation: true });
     let outline = qh(points);//.reduce((a, b) => a.concat(b)).map(i => points[i]).reduce((a, b) => a.concat(b));
 
-    // let geometry = new THREE.BufferGeometry();
+    let geometry = new THREE.BufferGeometry();
 
-    let geometry = new THREE.Geometry();
+    // let geometry = new THREE.Geometry();
 
     // let vertices = new Float32Array(outline);
 
@@ -56,18 +56,18 @@ function Rock (size) {
         return new THREE.Vector3(p[0], p[1], p[2]);
     });
 
-    // let vertices = new Float32Array(points.reduce((a,b) => a.concat(b)));
+    let vertices = new Float32Array(points.reduce((a,b) => a.concat(b)));
 
-    // geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
 
-    // let indices = new Uint16Array(outline.reduce((a,b) => a.concat(b)));
-    // geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+    let indices = new Uint16Array(outline.reduce((a,b) => a.concat(b)));
+    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
 
-    outline.forEach((p, i) => {
-        let [i1, i2, i3] = p;
-        geometry.faces.push(new THREE.Face3(i1, i2, i3));
-    });
+    // outline.forEach((p, i) => {
+    //     let [i1, i2, i3] = p;
+    //     geometry.faces.push(new THREE.Face3(i1, i2, i3));
+    // });
 
     geometry.computeFaceNormals();
     // geometry.mergeVertices();
@@ -97,8 +97,8 @@ function Rock (size) {
 
     /* Roughen */
 
-    var modifier = new SubdivisionModifier(Util.randomInt(2, 3));
-    modifier.modify( geometry );
+    // var modifier = new SubdivisionModifier(Util.randomInt(2, 3));
+    // modifier.modify( geometry );
 
     // geo.mergeVertices();
 

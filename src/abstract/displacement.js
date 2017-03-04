@@ -1,11 +1,23 @@
 'use strict';
 
 const FastSimplexNoise = require('fast-simplex-noise').default;
+const WorleyNoise = require('worley-noise');
 
 const Util = require('../util/util');
 const Field = require('../abstract/field');
 
 module.exports = {
+    cellNoise (matrix) {
+        let noise = new WorleyNoise(10, Math.random() * 1000);
+        let size = matrix.length;
+        let map = noise.getNormalizedMap(size);
+
+        for (let i = 0; i < size; i++) for (let j = 0; j < size; j++) {
+            // console.log(map[i][j]);
+            matrix[i][j] *= map[i * size + j];
+        }
+
+    },
     noise (matrix) {
         const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
         let max = matrix.length
