@@ -7,6 +7,7 @@ let Util = require('../util/util');
 let Helpers = require('../util/helpers');
 let Displacement = require('../abstract/displacement');
 let Matrix = require('../util/matrix');
+const Entropy = require('../abstract/entropy');
 
 let Materials = require('../util/materials');
 let Field = require('../abstract/field');
@@ -73,8 +74,12 @@ function Terrain (size, baseAmp, heightAmp) {
 
     let heightMap = Matrix(size);
 
-    Displacement.noise(heightMap);
-    Displacement.cellNoise(heightMap);
+    console.log("wat")
+    Displacement.noise(heightMap, 0.3);
+    Entropy.crack(heightMap);
+    Entropy.crack(heightMap);
+    Entropy.crack(heightMap);
+    // Displacement.cellNoise(heightMap);
 
     /* Vertices */
     for (let i = 0; i < size; i++) {
@@ -87,13 +92,13 @@ function Terrain (size, baseAmp, heightAmp) {
         }
     }
 
-    Displacement.turbulence(geometry.vertices, size*baseAmp, 10, -3, 3);
+    // Displacement.turbulence(geometry.vertices, size*baseAmp, 10, -4, 4);
 
     geometry.vertices.forEach((v, i) => {
         if (!(i % size) || i % size === size-1 || i < size || i > size * size - size) {
             v.y = 0;
         }
-        v.y = v.y < 0 ? 0 : v.y > 8 ? 8 : v.y;
+        v.y = v.y < 0 ? v.y : v.y > 8 ? 8 : v.y < 4 ? v.y - (4 - v.y) : v.y;
         return v;
     });
 
@@ -103,9 +108,10 @@ function Terrain (size, baseAmp, heightAmp) {
             geometry.faces.push(new THREE.Face3(i, i+1, i+size));
             geometry.faces.push(new THREE.Face3(i+1, i+size+1, i+size));
         }
-        // geometry.faces.push(new THREE.Face3(size * size-1, size-1, 0));
-        // geometry.faces.push(new THREE.Face3(size * size - size, size * size - 1, 0));
     }
+
+    geometry.faces.push(new THREE.Face3(size * size-1, size-1, 0));
+    geometry.faces.push(new THREE.Face3(0, size * size - size, size * size - 1));
 
     /* Will smooth terrain */
     // geometry.computeVertexNormals();
@@ -121,6 +127,14 @@ function Terrain (size, baseAmp, heightAmp) {
     buffer_g.fromGeometry(geometry);
 
     let mesh = new THREE.Mesh(buffer_g, Materials.EARTH);
+
+    let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
+    var line = new THREE.LineSegments( wireframe );
+    line.material.depthTest = false;
+    line.material.opacity = 0.5;
+    line.material.transparent = true;
+
+    // mesh.add( line );
 
     console.log('Terrain created...')
 

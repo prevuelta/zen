@@ -1,8 +1,8 @@
+'use strict';
+
+let THREE = require('three');
 
 let Cross = require('./cross');
-    // let normals = new THREE.FaceNormalsHelper( mesh );
-
-    // mesh.add(normals)
 
     //     let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
     // var line = new THREE.LineSegments( wireframe );
@@ -49,7 +49,19 @@ module.exports = {
         cross.position.z = pos.z;
 
         return cross;
+    },
+
+    normals (mesh) {
+        mesh.add(new THREE.FaceNormalsHelper( mesh ))
+    },
+
+    boundingBox (mesh) {
+        let helper = new THREE.BoundingBoxHelper(mesh, new THREE.Color(0xFF0000));
+        mesh.add(helper);
+        helper.update();
     }
+
+
 
     // geometry.vertices.forEach(f => {
     //     let cross = Cross(0.5);

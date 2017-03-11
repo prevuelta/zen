@@ -18,8 +18,8 @@ module.exports = {
         }
 
     },
-    noise (matrix) {
-        const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, max: 1, min: 0, octaves: 8 })
+    noise (matrix, depth) {
+        const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, min: 0, max: depth, octaves: 8 })
         let max = matrix.length
         for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {
             matrix[i][j] *= noiseGenerator.scaled([i, j]);

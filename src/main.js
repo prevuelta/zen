@@ -59,15 +59,15 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.6;
-const yAmp = 20;
-const size = 120;
+const xAmp = 0.2;
+const yAmp = 5;
+const size = 50;
 
-const ROCKS = 50;
+const ROCKS = 0;
 const yAxis = new THREE.Vector3(0,1,0);
 
 let step = 0;
-let stepLimit = 600;
+let stepLimit = 1200;
 
 initThree();
 initCannon();
@@ -150,16 +150,16 @@ function initCannon() {
         let y = bbox.max.y - bbox.min.y;
         let z = bbox.max.z - bbox.min.z;
 
-        let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
+        // let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
 
         // let shape = new CANNON.Sphere(0.3);
-        // let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
+        let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
 
         let body = new CANNON.Body({
             mass: 10
         });
         body.addShape(shape);
-        body.position.set(Util.randomInt(-size*xAmp/2, size*xAmp/2), 30, Util.randomInt(-size*xAmp/2, size*xAmp/2));
+        body.position.set(Util.randomInt(-size*xAmp/2, size*xAmp/2), 10, Util.randomInt(-size*xAmp/2, size*xAmp/2));
         // body.position.vadd(terrainBody.position, body.position);
         bodies[i].body = body;
         world.addBody(body);
@@ -184,7 +184,7 @@ function initThree () {
     group.position.y = 40;
 
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomFloat(0.2, 5));
+        let rock = Rock(Util.randomFloat(0.2, 3));
         // let geo = new THREE.SphereGeometry(0.6, 5, 5);
 
         // let rock = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({
@@ -213,7 +213,7 @@ function initThree () {
     water.position.set(0, 0, 0);
     Displacement.turbulence(water.geometry.vertices, xAmp * size);
 
-    scene.add(water);
+    // scene.add(water);
 
 
 // texture.load('assets/stone_texture.jpg', function (texture){
@@ -270,9 +270,9 @@ function render() {
 
 function updatePhysics () {
       // Step the physics world
-    // if (step < stepLimit)
+    if (step < stepLimit)
         world.step(timeStep);
-    // step++;
+    step++;
       // Copy coordinates from Cannon.js to Three.js
     // terrain.position.copy(terrainBody.position);
     terrain2.position.copy(terrainBody.position);

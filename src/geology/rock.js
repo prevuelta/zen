@@ -7,16 +7,20 @@ let Field = require('../abstract/Field');
 let Cross = require('../util/cross');
 let Util = require('../util/util');
 
+const Helpers = require('../util/helpers');
+
 const qh = require('quickhull3d');
 const SubdivisionModifier = require('three-subdivision-modifier');
 const vert = require('../shaders/test.vert');
 const frag = require('../shaders/test.frag');
 
+const Materials = require('../util/materials');
+
 
 function Rock (size) {
 
     size = size || 2;
-    let pointCount = 10;//Util.randomInt(10, 10);
+    let pointCount = 40;//Util.randomInt(10, 10);
 
     let points = [];
     let min = -size, max = size;
@@ -71,7 +75,7 @@ function Rock (size) {
 
     geometry.computeFaceNormals();
     // geometry.mergeVertices();
-    // geometry.computeVertexNormals();
+    geometry.computeVertexNormals();
 
     // Next, we need to merge vertices to clean up any unwanted vertex. 
     // geometry.mergeVertices();
@@ -173,7 +177,7 @@ function Rock (size) {
 
     let material = new THREE.MeshLambertMaterial( {
         color: 0xF4E0C5,
-        shading: THREE.FlatShading
+        shading: THREE.SmoothShading
     });
 
     // let material = new THREE.ShaderMaterial( {
@@ -188,16 +192,13 @@ function Rock (size) {
     // var buffer_g = new THREE.BufferGeometry();
     // buffer_g.fromGeometry(geometry);
 
-    let mesh = new THREE.Mesh( geometry, material );
+    let mesh = new THREE.Mesh( geometry, Materials.EARTH );
+
+    // Helpers.normals(mesh);
     // let mesh = new THREE.Mesh( buffer_g, material );
 
     // let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
 
-    let helper = new THREE.BoundingBoxHelper(mesh, new THREE.Color(0xFF0000));
-
-    // mesh.add(helper);
-
-    helper.update();
 
     // console.log("Helper", helper.box.max.x - helper.box.min.x)
 
