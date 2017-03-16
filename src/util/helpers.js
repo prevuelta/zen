@@ -15,8 +15,6 @@ let Cross = require('./cross');
 
     // let markers = new THREE.Object3D();
 
-
-
     // geometry.vertices.forEach(f => {
     //     let cross = Cross(0.5);
 
@@ -40,7 +38,6 @@ let Cross = require('./cross');
     //object.applyMatrix(mS);
 
 module.exports = {
-    // let markers = new THREE.Object3D();
     marker (pos, weight = 0.5) {
         let cross = Cross(weight);
 
@@ -50,26 +47,19 @@ module.exports = {
 
         return cross;
     },
-
     normals (mesh) {
         mesh.add(new THREE.FaceNormalsHelper( mesh ))
     },
-
     boundingBox (mesh) {
         let helper = new THREE.BoundingBoxHelper(mesh, new THREE.Color(0xFF0000));
         mesh.add(helper);
         helper.update();
+    },
+    wireframe (geometry) {
+        let line = new THREE.LineSegments( new THREE.WireframeGeometry( geometry ) );
+        line.material.depthTest = false;
+        line.material.opacity = 0.5;
+        line.material.transparent = true;
+        return line;
     }
-
-
-
-    // geometry.vertices.forEach(f => {
-    //     let cross = Cross(0.5);
-
-    //     cross.position.x = f.x;
-    //     cross.position.y = f.y;
-    //     cross.position.z = f.z;
-
-    //     markers.add(cross);
-    // });
 }

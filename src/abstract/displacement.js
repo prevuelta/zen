@@ -7,22 +7,21 @@ const Util = require('../util/util');
 const Field = require('../abstract/field');
 
 module.exports = {
-    cellNoise (matrix) {
-        let noise = new WorleyNoise(10, Math.random() * 1000);
+    cellNoise (matrix, depth = 2, points = 20) {
+        let noise = new WorleyNoise(points, Math.random() * 1000);
         let size = matrix.length;
         let map = noise.getNormalizedMap(size);
 
         for (let i = 0; i < size; i++) for (let j = 0; j < size; j++) {
-            // console.log(map[i][j]);
             matrix[i][j] *= map[i * size + j];
         }
 
     },
     noise (matrix, depth) {
-        const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, min: 0, max: depth, octaves: 8 })
+        const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, min: 0, max: 1, octaves: 8 })
         let max = matrix.length
         for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {
-            matrix[i][j] *= noiseGenerator.scaled([i, j]);
+            matrix[i][j] += noiseGenerator.scaled([i, j]) * depth;
         }
     },
     multiply (matrix, scalar = 1) {
@@ -30,6 +29,12 @@ module.exports = {
             matrix[i][j] *= scalar;
         }
         return matrix;
+    },
+    limit (matrix, lower, upper) {
+        let max = matrix.length
+        for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {
+            matrix[i][j] = Math.min(upper, Math.max(lower, matrix[i][j]));
+        }
     },
     turbulence (vertices, size, fieldCount = 2, min = -4, max = 4) {
         let fields = [];

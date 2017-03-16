@@ -6037,22 +6037,21 @@ const Util = require('../util/util');
 const Field = require('../abstract/field');
 
 module.exports = {
-    cellNoise (matrix) {
-        let noise = new WorleyNoise(10, Math.random() * 1000);
+    cellNoise (matrix, depth = 2, points = 20) {
+        let noise = new WorleyNoise(points, Math.random() * 1000);
         let size = matrix.length;
         let map = noise.getNormalizedMap(size);
 
         for (let i = 0; i < size; i++) for (let j = 0; j < size; j++) {
-            // console.log(map[i][j]);
             matrix[i][j] *= map[i * size + j];
         }
 
     },
     noise (matrix, depth) {
-        const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, min: 0, max: depth, octaves: 8 })
+        const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, min: 0, max: 1, octaves: 8 })
         let max = matrix.length
         for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {
-            matrix[i][j] *= noiseGenerator.scaled([i, j]);
+            matrix[i][j] += noiseGenerator.scaled([i, j]) * depth;
         }
     },
     multiply (matrix, scalar = 1) {
@@ -6060,6 +6059,12 @@ module.exports = {
             matrix[i][j] *= scalar;
         }
         return matrix;
+    },
+    limit (matrix, lower, upper) {
+        let max = matrix.length
+        for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {
+            matrix[i][j] = Math.min(upper, Math.max(lower, matrix[i][j]));
+        }
     },
     turbulence (vertices, size, fieldCount = 2, min = -4, max = 4) {
         let fields = [];
@@ -6104,29 +6109,78 @@ module.exports = {
         // dir.multiplyScalar(dist/(5*(1+Math.random())));
         dir.multiplyScalar(0.1);//dist/(5*(1+Math.random())));
         v.sub(dir);
-
-
     },
-    crack (matrix, width = 10, depth = 1) {
+    crack (matrix, width = 10) {
         let size = matrix.length;
-        const noiseGenerator = new FastSimplexNoise({ frequency: 0.01, min: 0, max: size, octaves: 8 })
-        const noiseGenerator2 = new FastSimplexNoise({ frequency: 0.01, min: 0, max: size, octaves: 8 })
-        const depthNoise = new FastSimplexNoise({ frequency: 0.01, min: 0, max: depth, octaves: 8 })
-        for (let i = 0; i < size; i++) for (let j = 0; j < size; j++) {
-            let n1 = noiseGenerator.scaled([i, j]);
-            let n2 = noiseGenerator2.scaled([i, j]);
-            let dif = n1 - n2;
-            if (j >= Math.floor(n1) && j <= Math.floor(n2)) {
-                matrix[i][j] -= Math.cos((j-n1) / dif);//depthNoise.scaled([i,j]);
-                // if (j === Math.floor(n2))
-                // if (j === Math.floor(n1))
+        const noiseGenerator = new FastSimplexNoise({ frequency: 0.03, min: 0, max: size/4, octaves: 8 })
+        const noiseGenerator2 = new FastSimplexNoise({ frequency: 0.03, min: size/2, max: size, octaves: 8 })
+
+        for (let i = 0; i < size; i++) {
+            let n1 = Math.floor(noiseGenerator.scaled([i, 0]));
+            let n2 = Math.floor(noiseGenerator2.scaled([i, 0]));
+            let diff = n2 - n1;
+            const depthNoise = new FastSimplexNoise({ frequency: 0.02, min: 0, max: 1, octaves: 8 })
+            console.log("Noise", n1, n2, diff);
+
+            for (let j = 0; j < size; j++) {
+                // 3 9
+                // diff 6
+                // 7 - 3
+                // Math.cos(4/6);
+                if (j >= n1 && j <= n2) {
+                    let norm = ((j - n1) / diff) || 0;
+                    let normCos = Math.cos(norm*(Math.PI*2))/2-0.5;
+                    // console.log("Norm", norm, "Normcos", normCos)
+                    let amount = normCos * depthNoise.scaled([i,j]);
+                    // matrix[i][j] -= 1;//amount;
+                    matrix[i][j] += amount;
+                    // if (j === Math.floor(n2))
+                    // if (j === Math.floor(n1))
+                }
             }
         }
     },
     break (geo, min, max) {
 
     },
-    erode (geo) {
+    edge (matrix, depth = 2) {
+        let size = matrix.length;
+        let offset = Math.random()*size;
+        let amp = Math.random() * 10;
+        let depthNoise = new FastSimplexNoise({ frequency: 0.04, min: 0, max: 20, octaves: 8 })
+        for (let i = 0; i < size; i++) {
+
+            let slope = 10;
+            for (let j = 0; j < size; j++) {
+                let noise = depthNoise.scaled([i, 0]);
+                let limit = Math.cos((i+offset)/10)*amp + noise + size/3;
+                if (slope && j > limit) {
+
+                    // console.log(1-1/slope, matrix[i][j])
+                    matrix[i][j] -= matrix[i][j] - 1/slope;
+                    // matrix[i][j] = 0.4;//height/slope;
+                    slope--;
+                } else if (j > limit) {
+                    matrix[i][j] = 0;// depth;
+                }
+            }
+        }
+    },
+    normalize (matrix, depth) {
+        let size = matrix.length;
+        for (let i = 0; i < size; i++) {
+            for (let j = 0; j < size; j++) {
+                matrix[i][j] += Math.sqrt(depth-matrix[i][j]);
+            }
+        }
+    },
+
+    // (2) 4-2 = 2 2+ 1.414
+    // (3) 4-3 = 1 3 + 
+    // (0) 4-0 = 4 0 + 2
+    // (10) 4-10 = -6 10+(Math.sqrt(-6))
+
+    erode () {
         geo.vertices.forEach(v => {
             let dist = geo.centroid.distanceTo(v);
             let dir = v.clone();
@@ -6632,15 +6686,19 @@ function Terrain (size, baseAmp, heightAmp) {
     let geometry = new THREE.Geometry();
     // let geometry = new Three.PlaneBufferGeometry(size*baseAmp, size*baseAmp, size, size);
 
-
     let heightMap = Matrix(size);
 
     console.log("wat")
-    Displacement.noise(heightMap, 0.3);
-    Entropy.crack(heightMap);
-    Entropy.crack(heightMap);
-    Entropy.crack(heightMap);
-    // Displacement.cellNoise(heightMap);
+    // Entropy.crack(heightMap);
+    // Entropy.crack(heightMap);
+    // Entropy.crack(heightMap);
+    // Displacement.cellNoise(heightMap, 10);
+    // Displacement.cellNoise(heightMap, 10);
+    Entropy.edge(heightMap, 3);
+    // Displacement.cellNoise(heightMap, 5);
+    // Displacement.limit(heightMap, 0, 0.6);
+    Displacement.noise(heightMap, 0.2);
+    // Entropy.normalize(heightMap, 1);
 
     /* Vertices */
     for (let i = 0; i < size; i++) {
@@ -6659,7 +6717,7 @@ function Terrain (size, baseAmp, heightAmp) {
         if (!(i % size) || i % size === size-1 || i < size || i > size * size - size) {
             v.y = 0;
         }
-        v.y = v.y < 0 ? v.y : v.y > 8 ? 8 : v.y < 4 ? v.y - (4 - v.y) : v.y;
+        // v.y = v.y < 0 ? 0 : v.y > 1000 ? 1000 : v.y;// < 4 ? v.y - (4 - v.y) : v.y;
         return v;
     });
 
@@ -6677,25 +6735,15 @@ function Terrain (size, baseAmp, heightAmp) {
     /* Will smooth terrain */
     // geometry.computeVertexNormals();
 
-    // var modifier = new SubdivisionModifier(5);
-    // modifier.modify( geometry );
-
     geometry.computeFaceNormals();
     geometry.mergeVertices();
-
 
     var buffer_g = new THREE.BufferGeometry();
     buffer_g.fromGeometry(geometry);
 
     let mesh = new THREE.Mesh(buffer_g, Materials.EARTH);
 
-    let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
-    var line = new THREE.LineSegments( wireframe );
-    line.material.depthTest = false;
-    line.material.opacity = 0.5;
-    line.material.transparent = true;
-
-    // mesh.add( line );
+    // mesh.add( Helpers.wireframe(geometry) );
 
     console.log('Terrain created...')
 
@@ -6769,8 +6817,8 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.2;
-const yAmp = 5;
+const xAmp = 0.5;
+const yAmp = 10;
 const size = 50;
 
 const ROCKS = 0;
@@ -6919,8 +6967,8 @@ function initThree () {
 
     scene.add(terrain.mesh);
 
-    let water = Water(xAmp * size, yAmp/4);
-    water.position.set(0, 0, 0);
+    let water = Water(xAmp * size, 2);
+    // water.position.set(0, yAmp/2, 0);
     Displacement.turbulence(water.geometry.vertices, xAmp * size);
 
     // scene.add(water);
@@ -6985,9 +7033,9 @@ function updatePhysics () {
     step++;
       // Copy coordinates from Cannon.js to Three.js
     // terrain.position.copy(terrainBody.position);
-    terrain2.position.copy(terrainBody.position);
+    // terrain2.position.copy(terrainBody.position);
     // terrain.quaternion.copy(terrainBody.quaternion);
-    terrain2.quaternion.copy(terrainBody.quaternion);
+    // terrain2.quaternion.copy(terrainBody.quaternion);
 
     plane.position.copy(groundBody.position);
     plane.quaternion.copy(groundBody.quaternion);
@@ -7071,8 +7119,6 @@ let Cross = require('./cross');
 
     // let markers = new THREE.Object3D();
 
-
-
     // geometry.vertices.forEach(f => {
     //     let cross = Cross(0.5);
 
@@ -7096,7 +7142,6 @@ let Cross = require('./cross');
     //object.applyMatrix(mS);
 
 module.exports = {
-    // let markers = new THREE.Object3D();
     marker (pos, weight = 0.5) {
         let cross = Cross(weight);
 
@@ -7106,28 +7151,21 @@ module.exports = {
 
         return cross;
     },
-
     normals (mesh) {
         mesh.add(new THREE.FaceNormalsHelper( mesh ))
     },
-
     boundingBox (mesh) {
         let helper = new THREE.BoundingBoxHelper(mesh, new THREE.Color(0xFF0000));
         mesh.add(helper);
         helper.update();
+    },
+    wireframe (geometry) {
+        let line = new THREE.LineSegments( new THREE.WireframeGeometry( geometry ) );
+        line.material.depthTest = false;
+        line.material.opacity = 0.5;
+        line.material.transparent = true;
+        return line;
     }
-
-
-
-    // geometry.vertices.forEach(f => {
-    //     let cross = Cross(0.5);
-
-    //     cross.position.x = f.x;
-    //     cross.position.y = f.y;
-    //     cross.position.z = f.z;
-
-    //     markers.add(cross);
-    // });
 }
 },{"./cross":22,"three":"three"}],24:[function(require,module,exports){
 'use strict';
@@ -7138,7 +7176,7 @@ let frag = require('../shaders/water.frag');
 let vert = require('../shaders/water.vert');
 
 let earth = new THREE.MeshLambertMaterial( {
-    color: 0xCD9A67,
+    color: 0x666666,
     side: THREE.FrontSide,
     shading: THREE.FlatShading
 });

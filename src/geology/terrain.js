@@ -71,15 +71,19 @@ function Terrain (size, baseAmp, heightAmp) {
     let geometry = new THREE.Geometry();
     // let geometry = new Three.PlaneBufferGeometry(size*baseAmp, size*baseAmp, size, size);
 
-
     let heightMap = Matrix(size);
 
     console.log("wat")
-    Displacement.noise(heightMap, 0.3);
-    Entropy.crack(heightMap);
-    Entropy.crack(heightMap);
-    Entropy.crack(heightMap);
-    // Displacement.cellNoise(heightMap);
+    // Entropy.crack(heightMap);
+    // Entropy.crack(heightMap);
+    // Entropy.crack(heightMap);
+    // Displacement.cellNoise(heightMap, 10);
+    // Displacement.cellNoise(heightMap, 10);
+    Entropy.edge(heightMap, 3);
+    // Displacement.cellNoise(heightMap, 5);
+    // Displacement.limit(heightMap, 0, 0.6);
+    Displacement.noise(heightMap, 0.2);
+    // Entropy.normalize(heightMap, 1);
 
     /* Vertices */
     for (let i = 0; i < size; i++) {
@@ -98,7 +102,7 @@ function Terrain (size, baseAmp, heightAmp) {
         if (!(i % size) || i % size === size-1 || i < size || i > size * size - size) {
             v.y = 0;
         }
-        v.y = v.y < 0 ? v.y : v.y > 8 ? 8 : v.y < 4 ? v.y - (4 - v.y) : v.y;
+        // v.y = v.y < 0 ? 0 : v.y > 1000 ? 1000 : v.y;// < 4 ? v.y - (4 - v.y) : v.y;
         return v;
     });
 
@@ -116,25 +120,15 @@ function Terrain (size, baseAmp, heightAmp) {
     /* Will smooth terrain */
     // geometry.computeVertexNormals();
 
-    // var modifier = new SubdivisionModifier(5);
-    // modifier.modify( geometry );
-
     geometry.computeFaceNormals();
     geometry.mergeVertices();
-
 
     var buffer_g = new THREE.BufferGeometry();
     buffer_g.fromGeometry(geometry);
 
     let mesh = new THREE.Mesh(buffer_g, Materials.EARTH);
 
-    let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
-    var line = new THREE.LineSegments( wireframe );
-    line.material.depthTest = false;
-    line.material.opacity = 0.5;
-    line.material.transparent = true;
-
-    // mesh.add( line );
+    // mesh.add( Helpers.wireframe(geometry) );
 
     console.log('Terrain created...')
 

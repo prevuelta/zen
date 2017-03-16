@@ -59,8 +59,8 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.2;
-const yAmp = 5;
+const xAmp = 0.5;
+const yAmp = 10;
 const size = 50;
 
 const ROCKS = 0;
@@ -209,8 +209,8 @@ function initThree () {
 
     scene.add(terrain.mesh);
 
-    let water = Water(xAmp * size, yAmp/4);
-    water.position.set(0, 0, 0);
+    let water = Water(xAmp * size, 2);
+    // water.position.set(0, yAmp/2, 0);
     Displacement.turbulence(water.geometry.vertices, xAmp * size);
 
     // scene.add(water);
@@ -275,9 +275,9 @@ function updatePhysics () {
     step++;
       // Copy coordinates from Cannon.js to Three.js
     // terrain.position.copy(terrainBody.position);
-    terrain2.position.copy(terrainBody.position);
+    // terrain2.position.copy(terrainBody.position);
     // terrain.quaternion.copy(terrainBody.quaternion);
-    terrain2.quaternion.copy(terrainBody.quaternion);
+    // terrain2.quaternion.copy(terrainBody.quaternion);
 
     plane.position.copy(groundBody.position);
     plane.quaternion.copy(groundBody.quaternion);
