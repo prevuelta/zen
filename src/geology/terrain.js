@@ -75,14 +75,14 @@ function Terrain (size, baseAmp, heightAmp) {
 
     console.log("wat")
     // Entropy.crack(heightMap);
-    // Entropy.crack(heightMap);
-    // Entropy.crack(heightMap);
+    
+    Entropy.edge(heightMap, 1);
     // Displacement.cellNoise(heightMap, 10);
-    // Displacement.cellNoise(heightMap, 10);
-    Entropy.edge(heightMap, 3);
-    // Displacement.cellNoise(heightMap, 5);
-    // Displacement.limit(heightMap, 0, 0.6);
+    Displacement.cellNoise(heightMap, 5);
+    Displacement.limit(heightMap, 0, 1);
     Displacement.noise(heightMap, 0.2);
+
+    Entropy.erode(heightMap);
     // Entropy.normalize(heightMap, 1);
 
     /* Vertices */

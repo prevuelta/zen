@@ -55,19 +55,26 @@ module.exports = {
         let size = matrix.length;
         let offset = Math.random()*size;
         let amp = Math.random() * 10;
-        let depthNoise = new FastSimplexNoise({ frequency: 0.04, min: 0, max: 20, octaves: 8 })
+        let depthNoise = new FastSimplexNoise({ frequency: 0.04, min: 0, max: size/2, octaves: 8 })
         for (let i = 0; i < size; i++) {
 
-            let slope = 10;
-            for (let j = 0; j < size; j++) {
-                let noise = depthNoise.scaled([i, 0]);
-                let limit = Math.cos((i+offset)/10)*amp + noise + size/3;
-                if (slope && j > limit) {
+            let slope = 10,
+                inc = 0,
+                count = 0;
 
-                    // console.log(1-1/slope, matrix[i][j])
-                    matrix[i][j] -= matrix[i][j] - 1/slope;
-                    // matrix[i][j] = 0.4;//height/slope;
-                    slope--;
+            let noise = depthNoise.scaled([i, 0]);
+            let limit = Math.floor(Math.cos((i+offset)/10)*amp + noise);
+
+            for (let j = 0; j < size; j++) {
+
+
+                if (j === limit) {
+                    inc = matrix[i][j]/slope;
+                }
+
+                if (count < slope && j > limit) {
+                    matrix[i][j] -= count * inc;
+                    count++;
                 } else if (j > limit) {
                     matrix[i][j] = 0;// depth;
                 }
@@ -83,18 +90,38 @@ module.exports = {
         }
     },
 
-    // (2) 4-2 = 2 2+ 1.414
-    // (3) 4-3 = 1 3 + 
-    // (0) 4-0 = 4 0 + 2
-    // (10) 4-10 = -6 10+(Math.sqrt(-6))
+    erode (matrix, displacement = 0.2) {
 
-    erode () {
-        geo.vertices.forEach(v => {
-            let dist = geo.centroid.distanceTo(v);
-            let dir = v.clone();
-            dir.normalize();
-            dir.multiplyScalar(dist/(2*(1+Math.random())));
-            v.sub(dir);
+        let size = matrix.length;
+        let store = [];
+
+        function getLowestNeighbor (x, y) {
+            Math.min(
+                matrix[x-1][y-1],
+                matrix[x][y-1],
+                matrix[x+1][y-1],
+                matrix[x-1][y],
+                matrix[x+1][y],
+                matrix[x+1][y-1],
+                matrix[x+1][y],
+                matrix[x+1][y+1],
+            );
+        }
+
+        for (let i = 0; i < size; i++) {
+            for (let j = 0; j < size; j++) {
+                // matrix[i][j] += Math.sqrt(depth-matrix[i][j]);
+                store.push({position: [i,j], value: matrix[i][j] });
+            }
+        }
+        store.sort((a,b) => a.value - b.value).reverse();
+        console.log(store[0].value, store[1].value);
+
+        store.forEach(p => {
+
         });
+        // sort by height
+        // Erode each (check surrounding if one is lower remove percentage and add to next location and repeat until none are lower)
+        // matrix[i][j]
     }
 }
