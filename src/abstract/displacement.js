@@ -7,7 +7,7 @@ const Util = require('../util/util');
 const Field = require('../abstract/field');
 
 module.exports = {
-    cellNoise (matrix, depth = 2, points = 20) {
+    cellNoise (matrix, depth = 0.2, points = 20) {
         let noise = new WorleyNoise(points, Math.random() * 1000);
         let size = matrix.length;
         let map = noise.getNormalizedMap(size);
@@ -36,6 +36,12 @@ module.exports = {
             matrix[i][j] = Math.min(upper, Math.max(lower, matrix[i][j]));
         }
     },
+    softLimit (matrix, lower, upper) {
+        let max = matrix.length
+        for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {
+            // matrix[i][j] = 
+        }
+    }
     turbulence (vertices, size, fieldCount = 2, min = -4, max = 4) {
         let fields = [];
         for (let i = 0; i < fieldCount;i ++)  {

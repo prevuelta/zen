@@ -77,12 +77,17 @@ function Terrain (size, baseAmp, heightAmp) {
     // Entropy.crack(heightMap);
     
     Entropy.edge(heightMap, 1);
-    // Displacement.cellNoise(heightMap, 10);
-    Displacement.cellNoise(heightMap, 5);
-    Displacement.limit(heightMap, 0, 1);
+    Displacement.cellNoise(heightMap, 10);
+    // Displacement.cellNoise(heightMap, 5);
+    // Displacement.limit(heightMap, 0, 1);
+    Displacement.softLimit(heightMap, 0, 1);
     Displacement.noise(heightMap, 0.2);
 
-    Entropy.erode(heightMap);
+    Entropy.erode(heightMap, 1);
+    // Entropy.erode(heightMap);
+    // Entropy.erode(heightMap);
+    // Entropy.erode(heightMap);
+    // Entropy.erode(heightMap);
     // Entropy.normalize(heightMap, 1);
 
     /* Vertices */
@@ -126,7 +131,7 @@ function Terrain (size, baseAmp, heightAmp) {
     var buffer_g = new THREE.BufferGeometry();
     buffer_g.fromGeometry(geometry);
 
-    let mesh = new THREE.Mesh(buffer_g, Materials.EARTH);
+    let mesh = new THREE.Mesh(buffer_g, Materials.TERRAIN);
 
     // mesh.add( Helpers.wireframe(geometry) );
 

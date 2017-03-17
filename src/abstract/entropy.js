@@ -56,9 +56,10 @@ module.exports = {
         let offset = Math.random()*size;
         let amp = Math.random() * 10;
         let depthNoise = new FastSimplexNoise({ frequency: 0.04, min: 0, max: size/2, octaves: 8 })
+        let slopeNoise = new FastSimplexNoise({ frequency: 0.04, min: 0, max: 10, octaves: 8 })
         for (let i = 0; i < size; i++) {
 
-            let slope = 10,
+            let slope = Math.floor(slopeNoise.scaled([i, 0])),
                 inc = 0,
                 count = 0;
 
@@ -90,36 +91,125 @@ module.exports = {
         }
     },
 
-    erode (matrix, displacement = 0.2) {
+    erode (matrix, iterations) {
 
         let size = matrix.length;
-        let store = [];
-
-        function getLowestNeighbor (x, y) {
-            Math.min(
-                matrix[x-1][y-1],
-                matrix[x][y-1],
-                matrix[x+1][y-1],
-                matrix[x-1][y],
-                matrix[x+1][y],
-                matrix[x+1][y-1],
-                matrix[x+1][y],
-                matrix[x+1][y+1],
-            );
-        }
-
-        for (let i = 0; i < size; i++) {
-            for (let j = 0; j < size; j++) {
-                // matrix[i][j] += Math.sqrt(depth-matrix[i][j]);
-                store.push({position: [i,j], value: matrix[i][j] });
-            }
-        }
-        store.sort((a,b) => a.value - b.value).reverse();
-        console.log(store[0].value, store[1].value);
-
-        store.forEach(p => {
-
+        let store = matrixToLinkedObject(matrix)
+        let highestToLowest = Object.keys(store).sort((a,b) => {
+            a.value - b.value
         });
+
+        while (iterations) {
+            console.log("Iteration----", iterations)
+            highestToLowest.forEach(v => {
+                erode(store[v], 0);
+            });
+            iterations--;
+        }
+
+        Object.keys(store).forEach(k => {
+            let o = store[k];
+            let [x, y] = k.split('-');
+            matrix[+x][+y] = o.value;
+        });
+
+// console.log(highestToLowest);
+        // store.sort((a,b) => a.value - b.value).reverse();
+        // console.log(store[0].value, store[1].value);
+
+        // store.forEach(p => {
+        //     erode(p);
+        // });
+        // erode(store[0])
+
+        function erode (p, carry) {
+
+            let lowestNeighbor = p.neighbors.reduce((a, b) => a.value < b.value ? a : b);
+            // console.log(p, lowestNeighbor)
+            if (p !== lowestNeighbor) {
+                // p.value
+                // if (carry) {
+                    // p.value += carry * 0.2;
+                    // carry -= carry * 0.2;
+                    // erode(lowestNeighbor, carry);
+                // } else {
+                    // p.value -= 0.8;
+                    lowestNeighbor.value -= 0.01;
+                    carry += 0.01;
+                    erode(lowestNeighbor, carry)
+                // }
+                // p.value += deposit;
+                // carry -= deposit;
+                // erode(lowestNeighbor, carry, deposit);
+            } else {
+                console.log("P is lowest neightbor")
+                p.value += carry;
+                // p.value += add;
+            }
+
+            // let neighbors = [
+            //         matrix[x-1] && matrix[x-1][y-1],
+            //         matrix[x] && matrix[x][y-1],
+            //         matrix[x+1] && matrix[x+1][y-1],
+            //         matrix[x-1] && matrix[x-1][y],
+            //         matrix[x][y],
+            //         matrix[x+1] && matrix[x+1][y],
+            //         matrix[x+1] && matrix[x+1][y-1],
+            //         matrix[x+1] && matrix[x+1][y],
+            //         matrix[x+1] && matrix[x+1][y+1]
+            //     ].filter(v => v != undefined;
+
+            // console.log(neighbors);
+
+            // neighbors = matrixToArray(neighbors);
+
+            // console.log(neighbors);
+
+            // let minNeighbor = neighbors.reduce((a,b) => Math.min(a.value, b.value));
+            // console.log(minNeightbor)
+        }
+
+        function matrixToLinkedObject (matrix) {
+            let linked = {
+
+            };
+            for (let i = 0; i < matrix.length; i++) {
+                for (let j = 0; j < matrix[i].length; j++) {
+                    linked[`${i}-${j}`] = { value: matrix[i][j], neighbors: [] };
+                }
+            }
+            Object.keys(linked).forEach(k => {
+                linked[k].neighbors = getNeighbors(linked, k.split('-'))
+            });
+            return linked;
+        }
+
+        function getNeighbors (linked, xy) {
+
+            let neighbors = [];
+
+            let [x, y] = xy;
+
+            let positions = [
+                [-1,-1],
+                [0, -1],
+                [1, -1],
+                [-1, 0],
+                [0, 0],
+                [1, 0],
+                [-1, 1],
+                [0, 1],
+                [1, 1]
+            ];
+
+            positions.forEach(pos => {
+                let key = `${+x+pos[0]}-${+y+pos[1]}`;
+                neighbors.push(linked[key]);
+            });
+
+            return neighbors.filter(v => v != undefined);
+        }
+
         // sort by height
         // Erode each (check surrounding if one is lower remove percentage and add to next location and repeat until none are lower)
         // matrix[i][j]

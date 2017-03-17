@@ -59,9 +59,9 @@ let world,
 
 let geos = [];
 
-const xAmp = 0.5;
-const yAmp = 10;
-const size = 50;
+const xAmp = 0.4;
+const yAmp = 4;
+const size = 40;
 
 const ROCKS = 0;
 const yAxis = new THREE.Vector3(0,1,0);
