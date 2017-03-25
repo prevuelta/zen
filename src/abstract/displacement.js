@@ -41,7 +41,7 @@ module.exports = {
         for (let i = 0; i < max; i++) for (let j = 0; j < max; j++) {
             // matrix[i][j] = 
         }
-    }
+    },
     turbulence (vertices, size, fieldCount = 2, min = -4, max = 4) {
         let fields = [];
         for (let i = 0; i < fieldCount;i ++)  {

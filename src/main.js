@@ -61,7 +61,7 @@ let geos = [];
 
 const xAmp = 0.4;
 const yAmp = 4;
-const size = 40;
+const size = 20;
 
 const ROCKS = 0;
 const yAxis = new THREE.Vector3(0,1,0);

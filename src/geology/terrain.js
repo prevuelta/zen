@@ -105,7 +105,7 @@ function Terrain (size, baseAmp, heightAmp) {
 
     geometry.vertices.forEach((v, i) => {
         if (!(i % size) || i % size === size-1 || i < size || i > size * size - size) {
-            v.y = 0;
+            // v.y = 0;
         }
         // v.y = v.y < 0 ? 0 : v.y > 1000 ? 1000 : v.y;// < 4 ? v.y - (4 - v.y) : v.y;
         return v;

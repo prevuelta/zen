@@ -32,7 +32,7 @@ let terrain =  new THREE.ShaderMaterial( {
         resolution: { value: new THREE.Vector2() }
     },
     vertexShader: terrainVert,
-    fragmentShader: terrainFrag,
+    fragmentShader: terrainFrag
 });
 
 

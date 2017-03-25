@@ -142,7 +142,7 @@ module.exports = {
                 // carry -= deposit;
                 // erode(lowestNeighbor, carry, deposit);
             } else {
-                console.log("P is lowest neightbor")
+                // console.log("P is lowest neightbor")
                 p.value += carry;
                 // p.value += add;
             }
