@@ -75,24 +75,45 @@ function Terrain (size, baseAmp, heightAmp) {
 
     console.log("wat")
     // Entropy.crack(heightMap);
-    
-    Entropy.edge(heightMap, 1);
-    Displacement.cellNoise(heightMap, 10);
-    // Displacement.cellNoise(heightMap, 5);
-    // Displacement.limit(heightMap, 0, 1);
-    Displacement.softLimit(heightMap, 0, 1);
-    Displacement.noise(heightMap, 0.2);
 
-    Entropy.erode(heightMap, 1);
+        Entropy.edge(heightMap, 1);
+        Displacement.cellNoise(heightMap, 10);
+
+    Displacement.limit(heightMap, 0, 0.2);
+    // Displacement.softLimit(heightMap, 0, 0.5);
+        Displacement.noise(heightMap, 0.2);
+
+        Entropy.erode(heightMap, 1);
     // Entropy.erode(heightMap);
     // Entropy.erode(heightMap);
     // Entropy.erode(heightMap);
     // Entropy.erode(heightMap);
     // Entropy.normalize(heightMap, 1);
 
+    // let start = [];
+    // let end = [];
+
+    // for (let i = 0; i < heightMap.length; i++) {
+    //     start.push([heightMap.length,0,0]);
+    //     end.push([heightMap.length,0,heightMap.length]);
+    // }
+
+    // heightMap.push(end);
+    // heightMap.unshift(start);
+
+    // for (let i = 0; i < heightMap.length; i++) {
+
+    //     let endIndex = heightMap[i].length - 1;
+    //     let vStart = [x,y,0];
+    //     let vEnd = [x,y,endIndex];
+
+    //     heightMap[i].push(vEnd);
+    //     heightMap[i].unshift(vStart);
+    // }
+
     /* Vertices */
-    for (let i = 0; i < size; i++) {
-        for (let j = 0; j < size; j++) {
+    for (let i = 0; i < heightMap.length; i++) {
+        for (let j = 0; j < heightMap[i].length; j++) {
             x = i*baseAmp;
             y = heightMap[i][j] * heightAmp;
             z = j*baseAmp;
@@ -101,26 +122,33 @@ function Terrain (size, baseAmp, heightAmp) {
         }
     }
 
+
     // Displacement.turbulence(geometry.vertices, size*baseAmp, 10, -4, 4);
 
-    geometry.vertices.forEach((v, i) => {
-        if (!(i % size) || i % size === size-1 || i < size || i > size * size - size) {
+    // geometry.vertices.forEach((v, i) => {
+        // if (!(i % size) || i % size === size-1 || i < size || i > size * size - size) {
             // v.y = 0;
-        }
+        // }
         // v.y = v.y < 0 ? 0 : v.y > 1000 ? 1000 : v.y;// < 4 ? v.y - (4 - v.y) : v.y;
-        return v;
-    });
+        // return v;
+    // });
 
     /* Faces */
-    for (let i = 0; i < size * size; i++) {
-        if ((i+1)%size !== 0 && i < (size * size) - size) {
-            geometry.faces.push(new THREE.Face3(i, i+1, i+size));
-            geometry.faces.push(new THREE.Face3(i+1, i+size+1, i+size));
+    for (let i = 0; i < heightMap.length; i++) {
+        for (let j = 0; j < heightMap[i].length; j++) {
+        // let s =  Math.sqrt(geometry.vertices.length);
+            // if ((i+1)%size !== 0 && i < (size * size) - size) {
+             let length = heightMap[i].length;
+             let k = (i * heightMap.length) + j;
+             if (i < heightMap.length-1 && j < length-1) {
+                geometry.faces.push(new THREE.Face3(k, k+1, k+length));
+                geometry.faces.push(new THREE.Face3(k+1, k+length+1, k+length));
+            }
         }
     }
 
-    geometry.faces.push(new THREE.Face3(size * size-1, size-1, 0));
-    geometry.faces.push(new THREE.Face3(0, size * size - size, size * size - 1));
+    // geometry.faces.push(new THREE.Face3(size * size-1, size-1, 0));
+    // geometry.faces.push(new THREE.Face3(0, size * size - size, size * size - 1));
 
     /* Will smooth terrain */
     // geometry.computeVertexNormals();
@@ -133,7 +161,7 @@ function Terrain (size, baseAmp, heightAmp) {
 
     let mesh = new THREE.Mesh(buffer_g, Materials.TERRAIN);
 
-    // mesh.add( Helpers.wireframe(geometry) );
+    mesh.add( Helpers.wireframe(geometry) );
 
     console.log('Terrain created...')
 

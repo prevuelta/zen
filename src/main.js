@@ -209,10 +209,10 @@ function initThree () {
 
     scene.add(terrain.mesh);
 
-    let water = Water(xAmp * size, 2);
+    let water = Water(xAmp * size, 1);
     // water.position.set(0, yAmp/2, 0);
-    Displacement.turbulence(water.geometry.vertices, xAmp * size);
-
+    // Displacement.turbulence(water.geometry.vertices, xAmp * size);
+// 
     // scene.add(water);
 
 

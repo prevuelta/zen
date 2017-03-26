@@ -57,6 +57,7 @@ module.exports = {
         let amp = Math.random() * 10;
         let depthNoise = new FastSimplexNoise({ frequency: 0.04, min: 0, max: size/2, octaves: 8 })
         let slopeNoise = new FastSimplexNoise({ frequency: 0.04, min: 0, max: 10, octaves: 8 })
+
         for (let i = 0; i < size; i++) {
 
             let slope = Math.floor(slopeNoise.scaled([i, 0])),
@@ -67,8 +68,6 @@ module.exports = {
             let limit = Math.floor(Math.cos((i+offset)/10)*amp + noise);
 
             for (let j = 0; j < size; j++) {
-
-
                 if (j === limit) {
                     inc = matrix[i][j]/slope;
                 }
@@ -77,7 +76,7 @@ module.exports = {
                     matrix[i][j] -= count * inc;
                     count++;
                 } else if (j > limit) {
-                    matrix[i][j] = 0;// depth;
+                    matrix[i][j] = 0;
                 }
             }
         }
