@@ -6849,17 +6849,34 @@ function Terrain (size, baseAmp, heightAmp) {
     //     heightMap[i].unshift(vStart);
     // }
 
+    let vertices = [];
+
     /* Vertices */
     for (let i = 0; i < heightMap.length; i++) {
-        for (let j = 0; j < heightMap[i].length; j++) {
+        for(let j = 0; j < heightMap.length; j++) {
             x = i*baseAmp;
             y = heightMap[i][j] * heightAmp;
             z = j*baseAmp;
-            vertice = new THREE.Vector3(x,y,z);
-            geometry.vertices.push(vertice);
+            vertices.push([x, y, z]);
         }
     }
 
+    // for (let i = 0; i < heightMap.length; i++) {
+
+    //     let endIndex = heightMap[i].length - 1;
+    //     let vStart = [i*baseAmp, 0, 0];
+    //     let vEnd = [i*baseAmp, 0, endIndex];
+
+    //     heightMap[i].push(vEnd);
+    //     heightMap[i].unshift(vStart);
+    // }
+
+
+    geometry.vertices = vertices.map(v => { 
+        let [x, y, z] = v;
+        return new THREE.Vector3(x,y,z)
+    });
+            // geometry.vertices.push(vertice);
 
     // Displacement.turbulence(geometry.vertices, size*baseAmp, 10, -4, 4);
 
@@ -6874,10 +6891,11 @@ function Terrain (size, baseAmp, heightAmp) {
     /* Faces */
     for (let i = 0; i < heightMap.length; i++) {
         for (let j = 0; j < heightMap[i].length; j++) {
-        // let s =  Math.sqrt(geometry.vertices.length);
+            // let s =  Math.sqrt(geometry.vertices.length);
             // if ((i+1)%size !== 0 && i < (size * size) - size) {
              let length = heightMap[i].length;
              let k = (i * heightMap.length) + j;
+
              if (i < heightMap.length-1 && j < length-1) {
                 geometry.faces.push(new THREE.Face3(k, k+1, k+length));
                 geometry.faces.push(new THREE.Face3(k+1, k+length+1, k+length));
@@ -7203,7 +7221,7 @@ function updatePhysics () {
 }
 
 },{"./abstract/displacement":9,"./elements/water":12,"./flora/grass":13,"./geology/cobble":14,"./geology/rock":15,"./geology/terrain":16,"./util/shape2mesh":29,"./util/util":30,"cannon":"cannon","stats-js":5,"three":"three","three-orbit-controls":6}],18:[function(require,module,exports){
-module.exports = "// #ifdef GL_ES\n// precision highp float;\n// #endif\n\n// varying vec3 vNormal;\n// varying vec3 vPosition;\n\n// varying vec2 vUv;\n// varying float noise;\n\n// varying vec3 col;\n\n// highp float rand(vec2 co)\n// {\n//     highp float a = 12.9898;\n//     highp float b = 78.233;\n//     highp float c = 43758.5453;\n//     highp float dt= dot(co.xy ,vec2(a,b));\n//     highp float sn= mod(dt,3.14);\n//     return fract(sin(sn) * c);\n// }\n\n// same name and type as VS\nvarying vec3 vNormal;\n\nvoid main() {\n\n  // calc the dot product and clamp\n  // 0 -> 1 rather than -1 -> 1\n  vec3 light = vec3(0.5, 0.2, 1.0);\n\n  // ensure it's normalized\n  light = normalize(light);\n\n  // calculate the dot product of\n  // the light to the vertex normal\n  float dProd = max(0.0,\n                    dot(vNormal, light));\n\n  // feed into our frag colour\n  gl_FragColor = vec4(dProd, // R\n                      dProd, // G\n                      dProd, // B\n                      1.0);  // A\n\n}\n\n// void main() {\n\n//     // gl_FragColor = vec4(vPosition[1], vPosition[1] > 0.0 ? 0.0 : 1.0, 0, 0.5);\n//     gl_FragColor = vec4(color, 0.5);\n//     // gl_FragColor = vec4(0, 0, 0, 1);\n//       // gl_FragColor = vec4(col[1], 0, 0, 0.5);\n// }\n\n";
+module.exports = "// #ifdef GL_ES\n// precision highp float;\n// #endif\n\n// varying vec3 vNormal;\n// varying vec3 vPosition;\n\n// varying vec2 vUv;\n// varying float noise;\n\n// varying vec3 col;\n\n// highp float rand(vec2 co)\n// {\n//     highp float a = 12.9898;\n//     highp float b = 78.233;\n//     highp float c = 43758.5453;\n//     highp float dt= dot(co.xy ,vec2(a,b));\n//     highp float sn= mod(dt,3.14);\n//     return fract(sin(sn) * c);\n// }\n\n// same name and type as VS\nvarying vec3 vNormal;\n\nvoid main() {\n\n  // calc the dot product and clamp\n  // 0 -> 1 rather than -1 -> 1\n  vec3 light = vec3(0.5, 0.2, 1.0);\n\n  // ensure it's normalized\n  light = normalize(light);\n\n  // calculate the dot product of\n  // the light to the vertex normal\n  float dProd = max(0.0,\n                    dot(vNormal, light));\n\n\n  vec3 color = dProd < 1.0 && dProd > 0.75 ? vec3(1.0, 0.0, 0.0) :\n               dProd < 0.75 && dProd > 0.5 ? vec3(0.0, 1.0, 0.0) :\n               dProd < 0.5 && dProd > 0.0 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 0.0, 0.0);\n\n  // feed into our frag colour\n  gl_FragColor = vec4(color, // B\n                      1.0);  // A\n\n}\n\n// void main() {\n\n//     // gl_FragColor = vec4(vPosition[1], vPosition[1] > 0.0 ? 0.0 : 1.0, 0, 0.5);\n//     gl_FragColor = vec4(color, 0.5);\n//     // gl_FragColor = vec4(0, 0, 0, 1);\n//       // gl_FragColor = vec4(col[1], 0, 0, 0.5);\n// }\n\n";
 
 },{}],19:[function(require,module,exports){
 module.exports = "\n// varying vec3 col;\n\n// varying vec3 vPosition;\n\n// void main() {\n//   col = vec3(uv, 1.0);\n\n//   vPosition = position;\n\n//   gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\n// }\n\nvarying vec3 vNormal;\n\nvoid main() {\n\n  // set the vNormal value with\n  // the attribute value passed\n  // in by Three.js\n  vNormal = normal;\n\n  gl_Position = projectionMatrix *\n                modelViewMatrix *\n                vec4(position, 1.0);\n}";

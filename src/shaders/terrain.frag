@@ -37,10 +37,13 @@ void main() {
   float dProd = max(0.0,
                     dot(vNormal, light));
 
+
+  vec3 color = dProd < 1.0 && dProd > 0.75 ? vec3(1.0, 0.0, 0.0) :
+               dProd < 0.75 && dProd > 0.5 ? vec3(0.0, 1.0, 0.0) :
+               dProd < 0.5 && dProd > 0.0 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 0.0, 0.0);
+
   // feed into our frag colour
-  gl_FragColor = vec4(dProd, // R
-                      dProd, // G
-                      dProd, // B
+  gl_FragColor = vec4(color, // B
                       1.0);  // A
 
 }

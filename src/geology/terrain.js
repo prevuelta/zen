@@ -111,17 +111,34 @@ function Terrain (size, baseAmp, heightAmp) {
     //     heightMap[i].unshift(vStart);
     // }
 
+    let vertices = [];
+
     /* Vertices */
     for (let i = 0; i < heightMap.length; i++) {
-        for (let j = 0; j < heightMap[i].length; j++) {
+        for(let j = 0; j < heightMap.length; j++) {
             x = i*baseAmp;
             y = heightMap[i][j] * heightAmp;
             z = j*baseAmp;
-            vertice = new THREE.Vector3(x,y,z);
-            geometry.vertices.push(vertice);
+            vertices.push([x, y, z]);
         }
     }
 
+    // for (let i = 0; i < heightMap.length; i++) {
+
+    //     let endIndex = heightMap[i].length - 1;
+    //     let vStart = [i*baseAmp, 0, 0];
+    //     let vEnd = [i*baseAmp, 0, endIndex];
+
+    //     heightMap[i].push(vEnd);
+    //     heightMap[i].unshift(vStart);
+    // }
+
+
+    geometry.vertices = vertices.map(v => { 
+        let [x, y, z] = v;
+        return new THREE.Vector3(x,y,z)
+    });
+            // geometry.vertices.push(vertice);
 
     // Displacement.turbulence(geometry.vertices, size*baseAmp, 10, -4, 4);
 
@@ -136,10 +153,11 @@ function Terrain (size, baseAmp, heightAmp) {
     /* Faces */
     for (let i = 0; i < heightMap.length; i++) {
         for (let j = 0; j < heightMap[i].length; j++) {
-        // let s =  Math.sqrt(geometry.vertices.length);
+            // let s =  Math.sqrt(geometry.vertices.length);
             // if ((i+1)%size !== 0 && i < (size * size) - size) {
              let length = heightMap[i].length;
              let k = (i * heightMap.length) + j;
+
              if (i < heightMap.length-1 && j < length-1) {
                 geometry.faces.push(new THREE.Face3(k, k+1, k+length));
                 geometry.faces.push(new THREE.Face3(k+1, k+length+1, k+length));
