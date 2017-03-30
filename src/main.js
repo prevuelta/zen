@@ -5,6 +5,7 @@ let CANNON = require('cannon');
 let OrbitControls = require('three-orbit-controls')(THREE);
 
 let Grass = require('./flora/grass');
+let Tree = require('./flora/tree');
 let Cobble = require('./geology/cobble');
 let Rock = require('./geology/rock');
 let Terrain = require('./geology/terrain');
@@ -204,10 +205,19 @@ function initThree () {
 
     Util.imageMap(terrain.heightMap);
 
-    terrain.mesh.rotation.set(0, -Math.PI, 0);
-    terrain.mesh.position.set(size * xAmp/2, 0, size * xAmp/2);
+    // terrain.mesh.rotation.set(0, -Math.PI, 0);
+    // terrain.mesh.position.set(size * xAmp/2, 0, size * xAmp/2);
 
     scene.add(terrain.mesh);
+
+    let tree = Tree();
+
+    let highest = terrain.highestPoint();
+
+    tree.position.set(highest.x, highest.y, highest.z);
+    // tree.position.set(2.8, 0.1, 5.2);
+
+    scene.add(tree);
 
     let water = Water(xAmp * size, 1);
     // water.position.set(0, yAmp/2, 0);

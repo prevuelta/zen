@@ -79,7 +79,7 @@ function Terrain (size, baseAmp, heightAmp) {
         Entropy.edge(heightMap, 1);
         Displacement.cellNoise(heightMap, 10);
 
-    Displacement.limit(heightMap, 0, 0.2);
+    Displacement.limit(heightMap, 0, 0.3);
     // Displacement.softLimit(heightMap, 0, 0.5);
         Displacement.noise(heightMap, 0.2);
 
@@ -186,7 +186,11 @@ function Terrain (size, baseAmp, heightAmp) {
     return {
         mesh: mesh,
         geometry: geometry,
-        heightMap: heightMap
+        heightMap: heightMap,
+        highestPoint () {
+            let highest = geometry.vertices.sort((a,b) => a.y - b.y).pop();
+            return highest;
+        }
     };
 }
 
