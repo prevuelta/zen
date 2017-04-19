@@ -210,14 +210,14 @@ function initThree () {
 
     scene.add(terrain.mesh);
 
-    let tree = Tree();
+    // let tree = Tree();
 
     let highest = terrain.highestPoint();
 
-    tree.position.set(highest.x, highest.y, highest.z);
+    // tree.position.set(highest.x, highest.y, highest.z);
     // tree.position.set(2.8, 0.1, 5.2);
 
-    scene.add(tree);
+    // scene.add(tree);
 
     let water = Water(xAmp * size, 1);
     // water.position.set(0, yAmp/2, 0);
