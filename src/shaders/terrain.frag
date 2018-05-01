@@ -43,16 +43,6 @@ void main() {
                dProd < 0.5 && dProd > 0.0 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 0.0, 0.0);
 
   // feed into our frag colour
-  gl_FragColor = vec4(color, // B
-                      1.0);  // A
+  gl_FragColor = vec4(vec3(dProd, 0.0, 0.0), 1.0);
 
 }
-
-// void main() {
-
-//     // gl_FragColor = vec4(vPosition[1], vPosition[1] > 0.0 ? 0.0 : 1.0, 0, 0.5);
-//     gl_FragColor = vec4(color, 0.5);
-//     // gl_FragColor = vec4(0, 0, 0, 1);
-//       // gl_FragColor = vec4(col[1], 0, 0, 0.5);
-// }
-

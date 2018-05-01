@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 module.exports = require('./vendor/dat.gui')
 module.exports.color = require('./vendor/dat.color')
 },{"./vendor/dat.color":2,"./vendor/dat.gui":3}],2:[function(require,module,exports){
@@ -6096,7 +6096,7 @@ module.exports = {
     }
 }
 
-},{"../abstract/field":11,"../util/util":31,"fast-simplex-noise":4,"worley-noise":7}],10:[function(require,module,exports){
+},{"../abstract/field":11,"../util/util":32,"fast-simplex-noise":4,"worley-noise":7}],10:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -6318,30 +6318,6 @@ arguments[4][8][0].apply(exports,arguments)
 },{"dup":8,"three":"three"}],12:[function(require,module,exports){
 'use strict';
 
-const THREE = require('../util/patchedThree');
-const Materials = require('../util/materials');
-
-function Water (size, height) {
-
-    let geometry = new THREE.BoxGeometry(size,height,size);
-
-    // let material = new THREE.MeshLambertMaterial( {
-    //     color: 0x00ffff,
-    //     side: THREE.DoubleSide,
-    //     shading: THREE.FlatShading,
-    //     opacity: 0.3
-    // });
-
-
-    let mesh = new THREE.Mesh(geometry, Materials.WATER);
-
-    return mesh;
-}
-
-module.exports = Water;
-},{"../util/materials":27,"../util/patchedThree":29}],13:[function(require,module,exports){
-'use strict';
-
 let THREE = require('three');
 
 
@@ -6406,7 +6382,7 @@ function Grass (options) {
 
 
 module.exports = Grass;
-},{"three":"three"}],14:[function(require,module,exports){
+},{"three":"three"}],13:[function(require,module,exports){
 'use strict';
 
 const THREE = require('three');
@@ -6478,7 +6454,7 @@ function Tree () {
 }
 
 module.exports = Tree;
-},{"../util/helpers":26,"../util/materials":27,"three":"three"}],15:[function(require,module,exports){
+},{"../util/helpers":27,"../util/materials":28,"three":"three"}],14:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -6589,7 +6565,7 @@ function Cobble (scene) {
 }
 
 module.exports = Cobble;
-},{"../abstract/Field":8,"../abstract/entropy":10,"../util/cross":25,"three":"three"}],16:[function(require,module,exports){
+},{"../abstract/Field":8,"../abstract/entropy":10,"../util/cross":26,"three":"three"}],15:[function(require,module,exports){
 'use strict';
 
 let THREE = require('../util/patchedThree');
@@ -6807,7 +6783,7 @@ function Rock (size) {
 }
 
 module.exports = Rock;
-},{"../abstract/Field":8,"../abstract/entropy":10,"../shaders/test.frag":21,"../shaders/test.vert":22,"../util/cross":25,"../util/helpers":26,"../util/materials":27,"../util/patchedThree":29,"../util/util":31,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],17:[function(require,module,exports){
+},{"../abstract/Field":8,"../abstract/entropy":10,"../shaders/test.frag":22,"../shaders/test.vert":23,"../util/cross":26,"../util/helpers":27,"../util/materials":28,"../util/patchedThree":30,"../util/util":32,"quickhull3d":"quickhull3d","three-subdivision-modifier":"three-subdivision-modifier"}],16:[function(require,module,exports){
 'use strict';
 
 const THREE = require('../util/patchedThree');
@@ -6891,9 +6867,9 @@ function Terrain (size, baseAmp, heightAmp) {
 
     Displacement.limit(heightMap, 0, 0.3);
     // Displacement.softLimit(heightMap, 0, 0.5);
-        Displacement.noise(heightMap, 0.2);
+    Displacement.noise(heightMap, 0.2);
 
-        Entropy.erode(heightMap, 1);
+    Entropy.erode(heightMap, 1);
     // Entropy.erode(heightMap);
     // Entropy.erode(heightMap);
     // Entropy.erode(heightMap);
@@ -7005,7 +6981,8 @@ function Terrain (size, baseAmp, heightAmp) {
 }
 
 module.exports = Terrain;
-},{"../abstract/displacement":9,"../abstract/entropy":10,"../abstract/field":11,"../util/helpers":26,"../util/materials":27,"../util/matrix":28,"../util/patchedThree":29,"../util/util":31,"three-subdivision-modifier":"three-subdivision-modifier"}],18:[function(require,module,exports){
+
+},{"../abstract/displacement":9,"../abstract/entropy":10,"../abstract/field":11,"../util/helpers":27,"../util/materials":28,"../util/matrix":29,"../util/patchedThree":30,"../util/util":32,"three-subdivision-modifier":"three-subdivision-modifier"}],17:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -7017,12 +6994,14 @@ let Tree = require('./flora/tree');
 let Cobble = require('./geology/cobble');
 let Rock = require('./geology/rock');
 let Terrain = require('./geology/terrain');
-let Water = require('./elements/water');
+// let Water = require('./elements/water');
 
 const Util = require('./util/util');
+const Materials = require('./util/materials');
 const Displacement = require('./abstract/displacement');
 
 let shape2mesh = require('./util/shape2mesh');
+const Helpers = require('./util/helpers');
 
 const Stats = require('stats-js');
 
@@ -7047,26 +7026,9 @@ document.body.appendChild( stats.domElement );
 // }, 1000 / 60 );
 
 
-let world,
-    mass,
-    body,
-    terrain,
-    terrainBody,
-    groundBody,
-    plane,
-    shape,
-    group,
-    timeStep = 1/60,
-    camera,
+let camera,
     scene,
-    renderer,
-    geometry,
-    material,
-    bodies = [],
-    mesh,
-    terrain2;
-
-let geos = [];
+    renderer;
 
 const xAmp = 0.4;
 const yAmp = 4;
@@ -7078,108 +7040,6 @@ const yAxis = new THREE.Vector3(0,1,0);
 let step = 0;
 let stepLimit = 1200;
 
-initThree();
-initCannon();
-animate();
-
-function initCannon() {
-
-    // World
-    world = new CANNON.World();
-    world.gravity.set(0,-10,0);
-    world.broadphase = new CANNON.NaiveBroadphase();
-    world.solver.iterations = 2;
-
-    // Ground plane
-    let plane = new CANNON.Plane();
-    groundBody = new CANNON.Body({ mass: 0 });
-    groundBody.addShape(plane);
-    groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
-    world.add(groundBody);
-
-    let matrix = terrain.heightMap.map(h => h.map(v => v*yAmp)).reverse();
-
-    var hfShape = new CANNON.Heightfield(matrix, {
-        elementSize: xAmp
-    });
-    // let hfShape = new CANNON.Box(new CANNON.Vec3(20, 6, 20));
-    // // Create the heightfield shape
-    // var hfShape = new CANNON.Heightfield([[1,2,3], [4,5,6], [1,2,3]], {
-        // elementSize: 1 // Distance between the data points in X and Y directions
-    // });
-
-    // let boundsShape = new CANNON.Box(new CANNON.Vec3(xAmp*size, 100, xAmp*size));
-
-    // let boundsBody = new CANNON.Body({
-    //     mass: 0
-    // });
-
-    // boundsBody.addShape(boundsShape);
-
-    // world.addBody(boundsBody);
-
-    terrainBody = new CANNON.Body({
-        mass: 0
-    });
-
-
-    terrainBody.addShape(hfShape);
-    // terrainBody.position.set(0, 8, 0);
-    terrainBody.shapeOrientations[0].setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI * 0.5);
-    // terrainBody.position.set(-size * hfShape.elementSize / 2, 10, 10);
-    // terrainBody.position.set(-size * xAmp / 2, 0, -size * xAmp / 2);
-    terrainBody.position.set(-size * xAmp /2, 0, size * xAmp / 2);
-    world.addBody(terrainBody);
-
-    terrain2 = shape2mesh(terrainBody);
-
-    // scene.add(terrain2);
-
-    // let terrainShape = new CANNON.Trimesh(terrain.geometry.vertices.reduce((a, b) => a.concat([b.x, b.y, b.z]), []) , terrain.geometry.thing);
-
-    // let terrainShape = new CANNON.Box(new CANNON.Vec3(10, 1, 10));
-
-
-    // terrainBody.position.set(-12*4/2, 15, -12*4/2);
-    // terrainBody.addShape(terrainShape);
-    // world.addBody(terrainBody);
-
-    for (let i = 0;i < ROCKS;i++) {
-
-        let {geometry} = bodies[i].mesh;
-        // geometry.computeBoundingBox();
-        // let bbox = geometry.boundingBox;
-        let bbox = new THREE.Box3().setFromObject(bodies[i].mesh);
-
-        // console.log(bbox.size())
-        // let [x, y, z] = bbox.size();
-        // debugger;
-
-        let x = bbox.max.x - bbox.min.x;
-        let y = bbox.max.y - bbox.min.y;
-        let z = bbox.max.z - bbox.min.z;
-
-        // let shape = new CANNON.Trimesh(geometry.attributes.position.array, geometry.index.array);
-
-        // let shape = new CANNON.Sphere(0.3);
-        let shape = new CANNON.Box(new CANNON.Vec3(x/2,y/2,z/2));
-
-        let body = new CANNON.Body({
-            mass: 10
-        });
-        body.addShape(shape);
-        body.position.set(Util.randomInt(-size*xAmp/2, size*xAmp/2), 10, Util.randomInt(-size*xAmp/2, size*xAmp/2));
-        // body.position.vadd(terrainBody.position, body.position);
-        bodies[i].body = body;
-        world.addBody(body);
-
-        // body.angularVelocity.set(0,0,-10);
-    }
-    // body.angularVelocity.set(0,0,-10);
-    // body.angularDamping = 0.5;
-
-}
-
 
 function initThree () {
 
@@ -7188,12 +7048,8 @@ function initThree () {
     scene.background = new THREE.Color('#ffffff');
     camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
 
-    group = new THREE.Object3D();
-
-    group.position.y = 40;
-
     for (let i = 0; i < ROCKS; i++) {
-        let rock = Rock(Util.randomFloat(0.2, 3));
+        // let rock = Rock(Util.randomFloat(0.2, 3));
         // let geo = new THREE.SphereGeometry(0.6, 5, 5);
 
         // let rock = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({
@@ -7205,20 +7061,17 @@ function initThree () {
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
         // rock.position.z = Util.randomInt(0, 30);
-        scene.add(rock);
-        bodies.push({mesh: rock});
+        // scene.add(rock);
     }
 
-    terrain = Terrain(size, xAmp, yAmp);
+    let terrain = Terrain(size, xAmp, yAmp);
 
     Util.imageMap(terrain.heightMap);
 
     // terrain.mesh.rotation.set(0, -Math.PI, 0);
-    // terrain.mesh.position.set(size * xAmp/2, 0, size * xAmp/2);
+    // terrain.oesh.position.set(size * xAmp/2, 0, size * xAmp/2);
 
     scene.add(terrain.mesh);
-
-    // let tree = Tree();
 
     let highest = terrain.highestPoint();
 
@@ -7227,7 +7080,7 @@ function initThree () {
 
     // scene.add(tree);
 
-    let water = Water(xAmp * size, 1);
+    // let water = Water(xAmp * size, 1);
     // water.position.set(0, yAmp/2, 0);
     // Displacement.turbulence(water.geometry.vertices, xAmp * size);
 // 
@@ -7242,27 +7095,24 @@ function initThree () {
         vertexColors: THREE.VertexColors
     });
 
-    scene.add(new THREE.AxisHelper(50));
+    // scene.add(new THREE.AxisHelper(50));
 
-    camera.position.z = 100;
-    camera.position.y =20;
+    camera.position.z = 30;
+    camera.position.y = 10;
+    camera.position.x = 10;
     camera.target = new THREE.Vector3( 0, 0, 0 );
 
-    var light = new THREE.AmbientLight( 0x404040 ); // soft white light
-    // scene.add( light );
+    var light = new THREE.AmbientLight(0x444444); // soft white light
+    scene.add( light );
 
-    var directionalLight = new THREE.DirectionalLight( 0xFFFFFF, 1);
-    directionalLight.position.set( 10, 150, 100 );
+    var directionalLight = new THREE.DirectionalLight( 0xFF0000, 1);
+    directionalLight.position.set( 10, 10, 10 );
+    // directionalLight.rotationX(Math.PI/2);
+
     scene.add( directionalLight );
 
     let directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 0);
-    scene.add( directionalLightHelper);
-
-    var geometry = new THREE.PlaneBufferGeometry( xAmp*size, xAmp*size );
-    plane = new THREE.Mesh( geometry, material );
-    plane.rotation.x = Math.PI/2;
-    plane.position.y = 0;
-    // scene.add(plane);
+    // scene.add( directionalLightHelper);
 
     renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -7275,56 +7125,46 @@ function initThree () {
 function animate () {
     requestAnimationFrame( animate );
     // scene.rotateOnAxis(yAxis, Math.PI/480);
-    updatePhysics();
     render();
     stats.update();
 }
-
 
 function render() {
     renderer.render( scene, camera );
 }
 
+window.addEventListener( 'resize', function () {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+}, false );
 
-function updatePhysics () {
-      // Step the physics world
-    if (step < stepLimit)
-        world.step(timeStep);
-    step++;
-      // Copy coordinates from Cannon.js to Three.js
-    // terrain.position.copy(terrainBody.position);
-    // terrain2.position.copy(terrainBody.position);
-    // terrain.quaternion.copy(terrainBody.quaternion);
-    // terrain2.quaternion.copy(terrainBody.quaternion);
+initThree();
+animate();
 
-    plane.position.copy(groundBody.position);
-    plane.quaternion.copy(groundBody.quaternion);
-
-    bodies.forEach(b => {
-        b.mesh.position.copy(b.body.position);
-        b.mesh.quaternion.copy(b.body.quaternion);
-    });
-}
-
-},{"./abstract/displacement":9,"./elements/water":12,"./flora/grass":13,"./flora/tree":14,"./geology/cobble":15,"./geology/rock":16,"./geology/terrain":17,"./util/shape2mesh":30,"./util/util":31,"cannon":"cannon","stats-js":5,"three":"three","three-orbit-controls":6}],19:[function(require,module,exports){
-module.exports = "// #ifdef GL_ES\n// precision highp float;\n// #endif\n\n// varying vec3 vNormal;\n// varying vec3 vPosition;\n\n// varying vec2 vUv;\n// varying float noise;\n\n// varying vec3 col;\n\n// highp float rand(vec2 co)\n// {\n//     highp float a = 12.9898;\n//     highp float b = 78.233;\n//     highp float c = 43758.5453;\n//     highp float dt= dot(co.xy ,vec2(a,b));\n//     highp float sn= mod(dt,3.14);\n//     return fract(sin(sn) * c);\n// }\n\n// same name and type as VS\nvarying vec3 vNormal;\n\nvoid main() {\n\n  // calc the dot product and clamp\n  // 0 -> 1 rather than -1 -> 1\n  vec3 light = vec3(0.5, 0.2, 1.0);\n\n  // ensure it's normalized\n  light = normalize(light);\n\n  // calculate the dot product of\n  // the light to the vertex normal\n  float dProd = max(0.0,\n                    dot(vNormal, light));\n\n\n  vec3 color = dProd < 1.0 && dProd > 0.75 ? vec3(1.0, 0.0, 0.0) :\n               dProd < 0.75 && dProd > 0.5 ? vec3(0.0, 1.0, 0.0) :\n               dProd < 0.5 && dProd > 0.0 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 0.0, 0.0);\n\n  // feed into our frag colour\n  gl_FragColor = vec4(color, // B\n                      1.0);  // A\n\n}\n\n// void main() {\n\n//     // gl_FragColor = vec4(vPosition[1], vPosition[1] > 0.0 ? 0.0 : 1.0, 0, 0.5);\n//     gl_FragColor = vec4(color, 0.5);\n//     // gl_FragColor = vec4(0, 0, 0, 1);\n//       // gl_FragColor = vec4(col[1], 0, 0, 0.5);\n// }\n\n";
-
-},{}],20:[function(require,module,exports){
-module.exports = "\n// varying vec3 col;\n\n// varying vec3 vPosition;\n\n// void main() {\n//   col = vec3(uv, 1.0);\n\n//   vPosition = position;\n\n//   gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\n// }\n\nvarying vec3 vNormal;\n\nvoid main() {\n\n  // set the vNormal value with\n  // the attribute value passed\n  // in by Three.js\n  vNormal = normal;\n\n  gl_Position = projectionMatrix *\n                modelViewMatrix *\n                vec4(position, 1.0);\n}";
-
-},{}],21:[function(require,module,exports){
-module.exports = "#ifdef GL_ES\nprecision highp float;\n#endif\n\nvarying vec3 vNormal;\nvarying vec3 vPosition;\n\nvarying vec2 vUv;\nvarying float noise;\n\nhighp float rand(vec2 co)\n{\n    highp float a = 12.9898;\n    highp float b = 78.233;\n    highp float c = 43758.5453;\n    highp float dt= dot(co.xy ,vec2(a,b));\n    highp float sn= mod(dt,3.14);\n    return fract(sin(sn) * c);\n}\n\n\nvoid main() {\n    vec3 light = vec3(0.5, 0.2, 1.0);\n\n    // ensure it's normalized\n    light = normalize(light);\n\n    float distance = length(vPosition);\n\n    // calculate the dot product of\n    // the light to the vertex normal\n    // float dProd = max(0.0, dot(vNormal, light));\n    // dProd = dProd * 100.0;\n    // gl_FragColor = vec4(dProd, dProd, dProd, 1.0);\n    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // if (vPosition.x > 0.0 && vPosition.x < 0.1) {\n    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // }\n    // if (vPosition.y > 0.0 && vPosition.y < 0.1) {\n    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // }\n    // vec3 color = vec3( vUv * ( 1. - 2. * noise ), 0.0 );\n    // gl_FragColor = vec4( color.rgb, 1.0 );\n    // gl_FragColor = vec4(1.0,0,0,1.0);  // draw red\n}";
-
-},{}],22:[function(require,module,exports){
-module.exports = "// switch on high precision floats\n#ifdef GL_ES\nprecision highp float;\n#endif\n\n//\n// GLSL textureless classic 3D noise \"cnoise\",\n// with an RSL-style periodic variant \"pnoise\".\n// Author:  Stefan Gustavson (stefan.gustavson@liu.se)\n// Version: 2011-10-11\n//\n// Many thanks to Ian McEwan of Ashima Arts for the\n// ideas for permutation and gradient selection.\n//\n// Copyright (c) 2011 Stefan Gustavson. All rights reserved.\n// Distributed under the MIT license. See LICENSE file.\n// https://github.com/stegu/webgl-noise\n//\n\nvec3 mod289(vec3 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289(vec4 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute(vec4 x)\n{\n  return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nvec3 fade(vec3 t) {\n  return t*t*t*(t*(t*6.0-15.0)+10.0);\n}\n\n// Classic Perlin noise\nfloat cnoise(vec3 P)\n{\n  vec3 Pi0 = floor(P); // Integer part for indexing\n  vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1\n  Pi0 = mod289(Pi0);\n  Pi1 = mod289(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute(permute(ix) + iy);\n  vec4 ixy0 = permute(ixy + iz0);\n  vec4 ixy1 = permute(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n  return 2.2 * n_xyz;\n}\n\n// Classic Perlin noise, periodic variant\nfloat pnoise(vec3 P, vec3 rep)\n{\n  vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period\n  vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period\n  Pi0 = mod289(Pi0);\n  Pi1 = mod289(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute(permute(ix) + iy);\n  vec4 ixy0 = permute(ixy + iz0);\n  vec4 ixy1 = permute(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n  return 2.2 * n_xyz;\n}\n\nvarying vec2 vUv;\nvarying float noise;\n\nfloat turbulence( vec3 p ) {\n    float w = 100.0;\n    float t = -.5;\n    for (float f = 1.0 ; f <= 10.0 ; f++ ){\n        float power = pow( 2.0, f );\n        t += abs( pnoise( vec3( power * p ), vec3( 10.0, 10.0, 10.0 ) ) / power );\n    }\n    return t;\n}\n\nvarying vec3 vNormal;\nvarying vec3 vPosition;\n\nvoid main() {\n\n    vNormal = normal;\n    vPosition = position;\n    vUv = uv;\n\n    // get a turbulent 3d noise using the normal, normal to high freq\n    noise = 10.0 *  -.10 * turbulence( 0.2 * normal );\n    // get a 3d noise using the position, low frequency\n    float b = 5.0 * pnoise( 0.05 * position, vec3( 100.0 ) );\n    // compose both noises\n    float displacement = -10. * noise + b;\n    // float displacement = -20. * cnoise( vec3( 10.0, 10.0, 10.0 ) );\n\n    // move the position along the normal and transform it\n    vec3 newPosition = position + normal * displacement;\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n}";
-
-},{}],23:[function(require,module,exports){
+},{"./abstract/displacement":9,"./flora/grass":12,"./flora/tree":13,"./geology/cobble":14,"./geology/rock":15,"./geology/terrain":16,"./util/helpers":27,"./util/materials":28,"./util/shape2mesh":31,"./util/util":32,"cannon":"cannon","stats-js":5,"three":"three","three-orbit-controls":6}],18:[function(require,module,exports){
 module.exports = "#ifdef GL_ES\nprecision highp float;\n#endif\n\nvarying vec3 vNormal;\nvarying vec3 vPosition;\n\nvarying vec2 vUv;\nvarying float noise;\n\nvarying vec3 col;\n\nhighp float rand(vec2 co)\n{\n    highp float a = 12.9898;\n    highp float b = 78.233;\n    highp float c = 43758.5453;\n    highp float dt= dot(co.xy ,vec2(a,b));\n    highp float sn= mod(dt,3.14);\n    return fract(sin(sn) * c);\n}\n\n\nvoid main() {\n\n    gl_FragColor = vec4(0.25, 0.64, 0.85, 0.5);\n    // gl_FragColor = vec4(0, 0, 0, 1);\n      // gl_FragColor = vec4(col[1], 0, 0, 0.5);\n}\n\n";
 
-},{}],24:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 module.exports = "\nvarying vec3 col;\n\nvarying vec3 vPosition;\n\nvoid main() {\n  col = vec3(uv, 1.0);\n\n  vPosition = position;\n\n  gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\n}";
 
-},{}],25:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
+module.exports = "// #ifdef GL_ES\n// precision highp float;\n// #endif\n\n// varying vec3 vNormal;\n// varying vec3 vPosition;\n\n// varying vec2 vUv;\n// varying float noise;\n\n// varying vec3 col;\n\n// highp float rand(vec2 co)\n// {\n//     highp float a = 12.9898;\n//     highp float b = 78.233;\n//     highp float c = 43758.5453;\n//     highp float dt= dot(co.xy ,vec2(a,b));\n//     highp float sn= mod(dt,3.14);\n//     return fract(sin(sn) * c);\n// }\n\n// same name and type as VS\nvarying vec3 vNormal;\n\nvoid main() {\n\n  // calc the dot product and clamp\n  // 0 -> 1 rather than -1 -> 1\n  vec3 light = vec3(0.5, 0.2, 1.0);\n\n  // ensure it's normalized\n  light = normalize(light);\n\n  // calculate the dot product of\n  // the light to the vertex normal\n  float dProd = max(0.0,\n                    dot(vNormal, light));\n\n\n  vec3 color = dProd < 1.0 && dProd > 0.75 ? vec3(1.0, 0.0, 0.0) :\n               dProd < 0.75 && dProd > 0.5 ? vec3(0.0, 1.0, 0.0) :\n               dProd < 0.5 && dProd > 0.0 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 0.0, 0.0);\n\n  // feed into our frag colour\n  gl_FragColor = vec4(vec3(dProd, 0.0, 0.0), 1.0);\n\n}\n";
+
+},{}],21:[function(require,module,exports){
+module.exports = "\n// varying vec3 col;\n\n// varying vec3 vPosition;\n\n// void main() {\n//   col = vec3(uv, 1.0);\n\n//   vPosition = position;\n\n//   gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\n// }\n\nvarying vec3 vNormal;\n\nvoid main() {\n\n  // set the vNormal value with\n  // the attribute value passed\n  // in by Three.js\n  vNormal = normal;\n\n  gl_Position = projectionMatrix *\n                modelViewMatrix *\n                vec4(position, 1.0);\n}";
+
+},{}],22:[function(require,module,exports){
+module.exports = "#ifdef GL_ES\nprecision highp float;\n#endif\n\nvarying vec3 vNormal;\nvarying vec3 vPosition;\n\nvarying vec2 vUv;\nvarying float noise;\n\nhighp float rand(vec2 co)\n{\n    highp float a = 12.9898;\n    highp float b = 78.233;\n    highp float c = 43758.5453;\n    highp float dt= dot(co.xy ,vec2(a,b));\n    highp float sn= mod(dt,3.14);\n    return fract(sin(sn) * c);\n}\n\n\nvoid main() {\n    vec3 light = vec3(0.5, 0.2, 1.0);\n\n    // ensure it's normalized\n    light = normalize(light);\n\n    float distance = length(vPosition);\n\n    // calculate the dot product of\n    // the light to the vertex normal\n    // float dProd = max(0.0, dot(vNormal, light));\n    // dProd = dProd * 100.0;\n    // gl_FragColor = vec4(dProd, dProd, dProd, 1.0);\n    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // if (vPosition.x > 0.0 && vPosition.x < 0.1) {\n    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // }\n    // if (vPosition.y > 0.0 && vPosition.y < 0.1) {\n    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n    // }\n    // vec3 color = vec3( vUv * ( 1. - 2. * noise ), 0.0 );\n    // gl_FragColor = vec4( color.rgb, 1.0 );\n    // gl_FragColor = vec4(1.0,0,0,1.0);  // draw red\n}";
+
+},{}],23:[function(require,module,exports){
+module.exports = "// switch on high precision floats\n#ifdef GL_ES\nprecision highp float;\n#endif\n\n//\n// GLSL textureless classic 3D noise \"cnoise\",\n// with an RSL-style periodic variant \"pnoise\".\n// Author:  Stefan Gustavson (stefan.gustavson@liu.se)\n// Version: 2011-10-11\n//\n// Many thanks to Ian McEwan of Ashima Arts for the\n// ideas for permutation and gradient selection.\n//\n// Copyright (c) 2011 Stefan Gustavson. All rights reserved.\n// Distributed under the MIT license. See LICENSE file.\n// https://github.com/stegu/webgl-noise\n//\n\nvec3 mod289(vec3 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289(vec4 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute(vec4 x)\n{\n  return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nvec3 fade(vec3 t) {\n  return t*t*t*(t*(t*6.0-15.0)+10.0);\n}\n\n// Classic Perlin noise\nfloat cnoise(vec3 P)\n{\n  vec3 Pi0 = floor(P); // Integer part for indexing\n  vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1\n  Pi0 = mod289(Pi0);\n  Pi1 = mod289(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute(permute(ix) + iy);\n  vec4 ixy0 = permute(ixy + iz0);\n  vec4 ixy1 = permute(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n  return 2.2 * n_xyz;\n}\n\n// Classic Perlin noise, periodic variant\nfloat pnoise(vec3 P, vec3 rep)\n{\n  vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period\n  vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period\n  Pi0 = mod289(Pi0);\n  Pi1 = mod289(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute(permute(ix) + iy);\n  vec4 ixy0 = permute(ixy + iz0);\n  vec4 ixy1 = permute(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n  return 2.2 * n_xyz;\n}\n\nvarying vec2 vUv;\nvarying float noise;\n\nfloat turbulence( vec3 p ) {\n    float w = 100.0;\n    float t = -.5;\n    for (float f = 1.0 ; f <= 10.0 ; f++ ){\n        float power = pow( 2.0, f );\n        t += abs( pnoise( vec3( power * p ), vec3( 10.0, 10.0, 10.0 ) ) / power );\n    }\n    return t;\n}\n\nvarying vec3 vNormal;\nvarying vec3 vPosition;\n\nvoid main() {\n\n    vNormal = normal;\n    vPosition = position;\n    vUv = uv;\n\n    // get a turbulent 3d noise using the normal, normal to high freq\n    noise = 10.0 *  -.10 * turbulence( 0.2 * normal );\n    // get a 3d noise using the position, low frequency\n    float b = 5.0 * pnoise( 0.05 * position, vec3( 100.0 ) );\n    // compose both noises\n    float displacement = -10. * noise + b;\n    // float displacement = -20. * cnoise( vec3( 10.0, 10.0, 10.0 ) );\n\n    // move the position along the normal and transform it\n    vec3 newPosition = position + normal * displacement;\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n}";
+
+},{}],24:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18}],25:[function(require,module,exports){
+arguments[4][19][0].apply(exports,arguments)
+},{"dup":19}],26:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -7367,7 +7207,7 @@ function Cross (size) {
 }
 
 module.exports = Cross;
-},{"three":"three"}],26:[function(require,module,exports){
+},{"three":"three"}],27:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -7433,7 +7273,7 @@ module.exports = {
         return line;
     }
 }
-},{"./cross":25,"three":"three"}],27:[function(require,module,exports){
+},{"./cross":26,"three":"three"}],28:[function(require,module,exports){
 'use strict';
 
 let THREE = require('three');
@@ -7441,6 +7281,8 @@ let THREE = require('three');
 let frag = require('../shaders/water.frag');
 let vert = require('../shaders/water.vert');
 
+let seaFrag = require('../shaders/sea.frag');
+let seaVert = require('../shaders/sea.vert');
 
 let terrainFrag = require('../shaders/terrain.frag');
 let terrainVert = require('../shaders/terrain.vert');
@@ -7471,13 +7313,24 @@ let terrain =  new THREE.ShaderMaterial( {
     fragmentShader: terrainFrag
 });
 
+let sea =  new THREE.ShaderMaterial( {
+    uniforms: {
+        time: { value: 1.0 },
+        resolution: { value: new THREE.Vector2() }
+    },
+    vertexShader: seaVert,
+    fragmentShader: seaFrag
+});
+
 
 module.exports = {
     EARTH: earth,
     WATER: water,
-    TERRAIN: terrain
+    TERRAIN: terrain,
+    SEA: sea
 };
-},{"../shaders/terrain.frag":19,"../shaders/terrain.vert":20,"../shaders/water.frag":23,"../shaders/water.vert":24,"three":"three"}],28:[function(require,module,exports){
+
+},{"../shaders/sea.frag":18,"../shaders/sea.vert":19,"../shaders/terrain.frag":20,"../shaders/terrain.vert":21,"../shaders/water.frag":24,"../shaders/water.vert":25,"three":"three"}],29:[function(require,module,exports){
 'use strict';
 
 function Matrix (size) {
@@ -7491,7 +7344,7 @@ function Matrix (size) {
 }
 
 module.exports = Matrix;
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /**
  * Break faces with edges longer than maxEdgeLength
  * - not recursive
@@ -7733,7 +7586,7 @@ THREE.TessellateModifier.prototype.modify = function ( geometry ) {
 };
 
 module.exports = THREE;
-},{"three":"three"}],30:[function(require,module,exports){
+},{"three":"three"}],31:[function(require,module,exports){
 let THREE = require('three');
 let CANNON = require('cannon');
 
@@ -7929,7 +7782,7 @@ module.exports = function (body) {
 
     return obj;
 };
-},{"cannon":"cannon","three":"three"}],31:[function(require,module,exports){
+},{"cannon":"cannon","three":"three"}],32:[function(require,module,exports){
 'use strict';
 
 let DAT = require('dat-gui');
@@ -7995,4 +7848,4 @@ gui.add(params, 'wireframe').name('Wireframe').onFinishChange(function(){
 });
 
 module.exports = Util;
-},{"dat-gui":1}]},{},[18]);
+},{"dat-gui":1}]},{},[17]);

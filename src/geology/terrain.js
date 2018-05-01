@@ -81,9 +81,9 @@ function Terrain (size, baseAmp, heightAmp) {
 
     Displacement.limit(heightMap, 0, 0.3);
     // Displacement.softLimit(heightMap, 0, 0.5);
-        Displacement.noise(heightMap, 0.2);
+    Displacement.noise(heightMap, 0.2);
 
-        Entropy.erode(heightMap, 1);
+    Entropy.erode(heightMap, 1);
     // Entropy.erode(heightMap);
     // Entropy.erode(heightMap);
     // Entropy.erode(heightMap);

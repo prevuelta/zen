@@ -5,6 +5,8 @@ let THREE = require('three');
 let frag = require('../shaders/water.frag');
 let vert = require('../shaders/water.vert');
 
+let seaFrag = require('../shaders/sea.frag');
+let seaVert = require('../shaders/sea.vert');
 
 let terrainFrag = require('../shaders/terrain.frag');
 let terrainVert = require('../shaders/terrain.vert');
@@ -35,9 +37,19 @@ let terrain =  new THREE.ShaderMaterial( {
     fragmentShader: terrainFrag
 });
 
+let sea =  new THREE.ShaderMaterial( {
+    uniforms: {
+        time: { value: 1.0 },
+        resolution: { value: new THREE.Vector2() }
+    },
+    vertexShader: seaVert,
+    fragmentShader: seaFrag
+});
+
 
 module.exports = {
     EARTH: earth,
     WATER: water,
-    TERRAIN: terrain
+    TERRAIN: terrain,
+    SEA: sea
 };

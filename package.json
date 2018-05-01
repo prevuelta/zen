@@ -1,55 +1,55 @@
 {
-  "name": "zen",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "watch": "parallelshell 'npm run watch:js' 'npm run serve-sync'",
-    "watch:js": "watch 'npm run js' ./src",
-    "js": "browserify -x three -x cannon -x three-subdivision-modifier -x quickhull3d ./src/main.js -o ./dist/main.js",
-    "lib": "browserify -r cannon -r three -r three-subdivision-modifier -r quickhull3d -o ./dist/lib.js",
-    "serve-sync": "parallelshell 'http-server -p 4321 ./dist/' 'browser-sync start --proxy localhost:4321 --files dist/'",
-    "serve": "http-server -p 4321 ./dist/"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/prevuelta/zen.git"
-  },
-  "browserify": {
-    "transform": [
-      [
-        "stringify",
-        {
-          "extensions": [
-            ".vert",
-            ".frag"
-          ]
-        }
-      ]
-    ]
-  },
-  "author": "",
-  "license": "ISC",
-  "homepage": "https://github.com/prevuelta/zen.git",
-  "dependencies": {
-    "cannon": "^0.6.2",
-    "dat-gui": "^0.5.0",
-    "fast-simplex-noise": "^3.2.0",
-    "quickhull3d": "^2.0.0",
-    "simplex-noise": "^2.3.0",
-    "stats-js": "^1.0.0-alpha1",
-    "three": "^0.81.0",
-    "three-orbit-controls": "^82.1.0",
-    "three-subdivision-modifier": "^1.0.5",
-    "worley-noise": "^1.0.1"
-  },
-  "devDependencies": {
-    "babelify": "^7.3.0",
-    "browser-sync": "^2.18.6",
-    "browserify": "^13.1.0",
-    "parallelshell": "^2.0.0",
-    "standard": "^8.6.0",
-    "stringify": "^5.1.0",
-    "watch": "^0.19.2"
-  }
+    "name": "zen",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "watch": "run-p watch:js serve-sync",
+        "watch:js": "watch 'npm run js' ./src",
+        "js":
+            "browserify -x three -x cannon -x three-subdivision-modifier -x quickhull3d ./src/main.js -o ./dist/main.js",
+        "lib":
+            "browserify -r cannon -r three -r three-subdivision-modifier -r quickhull3d -o ./dist/lib.js",
+        "serve-sync": "run-p serve sync",
+        "sync": "browser-sync start --proxy localhost:4321 --files dist/",
+        "serve": "http-server -p 4321 ./dist/"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/prevuelta/zen.git"
+    },
+    "browserify": {
+        "transform": [
+            [
+                "stringify",
+                {
+                    "extensions": [".vert", ".frag"]
+                }
+            ]
+        ]
+    },
+    "author": "",
+    "license": "ISC",
+    "homepage": "https://github.com/prevuelta/zen.git",
+    "dependencies": {
+        "cannon": "^0.6.2",
+        "dat-gui": "^0.5.0",
+        "fast-simplex-noise": "^3.2.0",
+        "quickhull3d": "^2.0.0",
+        "simplex-noise": "^2.3.0",
+        "stats-js": "^1.0.0-alpha1",
+        "three": "^0.92.0",
+        "three-orbit-controls": "^82.1.0",
+        "three-subdivision-modifier": "^1.0.5",
+        "worley-noise": "^1.0.1"
+    },
+    "devDependencies": {
+        "babelify": "^8.0.0",
+        "browser-sync": "^2.18.6",
+        "browserify": "^16.2.0",
+        "npm-run-all": "^4.1.2",
+        "standard": "^11.0.1",
+        "stringify": "^5.1.0",
+        "watch": "^1.0.2"
+    }
 }
