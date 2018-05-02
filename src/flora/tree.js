@@ -1,9 +1,15 @@
-'use strict';
-
 const THREE = require('three');
 const Helpers = require('../util/helpers');
 
 const Materials = require('../util/materials');
+const Util = require('../util/util');
+const { randomFloat, randomInt } = Util;
+
+const xAxis = new THREE.Vector3(1, 0, 0);
+const zAxis = new THREE.Vector3(0, 0, 1);
+
+const { PI } = Math;
+const HALF_PI = PI / 2;
 
 function Tree() {
     const height = 3;
@@ -14,21 +20,67 @@ function Tree() {
 
     const vertices = [];
 
-    function branch(start, end, iterations) {
-        console.log(start, end, iterations);
-        vertices.push(start, end);
+    let branchLength;
+    const oddsOfSplit = 8;
+    const oddsOfBranch = 6;
+    const branchVariationLimit = PI;
+    const firstTarget = new THREE.Vector3();
+    let segmentLength = 0.4;
+
+    function branch(origin, target, iterations) {
+        // vertices.push(start, end);
         iterations--;
-        if (iterations <= 0) return;
-        console.log('Iteration tree', iterations);
-        for (let i = 0; i < 3; i++) {
-            const newEnd = [
-                end[0] + Math.random() * 4,
-                end[1],
-                end[2] + Math.random() * 4,
-            ];
-            console.log('Another branch');
-            branch(end, newEnd, iterations);
+        if (iterations === 0) return;
+        let start = origin;
+        let distance = origin.distanceTo(target);
+        let segmentMaxLength = iterations * segmentLength + randomFloat();
+        let branchActive = true;
+        while (distance > 0 && branchActive) {
+            const branch = randomInt(0, oddsOfBranch) === 0;
+            const split = randomInt(0, oddsOfSplit) === 0;
+            if (branch) {
+                const newTarget = start.clone().add(new THREE.Vector3(0,1,0);
+                branch(start, newTarget, iterations);
+            }
+            if (split) {
+                // const branchCount = randomInt(1, 4);
+                // branch();
+                // branch();
+                branchActive = false;
+                return;
+            } else {
+                const vector = start
+                    .clone()
+                    .add(target)
+                    .normalize()
+                    .multiplyScalar(segmentLength);
+                end = start.clone().add(vector);
+                vertices.push(start, end);
+                start = end;
+                segmentLength *= 0.94;
+                distance = start.distanceTo(target);
+            }
         }
+        // for (let i = 0; i < branchCount; i++) {
+        // const vector = new THREE.Vector3(0, 1, 0)
+        // .applyAxisAngle(xAxis, randomFloat(0, PI) - HALF_PI)
+        // .applyAxisAngle(zAxis, randomFloat(0, PI) - HALF_PI);
+        // vector.normalize().multiplyScalar(Math.random());
+        // if (randomInt(0, 1)) {
+        // const newEnd = end.clone().add(vector);
+        // branch(end, newEnd, iterations);
+        // } else {
+        // const dist = start.distanceTo(end);
+        // const midVector = start
+        // .clone()
+        // .add(end)
+        // .normalize()
+        // .multiplyScalar(randomFloat(0, dist));
+        // const mid = start.clone().add(midVector);
+        // const newEnd = mid.clone().add(vector);
+        // branch(mid, newEnd, iterations);
+        // }
+        // }
 
         // Will split?
         // let split = Math.random() > 0.8;
@@ -38,18 +90,13 @@ function Tree() {
         // points.push([Math.random(), i, Math.random()]);
         // }
     }
+    console.log('V', vertices);
 
-    branch([0, 0, 0], [0, 2, 0], 4);
-
-    const typedVertices = new Float32Array(vertices.length * 3);
-    for (let i = 0; i < vertices.length; i++) {
-        console.log(i);
-        typedVertices[i * 3] = vertices[i][0];
-        typedVertices[i * 3 + 1] = vertices[i][1];
-        typedVertices[i * 3 + 2] = vertices[i][2];
-    }
-
-    console.log(typedVertices);
+    branch(
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, randomFloat(4, 10)),
+        4,
+    );
 
     // Example of simple tree:
     // [ [000, 020], [020,040], [020, 020]
@@ -63,11 +110,8 @@ function Tree() {
     // renderModel(tree);
     // console.log(treeModel.map(c => new THREE.Vector3(c[0], c[1], c[2])));
 
-    const geometry = new THREE.BufferGeometry();
-    geometry.addAttribute(
-        'position',
-        new THREE.BufferAttribute(typedVertices, 3),
-    );
+    const geometry = new THREE.Geometry();
+    geometry.vertices = vertices;
 
     // geometry.vertices = vertices.map(v => new THREE.Vector3(v[0], v[1], v[2]));
     // geometry.computeFaceNormals();
