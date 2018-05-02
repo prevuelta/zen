@@ -1,5 +1,3 @@
-'use strict';
-
 let THREE = require('three');
 let CANNON = require('cannon');
 let OrbitControls = require('three-orbit-controls')(THREE);
@@ -21,57 +19,55 @@ const Helpers = require('./util/helpers');
 const Stats = require('stats-js');
 
 let stats = new Stats();
-stats.setMode(0); // 0: fps, 1: ms 
+stats.setMode(0); // 0: fps, 1: ms
 
 // Align top-left
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.left = '0px';
 stats.domElement.style.top = '0px';
 
-document.body.appendChild( stats.domElement );
+document.body.appendChild(stats.domElement);
 
 // setInterval( function () {
 
 //     stats.begin();
 
-//     // your code goes here 
+//     // your code goes here
 
 //     stats.end();
 
 // }, 1000 / 60 );
 
-
-let camera,
-    scene,
-    renderer;
+let camera, scene, renderer;
 
 const xAmp = 0.4;
 const yAmp = 4;
 const size = 20;
 
 const ROCKS = 0;
-const yAxis = new THREE.Vector3(0,1,0);
+const yAxis = new THREE.Vector3(0, 1, 0);
 
 let step = 0;
 let stepLimit = 1200;
 
-
-function initThree () {
-
+function initThree() {
     scene = new THREE.Scene();
 
     scene.background = new THREE.Color('#ffffff');
-    camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
+    camera = new THREE.PerspectiveCamera(
+        30,
+        window.innerWidth / window.innerHeight,
+        1,
+        10000,
+    );
 
     for (let i = 0; i < ROCKS; i++) {
         // let rock = Rock(Util.randomFloat(0.2, 3));
         // let geo = new THREE.SphereGeometry(0.6, 5, 5);
-
         // let rock = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({
-            // color: 0xF4E0C5,
-            // shading: THREE.FlatShading
+        // color: 0xF4E0C5,
+        // shading: THREE.FlatShading
         // }));
-
         // let rock = Rock(Util.randomFloat(0.2, 1));
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
@@ -90,24 +86,25 @@ function initThree () {
 
     let highest = terrain.highestPoint();
 
-    // tree.position.set(highest.x, highest.y, highest.z);
+    let tree = Tree();
+
+    tree.position.set(highest.x, highest.y, highest.z);
     // tree.position.set(2.8, 0.1, 5.2);
 
-    // scene.add(tree);
+    scene.add(tree);
 
     // let water = Water(xAmp * size, 1);
     // water.position.set(0, yAmp/2, 0);
     // Displacement.turbulence(water.geometry.vertices, xAmp * size);
-// 
+    //
     // scene.add(water);
 
-
-// texture.load('assets/stone_texture.jpg', function (texture){
+    // texture.load('assets/stone_texture.jpg', function (texture){
     // The actual texture is returned in the event.content
     let material = new THREE.MeshLambertMaterial({
         color: 0xffffff,
         side: THREE.DoubleSide,
-        vertexColors: THREE.VertexColors
+        vertexColors: THREE.VertexColors,
     });
 
     // scene.add(new THREE.AxisHelper(50));
@@ -115,44 +112,50 @@ function initThree () {
     camera.position.z = 30;
     camera.position.y = 10;
     camera.position.x = 10;
-    camera.target = new THREE.Vector3( 0, 0, 0 );
+    camera.target = new THREE.Vector3(0, 0, 0);
 
     var light = new THREE.AmbientLight(0x444444); // soft white light
-    scene.add( light );
+    scene.add(light);
 
-    var directionalLight = new THREE.DirectionalLight( 0xFF0000, 1);
-    directionalLight.position.set( 10, 10, 10 );
+    var directionalLight = new THREE.DirectionalLight(0xff0000, 1);
+    directionalLight.position.set(10, 10, 10);
     // directionalLight.rotationX(Math.PI/2);
 
-    scene.add( directionalLight );
+    scene.add(directionalLight);
 
-    let directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 0);
+    let directionalLightHelper = new THREE.DirectionalLightHelper(
+        directionalLight,
+        0,
+    );
     // scene.add( directionalLightHelper);
 
-    renderer = new THREE.WebGLRenderer({antialias: true});
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    document.body.appendChild( renderer.domElement );
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-    let controls = new OrbitControls( camera );
-
+    let controls = new OrbitControls(camera);
 }
 
-function animate () {
-    requestAnimationFrame( animate );
+function animate() {
+    requestAnimationFrame(animate);
     // scene.rotateOnAxis(yAxis, Math.PI/480);
     render();
     stats.update();
 }
 
 function render() {
-    renderer.render( scene, camera );
+    renderer.render(scene, camera);
 }
 
-window.addEventListener( 'resize', function () {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize( window.innerWidth, window.innerHeight );
-}, false );
+window.addEventListener(
+    'resize',
+    function() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    },
+    false,
+);
 
 initThree();
 animate();

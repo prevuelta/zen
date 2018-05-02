@@ -6390,70 +6390,89 @@ const Helpers = require('../util/helpers');
 
 const Materials = require('../util/materials');
 
-
-function Tree () {
-
+function Tree() {
     const height = 3;
     const increment = 0.2;
     const limit = 10;
     const branchLimit = 20;
     let iteration = 0;
 
-    function branch (origin) {
+    const vertices = [];
 
-        iteration++;
-        if (iteration > limit)
-            return origin;
-
-        let points = [origin];
-
-        for (let i = increment; i < Math.floor(Math.random() * branchLimit); i+=increment) {
-            // Will split?
-            let split = Math.random() > 0.8;
-            // if (split) {
-                // points.push(branch([Math.random(), i, Math.random()]))
-            // } else {
-                points.push([Math.random(), i, Math.random()]);
-            // }
+    function branch(start, end, iterations) {
+        console.log(start, end, iterations);
+        vertices.push(start, end);
+        iterations--;
+        if (iterations <= 0) return;
+        console.log('Iteration tree', iterations);
+        for (let i = 0; i < 3; i++) {
+            const newEnd = [
+                end[0] + Math.random() * 4,
+                end[1],
+                end[2] + Math.random() * 4,
+            ];
+            console.log('Another branch');
+            branch(end, newEnd, iterations);
         }
 
-        return points;
+        // Will split?
+        // let split = Math.random() > 0.8;
+        // if (split) {
+        // points.push(branch([Math.random(), i, Math.random()]))
+        // } else {
+        // points.push([Math.random(), i, Math.random()]);
+        // }
     }
 
+    branch([0, 0, 0], [0, 2, 0], 4);
 
-    let treeModel = branch([0, 0, 0]);
+    const typedVertices = new Float32Array(vertices.length * 3);
+    for (let i = 0; i < vertices.length; i++) {
+        console.log(i);
+        typedVertices[i * 3] = vertices[i][0];
+        typedVertices[i * 3 + 1] = vertices[i][1];
+        typedVertices[i * 3 + 2] = vertices[i][2];
+    }
+
+    console.log(typedVertices);
+
+    // Example of simple tree:
+    // [ [000, 020], [020,040], [020, 020]
 
     // for (let i = increment; i < height; i+=increment) {
     //     // Will split?
     //     vertices.push([Math.random(), i, Math.random()]);
     // }
-    function renderBranch () {
-
-    }
+    function renderBranch() {}
 
     // renderModel(tree);
-    console.log(treeModel.map(c => new THREE.Vector3(c[0], c[1], c[2])));
+    // console.log(treeModel.map(c => new THREE.Vector3(c[0], c[1], c[2])));
 
-    var geometry = new THREE.TubeGeometry(treeModel, 20, 2, 8, false );
-
-    // let geometries = [];
+    const geometry = new THREE.BufferGeometry();
+    geometry.addAttribute(
+        'position',
+        new THREE.BufferAttribute(typedVertices, 3),
+    );
 
     // geometry.vertices = vertices.map(v => new THREE.Vector3(v[0], v[1], v[2]));
     // geometry.computeFaceNormals();
     // geometry.mergeVertices();
 
-    let mesh = new THREE.Line(geometry, new THREE.LineBasicMaterial({
-        color: 0xff0000,
-        linewidth: 4
-    }));
+    let mesh = new THREE.LineSegments(
+        geometry,
+        new THREE.LineBasicMaterial({
+            color: 0xff0000,
+            linewidth: 4,
+        }),
+    );
 
     // mesh.add( Helpers.wireframe(geometry) );
 
     return mesh;
-
 }
 
 module.exports = Tree;
+
 },{"../util/helpers":27,"../util/materials":28,"three":"three"}],14:[function(require,module,exports){
 'use strict';
 
@@ -6983,8 +7002,6 @@ function Terrain (size, baseAmp, heightAmp) {
 module.exports = Terrain;
 
 },{"../abstract/displacement":9,"../abstract/entropy":10,"../abstract/field":11,"../util/helpers":27,"../util/materials":28,"../util/matrix":29,"../util/patchedThree":30,"../util/util":32,"three-subdivision-modifier":"three-subdivision-modifier"}],17:[function(require,module,exports){
-'use strict';
-
 let THREE = require('three');
 let CANNON = require('cannon');
 let OrbitControls = require('three-orbit-controls')(THREE);
@@ -7006,57 +7023,55 @@ const Helpers = require('./util/helpers');
 const Stats = require('stats-js');
 
 let stats = new Stats();
-stats.setMode(0); // 0: fps, 1: ms 
+stats.setMode(0); // 0: fps, 1: ms
 
 // Align top-left
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.left = '0px';
 stats.domElement.style.top = '0px';
 
-document.body.appendChild( stats.domElement );
+document.body.appendChild(stats.domElement);
 
 // setInterval( function () {
 
 //     stats.begin();
 
-//     // your code goes here 
+//     // your code goes here
 
 //     stats.end();
 
 // }, 1000 / 60 );
 
-
-let camera,
-    scene,
-    renderer;
+let camera, scene, renderer;
 
 const xAmp = 0.4;
 const yAmp = 4;
 const size = 20;
 
 const ROCKS = 0;
-const yAxis = new THREE.Vector3(0,1,0);
+const yAxis = new THREE.Vector3(0, 1, 0);
 
 let step = 0;
 let stepLimit = 1200;
 
-
-function initThree () {
-
+function initThree() {
     scene = new THREE.Scene();
 
     scene.background = new THREE.Color('#ffffff');
-    camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
+    camera = new THREE.PerspectiveCamera(
+        30,
+        window.innerWidth / window.innerHeight,
+        1,
+        10000,
+    );
 
     for (let i = 0; i < ROCKS; i++) {
         // let rock = Rock(Util.randomFloat(0.2, 3));
         // let geo = new THREE.SphereGeometry(0.6, 5, 5);
-
         // let rock = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({
-            // color: 0xF4E0C5,
-            // shading: THREE.FlatShading
+        // color: 0xF4E0C5,
+        // shading: THREE.FlatShading
         // }));
-
         // let rock = Rock(Util.randomFloat(0.2, 1));
         // group.add(rock);
         // rock.position.x = Util.randomInt(0, 30);
@@ -7075,24 +7090,25 @@ function initThree () {
 
     let highest = terrain.highestPoint();
 
-    // tree.position.set(highest.x, highest.y, highest.z);
+    let tree = Tree();
+
+    tree.position.set(highest.x, highest.y, highest.z);
     // tree.position.set(2.8, 0.1, 5.2);
 
-    // scene.add(tree);
+    scene.add(tree);
 
     // let water = Water(xAmp * size, 1);
     // water.position.set(0, yAmp/2, 0);
     // Displacement.turbulence(water.geometry.vertices, xAmp * size);
-// 
+    //
     // scene.add(water);
 
-
-// texture.load('assets/stone_texture.jpg', function (texture){
+    // texture.load('assets/stone_texture.jpg', function (texture){
     // The actual texture is returned in the event.content
     let material = new THREE.MeshLambertMaterial({
         color: 0xffffff,
         side: THREE.DoubleSide,
-        vertexColors: THREE.VertexColors
+        vertexColors: THREE.VertexColors,
     });
 
     // scene.add(new THREE.AxisHelper(50));
@@ -7100,44 +7116,50 @@ function initThree () {
     camera.position.z = 30;
     camera.position.y = 10;
     camera.position.x = 10;
-    camera.target = new THREE.Vector3( 0, 0, 0 );
+    camera.target = new THREE.Vector3(0, 0, 0);
 
     var light = new THREE.AmbientLight(0x444444); // soft white light
-    scene.add( light );
+    scene.add(light);
 
-    var directionalLight = new THREE.DirectionalLight( 0xFF0000, 1);
-    directionalLight.position.set( 10, 10, 10 );
+    var directionalLight = new THREE.DirectionalLight(0xff0000, 1);
+    directionalLight.position.set(10, 10, 10);
     // directionalLight.rotationX(Math.PI/2);
 
-    scene.add( directionalLight );
+    scene.add(directionalLight);
 
-    let directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 0);
+    let directionalLightHelper = new THREE.DirectionalLightHelper(
+        directionalLight,
+        0,
+    );
     // scene.add( directionalLightHelper);
 
-    renderer = new THREE.WebGLRenderer({antialias: true});
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    document.body.appendChild( renderer.domElement );
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-    let controls = new OrbitControls( camera );
-
+    let controls = new OrbitControls(camera);
 }
 
-function animate () {
-    requestAnimationFrame( animate );
+function animate() {
+    requestAnimationFrame(animate);
     // scene.rotateOnAxis(yAxis, Math.PI/480);
     render();
     stats.update();
 }
 
 function render() {
-    renderer.render( scene, camera );
+    renderer.render(scene, camera);
 }
 
-window.addEventListener( 'resize', function () {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize( window.innerWidth, window.innerHeight );
-}, false );
+window.addEventListener(
+    'resize',
+    function() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    },
+    false,
+);
 
 initThree();
 animate();
