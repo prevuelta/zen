@@ -11,92 +11,41 @@ const zAxis = new THREE.Vector3(0, 0, 1);
 const { PI } = Math;
 const HALF_PI = PI / 2;
 
-function Tree() {
-    const height = 3;
-    const increment = 0.2;
-    const limit = 10;
-    const branchLimit = 20;
-    let iteration = 0;
+const LSystem = require('lindenmayer');
 
+const FastSimplexNoise = require('fast-simplex-noise').default;
+const branchNoise = new FastSimplexNoise({
+    frequency: 0.02,
+    min: 0,
+    max: 1,
+    octaves: 8,
+});
+
+function Tree() {
     const vertices = [];
 
-    let branchLength;
-    const oddsOfSplit = 8;
-    const oddsOfBranch = 6;
-    const branchVariationLimit = PI;
-    const firstTarget = new THREE.Vector3();
-    let segmentLength = 0.4;
+    let currentVector;
 
-    function branch(origin, target, iterations) {
-        // vertices.push(start, end);
-        iterations--;
-        if (iterations === 0) return;
-        let start = origin;
-        let distance = origin.distanceTo(target);
-        let segmentMaxLength = iterations * segmentLength + randomFloat();
-        let branchActive = true;
-        while (distance > 0 && branchActive) {
-            const branch = randomInt(0, oddsOfBranch) === 0;
-            const split = randomInt(0, oddsOfSplit) === 0;
-            if (branch) {
-                const newTarget = start.clone().add(new THREE.Vector3(0,1,0);
-                branch(start, newTarget, iterations);
-            }
-            if (split) {
-                // const branchCount = randomInt(1, 4);
-                // branch();
-                // branch();
-                branchActive = false;
-                return;
-            } else {
-                const vector = start
-                    .clone()
-                    .add(target)
-                    .normalize()
-                    .multiplyScalar(segmentLength);
-                end = start.clone().add(vector);
-                vertices.push(start, end);
-                start = end;
-                segmentLength *= 0.94;
-                distance = start.distanceTo(target);
-            }
-        }
-        // for (let i = 0; i < branchCount; i++) {
-        // const vector = new THREE.Vector3(0, 1, 0)
-        // .applyAxisAngle(xAxis, randomFloat(0, PI) - HALF_PI)
-        // .applyAxisAngle(zAxis, randomFloat(0, PI) - HALF_PI);
-        // vector.normalize().multiplyScalar(Math.random());
-        // if (randomInt(0, 1)) {
-        // const newEnd = end.clone().add(vector);
-        // branch(end, newEnd, iterations);
-        // } else {
-        // const dist = start.distanceTo(end);
-        // const midVector = start
-        // .clone()
-        // .add(end)
-        // .normalize()
-        // .multiplyScalar(randomFloat(0, dist));
-        // const mid = start.clone().add(midVector);
-        // const newEnd = mid.clone().add(vector);
-        // branch(mid, newEnd, iterations);
-        // }
-        // }
+    var system = new LSystem({
+        axiom: '++FX',
+        productions: { X: '>2@[-FX]+FX' },
+        finals: {
+            '+': () => {},
+            '-': () => {},
+            F: () => {
+                console.log('f');
+            },
+            X: () => {
+                console.log('x');
+            },
+        },
+    });
+    system.iterate(5);
+    system.final();
 
-        // Will split?
-        // let split = Math.random() > 0.8;
-        // if (split) {
-        // points.push(branch([Math.random(), i, Math.random()]))
-        // } else {
-        // points.push([Math.random(), i, Math.random()]);
-        // }
-    }
     console.log('V', vertices);
 
-    branch(
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, randomFloat(4, 10)),
-        4,
-    );
+    // branch(new THREE.Vector3(), getRandomTarget(new THREE.Vector3()), 4);
 
     // Example of simple tree:
     // [ [000, 020], [020,040], [020, 020]
@@ -122,7 +71,7 @@ function Tree() {
         new THREE.LineBasicMaterial({
             color: 0xff0000,
             linewidth: 4,
-        }),
+        })
     );
 
     // mesh.add( Helpers.wireframe(geometry) );
