@@ -2,3 +2,4 @@ node_modules
 dist/scripts
 .DS_Store
 .sass-cache
+package-lock.json
