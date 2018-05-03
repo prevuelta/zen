@@ -6,10 +6,8 @@
     "scripts": {
         "watch": "run-p watch:js serve-sync",
         "watch:js": "watch 'npm run js' ./src",
-        "js":
-            "browserify -x three -x cannon -x three-subdivision-modifier -x quickhull3d ./src/main.js -o ./dist/main.js",
-        "lib":
-            "browserify -r cannon -r three -r three-subdivision-modifier -r quickhull3d -o ./dist/lib.js",
+        "js": "browserify -x three -x cannon -x three-subdivision-modifier -x quickhull3d ./src/main.js -o ./dist/main.js",
+        "lib": "browserify -r cannon -r three -r three-subdivision-modifier -r quickhull3d -o ./dist/lib.js",
         "serve-sync": "run-p serve sync",
         "sync": "browser-sync start --proxy localhost:4321 --files dist/",
         "serve": "http-server -p 4321 ./dist/"
@@ -23,7 +21,10 @@
             [
                 "stringify",
                 {
-                    "extensions": [".vert", ".frag"]
+                    "extensions": [
+                        ".vert",
+                        ".frag"
+                    ]
                 }
             ]
         ]
