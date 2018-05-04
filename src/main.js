@@ -1,23 +1,23 @@
-let THREE = require('three');
-let CANNON = require('cannon');
-let OrbitControls = require('three-orbit-controls')(THREE);
+import THREE from 'three';
+import OrbitControls from 'three-orbit-controls';
 
-let Grass = require('./flora/grass');
-let Tree = require('./flora/tree');
-let Cobble = require('./geology/cobble');
-let Rock = require('./geology/rock');
-let Terrain = require('./geology/terrain');
-// let Water = require('./elements/water');
+// import Grass from './flora/grass';
+import Tree from './flora/tree';
+// import Cobble from './geology/cobble';
+// import Rock from './geology/rock';
+import Terrain from './geology/terrain';
+// import Water from './elements/water';
 
-const Util = require('./util/util');
-const Materials = require('./util/materials');
-const Displacement = require('./abstract/displacement');
+import Util from './util/util';
+import Materials from './util/materials';
+// import Displacement from './abstract/displacement';
 
-let shape2mesh = require('./util/shape2mesh');
-const Helpers = require('./util/helpers');
+// import shape2mesh from './util/shape2mesh';
+import Helpers from './util/helpers';
 
-const Stats = require('stats-js');
+import Stats from 'stats-js';
 
+const orbitControls = OrbitControls(THREE);
 let stats = new Stats();
 stats.setMode(0); // 0: fps, 1: ms
 
@@ -133,7 +133,7 @@ function initThree() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    let controls = new OrbitControls(camera);
+    let controls = new orbitControls(camera);
 }
 
 function animate() {

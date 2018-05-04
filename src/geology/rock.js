@@ -8,7 +8,7 @@ let Util = require('../util/util');
 const Helpers = require('../util/helpers');
 
 const qh = require('quickhull3d');
-const SubdivisionModifier = require('three-subdivision-modifier');
+// const SubdivisionModifier = require('three-subdivision-modifier');
 
 const Materials = require('../util/materials');
 

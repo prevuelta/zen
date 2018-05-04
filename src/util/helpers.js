@@ -1,44 +1,41 @@
-'use strict';
+import THREE from 'three';
 
-let THREE = require('three');
+// let Cross = require('./cross');
 
-let Cross = require('./cross');
+//     let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
+// var line = new THREE.LineSegments( wireframe );
+// line.material.depthTest = false;
+// line.material.opacity = 0.5;
+// line.material.transparent = true;
 
-    //     let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
-    // var line = new THREE.LineSegments( wireframe );
-    // line.material.depthTest = false;
-    // line.material.opacity = 0.5;
-    // line.material.transparent = true;
+// mesh.add( line );
 
-    // mesh.add( line );
+// let markers = new THREE.Object3D();
 
+// geometry.vertices.forEach(f => {
+//     let cross = Cross(0.5);
 
-    // let markers = new THREE.Object3D();
+//     cross.position.x = f.x;
+//     cross.position.y = f.y;
+//     cross.position.z = f.z;
 
-    // geometry.vertices.forEach(f => {
-    //     let cross = Cross(0.5);
+//     markers.add(cross);
+// });
 
-    //     cross.position.x = f.x;
-    //     cross.position.y = f.y;
-    //     cross.position.z = f.z;
+// mesh.add(markers);;
 
-    //     markers.add(cross);
-    // });
+// var mS = (new THREE.Matrix4()).identity();
+//set -1 to the corresponding axis
+// mS.elements[0] = -1;
+// mS.elements[5] = -1;
+// mS.elements[10] = -1;
 
-    // mesh.add(markers);;
+// geometry.applyMatrix(mS);
+//mesh.applyMatrix(mS);
+//object.applyMatrix(mS);
 
-        // var mS = (new THREE.Matrix4()).identity();
-    //set -1 to the corresponding axis
-    // mS.elements[0] = -1;
-    // mS.elements[5] = -1;
-    // mS.elements[10] = -1;
-
-    // geometry.applyMatrix(mS);
-    //mesh.applyMatrix(mS);
-    //object.applyMatrix(mS);
-
-module.exports = {
-    marker (pos, weight = 0.5) {
+export default {
+    marker(pos, weight = 0.5) {
         let cross = Cross(weight);
 
         cross.position.x = pos.x;
@@ -47,19 +44,24 @@ module.exports = {
 
         return cross;
     },
-    normals (mesh) {
-        mesh.add(new THREE.FaceNormalsHelper( mesh ))
+    normals(mesh) {
+        mesh.add(new THREE.FaceNormalsHelper(mesh));
     },
-    boundingBox (mesh) {
-        let helper = new THREE.BoundingBoxHelper(mesh, new THREE.Color(0xFF0000));
+    boundingBox(mesh) {
+        let helper = new THREE.BoundingBoxHelper(
+            mesh,
+            new THREE.Color(0xff0000),
+        );
         mesh.add(helper);
         helper.update();
     },
-    wireframe (geometry) {
-        let line = new THREE.LineSegments( new THREE.WireframeGeometry( geometry ) );
+    wireframe(geometry) {
+        let line = new THREE.LineSegments(
+            new THREE.WireframeGeometry(geometry),
+        );
         line.material.depthTest = false;
         line.material.opacity = 0.5;
         line.material.transparent = true;
         return line;
-    }
-}
+    },
+};

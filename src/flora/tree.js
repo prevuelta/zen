@@ -1,8 +1,11 @@
-const THREE = require('three');
-const Helpers = require('../util/helpers');
+import THREE from 'three';
+import Helpers from '../util/helpers';
 
-const Materials = require('../util/materials');
-const Util = require('../util/util');
+import Materials from '../util/materials';
+import Util from '../util/util';
+import LSystem from 'lindenmayer';
+import FastSimplexNoise from 'fast-simplex-noise';
+
 const { randomFloat, randomInt } = Util;
 
 const xAxis = new THREE.Vector3(1, 0, 0);
@@ -10,40 +13,61 @@ const zAxis = new THREE.Vector3(0, 0, 1);
 
 const { PI } = Math;
 const HALF_PI = PI / 2;
-
-const LSystem = require('lindenmayer');
-
-const FastSimplexNoise = require('fast-simplex-noise').default;
-const branchNoise = new FastSimplexNoise({
-    frequency: 0.02,
-    min: 0,
-    max: 1,
-    octaves: 8,
-});
+const QUARTER_PI = PI / 4;
+const theta = HALF_PI / 2;
 
 function Tree() {
     const vertices = [];
 
     let currentVector;
+    let segmentLength = 0.2;
+    let currentSegment = new THREE.Vector3();
+    let angle = 0;
+    let stack = [];
 
     var system = new LSystem({
-        axiom: '++FX',
-        productions: { X: '>2@[-FX]+FX' },
+        axiom: '0',
+        productions: { 0: '1[0]0', 1: '11' },
         finals: {
-            '+': () => {},
-            '-': () => {},
-            F: () => {
-                console.log('f');
+            '[': () => {
+                angle = -theta;
+                stack.push(currentSegment.clone());
             },
-            X: () => {
-                console.log('x');
+            ']': () => {
+                angle = theta;
+                currentSegment = stack.pop();
+            },
+            0: () => {
+                segmentLength *= 0.98;
+                const v = new THREE.Vector3(0, 1, 0);
+                v
+                    .applyAxisAngle(xAxis, angle)
+                    // .applyAxisAngle(zAxis, QUARTER_PI)
+                    .normalize()
+                    .multiplyScalar(segmentLength);
+                const end = currentSegment.clone().add(v);
+                vertices.push(currentSegment, end);
+                currentSegment = end;
+            },
+            1: () => {
+                segmentLength *= 0.98;
+                const v = new THREE.Vector3(0, 1, 0)
+                    .applyAxisAngle(xAxis, angle)
+                    // .applyAxisAngle(zAxis, QUARTER_PI)
+                    .normalize()
+                    .multiplyScalar(segmentLength);
+                const end = currentSegment.clone().add(v);
+                vertices.push(currentSegment, end);
+                currentSegment = end;
+                // const v = new THREE.Vector3();
+                // vertices.push(v_);
+                // currentStart = v;
             },
         },
     });
-    system.iterate(5);
+    system.iterate(2);
+    console.log(system.getString());
     system.final();
-
-    console.log('V', vertices);
 
     // branch(new THREE.Vector3(), getRandomTarget(new THREE.Vector3()), 4);
 
@@ -71,7 +95,7 @@ function Tree() {
         new THREE.LineBasicMaterial({
             color: 0xff0000,
             linewidth: 4,
-        })
+        }),
     );
 
     // mesh.add( Helpers.wireframe(geometry) );
@@ -79,4 +103,4 @@ function Tree() {
     return mesh;
 }
 
-module.exports = Tree;
+export default Tree;
