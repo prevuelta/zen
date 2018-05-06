@@ -30,15 +30,17 @@ function Tree() {
         productions: { 0: '1[0]0', 1: '11' },
         finals: {
             '[': () => {
-                angle = -theta;
-                stack.push(currentSegment.clone());
+                stack.push({ seg: currentSegment.clone(), angle });
+                angle += theta;
             },
             ']': () => {
-                angle = theta;
-                currentSegment = stack.pop();
+                const { angle: prevAngle, seg } = stack.pop();
+                angle = prevAngle;
+                angle -= theta;
+                currentSegment = seg;
             },
             0: () => {
-                segmentLength *= 0.98;
+                // segmentLength *= 0.98;
                 const v = new THREE.Vector3(0, 1, 0);
                 v
                     .applyAxisAngle(xAxis, angle)
@@ -50,7 +52,7 @@ function Tree() {
                 currentSegment = end;
             },
             1: () => {
-                segmentLength *= 0.98;
+                // segmentLength *= 0.98;
                 const v = new THREE.Vector3(0, 1, 0)
                     .applyAxisAngle(xAxis, angle)
                     // .applyAxisAngle(zAxis, QUARTER_PI)
@@ -65,7 +67,7 @@ function Tree() {
             },
         },
     });
-    system.iterate(2);
+    system.iterate(5);
     console.log(system.getString());
     system.final();
 
@@ -95,7 +97,7 @@ function Tree() {
         new THREE.LineBasicMaterial({
             color: 0xff0000,
             linewidth: 4,
-        }),
+        })
     );
 
     // mesh.add( Helpers.wireframe(geometry) );
