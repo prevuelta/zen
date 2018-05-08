@@ -6,56 +6,73 @@ import Util from '../util/util';
 import LSystem from 'lindenmayer';
 import FastSimplexNoise from 'fast-simplex-noise';
 
-const { randomFloat, randomInt } = Util;
+import { lathe } from '../util/3dUtil';
+
+const { randomFloat, randomInt, randomPi } = Util;
 
 const xAxis = new THREE.Vector3(1, 0, 0);
 const zAxis = new THREE.Vector3(0, 0, 1);
+const yAxis = new THREE.Vector3(0, 1, 0);
 
 const { PI } = Math;
 const HALF_PI = PI / 2;
 const QUARTER_PI = PI / 4;
 const theta = HALF_PI / 2;
+const yTheta = HALF_PI / randomInt(1, 5);
 
 function Tree() {
     const vertices = [];
 
     let currentVector;
-    let segmentLength = 0.2;
+    let segmentLength = 0.1;
     let currentSegment = new THREE.Vector3();
     let angle = 0;
     let stack = [];
+    let yAngle = randomPi();
 
     var system = new LSystem({
-        axiom: '0',
-        productions: { 0: '1[0]0', 1: '11' },
+        axiom: 'X',
+        productions: { X: 'F+[[X]-X]-F[-FX]+X', F: 'FF' },
         finals: {
             '[': () => {
-                stack.push({ seg: currentSegment.clone(), angle });
-                angle += theta;
+                stack.push({ seg: currentSegment.clone(), angle, yAngle });
+            },
+            '+': () => {
+                angle += randomFloat(0, theta);
+                yAngle += randomFloat(0, yTheta);
             },
             ']': () => {
-                const { angle: prevAngle, seg } = stack.pop();
+                const {
+                    angle: prevAngle,
+                    seg,
+                    yAngle: prevYAngle,
+                } = stack.pop();
                 angle = prevAngle;
-                angle -= theta;
+                yAngle = prevYAngle;
                 currentSegment = seg;
             },
-            0: () => {
-                // segmentLength *= 0.98;
-                const v = new THREE.Vector3(0, 1, 0);
-                v
-                    .applyAxisAngle(xAxis, angle)
-                    // .applyAxisAngle(zAxis, QUARTER_PI)
-                    .normalize()
-                    .multiplyScalar(segmentLength);
-                const end = currentSegment.clone().add(v);
-                vertices.push(currentSegment, end);
-                currentSegment = end;
+            '-': () => {
+                // angle = prevAngle;
+                // angle -= theta;
+                angle -= randomFloat(0, theta);
             },
-            1: () => {
+            X: () => {
+                // segmentLength *= 0.98;
+                // const v = new THREE.Vector3(0, 1, 0);
+                // v
+                // .applyAxisAngle(xAxis, angle)
+                // // .applyAxisAngle(yAxis, randomPi())
+                // .normalize()
+                // .multiplyScalar(segmentLength);
+                // const end = currentSegment.clone().add(v);
+                // vertices.push(currentSegment, end);
+                // currentSegment = end;
+            },
+            F: () => {
                 // segmentLength *= 0.98;
                 const v = new THREE.Vector3(0, 1, 0)
                     .applyAxisAngle(xAxis, angle)
-                    // .applyAxisAngle(zAxis, QUARTER_PI)
+                    .applyAxisAngle(yAxis, yAngle)
                     .normalize()
                     .multiplyScalar(segmentLength);
                 const end = currentSegment.clone().add(v);
@@ -67,7 +84,7 @@ function Tree() {
             },
         },
     });
-    system.iterate(5);
+    system.iterate(4);
     console.log(system.getString());
     system.final();
 
@@ -88,17 +105,57 @@ function Tree() {
     const geometry = new THREE.Geometry();
     geometry.vertices = vertices;
 
-    // geometry.vertices = vertices.map(v => new THREE.Vector3(v[0], v[1], v[2]));
-    // geometry.computeFaceNormals();
-    // geometry.mergeVertices();
+    let group = new THREE.Group();
+
+    for (let i = 0; i < vertices.length; i += 2) {
+        let start = vertices[i];
+        let end = vertices[i + 1];
+        let axis = p1
+            .clone()
+            .sub(p2)
+            .normalize();
+        let cross = axis
+            .clone()
+            .cross(xAxis)
+            .normalize()
+            .multiplyScalar(3);
+        let gSegment = new THREE.Geometry();
+        let v = [],
+            f = [];
+        let fOrigin = v.length;
+        for (let j = 0; j < PI; j += QUARTER_PI) {
+            v.push(p1.clone().add(cross.clone().applyAxisAngle(axis, j)));
+        }
+        for (let j = 0; j < PI; j += QUARTER_PI) {
+            v.push(p2.clone().add(cross.clone().applyAxisAngle(axis, j)));
+        }
+        // f.push(new THREE.Face3(fOrigin, fOrigin + 4, fOrigin + 1));
+        f.push(new THREE.Face3(fOrigin, fOrigin + 1, fOrigin + 2));
+        gSegment.vertices = v;
+        gSegment.faces = f;
+        // gSegment.computeVertexNormals();
+        // gSegment.computeFaceNormals();
+        // gSegment = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+        gSegment = 
+
+        let gMesh = new THREE.Mesh(gSegment, Materials.BASIC);
+        // gMesh.position.set(p1.x, p1.y, p1.z);
+        group.add(gMesh);
+
+        // spline / div / axis /capped
+        // let p1Cross = p1.clone().add(p2).cross(xAxis).normalize();
+        // let v1 =
+    }
 
     let mesh = new THREE.LineSegments(
         geometry,
         new THREE.LineBasicMaterial({
-            color: 0xff0000,
+            color: 0x0000ff,
             linewidth: 4,
         })
     );
+
+    mesh.add(group);
 
     // mesh.add( Helpers.wireframe(geometry) );
 
