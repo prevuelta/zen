@@ -39,4 +39,10 @@ module.exports = {
         side: THREE.DoubleSide,
         color: '#ff0000',
     }),
+    BLUE: new THREE.MeshBasicMaterial({
+        color: 0x0000ff,
+    }),
+    GREEN: new THREE.MeshBasicMaterial({
+        color: 0x00ff00,
+    }),
 };
