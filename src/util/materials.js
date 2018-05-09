@@ -35,6 +35,7 @@ module.exports = {
     EARTH: earth,
     WATER: water,
     TERRAIN: terrain,
+    PHONG: new THREE.MeshPhongMaterial(),
     BASIC: new THREE.MeshBasicMaterial({
         side: THREE.DoubleSide,
         color: '#ff0000',

@@ -18,7 +18,7 @@ const { PI } = Math;
 const HALF_PI = PI / 2;
 const QUARTER_PI = PI / 4;
 const TWO_PI = PI * 2;
-const theta = HALF_PI / 2;
+const theta = HALF_PI / 3;
 const yTheta = HALF_PI / randomInt(1, 5);
 
 function Tree() {
@@ -39,7 +39,7 @@ function Tree() {
     };
     linkedTree.push(currentParent);
     let nodeStack = [];
-    const segments = 8;
+    const segments = 16;
     let maxLevel = 0;
 
     // [ { start, end, parent},
@@ -134,23 +134,65 @@ function Tree() {
     geometry.vertices = vertices;
 
     let group = new THREE.Group();
-    let maxThickness = 1;
+    let maxThickness = 0.5;
+
+    linkedTree.forEach(n => {
+        if (n.start) {
+            n.plane = verticesAroundAxis(n.start, n.end, segments, 0.4);
+        }
+    });
+
     linkedTree.forEach(n => {
         if (n.branch) {
-            // let g = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+            // let thicknessDelta = 1 - n.parent.level / (maxLevel - 1);
+            // let thickness = maxThickness * thicknessDelta;
+            // let g = new THREE.SphereGeometry(0.2, 32, 32);
             // let m = new THREE.Mesh(g, Materials.BASIC);
             // m.position.set(n.position.x, n.position.y, n.position.z);
             // group.add(m);
         } else if (n.start) {
-            let g = trunk(n); //new THREE.BoxGeometry(0.1, 0.1, 0.1);
+            // let g = trunk(n); //new THREE.BoxGeometry(0.1, 0.1, 0.1);
+            const g = plane(n.plane);
             let m = new THREE.Mesh(g, Materials.BLUE);
             m.position.set(n.start.x, n.start.y, n.start.z);
-            // group.add(m);
+            group.add(m);
         }
     });
 
+    function verticesAroundAxis(start, end, segments, distance) {
+        const v = [];
+        const inc = TWO_PI / segments;
+        const axis = start
+            .clone()
+            .sub(end)
+            .normalize();
+        const cross = axis
+            .clone()
+            .cross(xAxis)
+            .normalize()
+            .multiplyScalar(distance);
+        for (let j = 0; j < TWO_PI; j += inc) {
+            const pos = start
+                .clone()
+                .add(cross.clone().applyAxisAngle(axis, j));
+            v.push(pos);
+        }
+        return v;
+    }
+
+    function plane(vertices) {
+        const seg = new THREE.Geometry();
+        const f = [];
+        const center = new THREE.Vector3();
+        for (let i = 0; i < vertices.length; i++) {
+            f.push(new THREE.Face3(i, (i + 1) % vertices.length, center));
+        }
+        seg.vertices = v;
+        seg.faces = f;
+        return seg;
+    }
+
     function trunk(node) {
-        console.log(node);
         const { start, end, level, children } = node;
         const startThicknessDelta = 1 - node.parent.level / (maxLevel - 1);
         const endThicknessDelta = 1 - level / (maxLevel - 1);
@@ -171,10 +213,10 @@ function Tree() {
         let v = [],
             f = [];
         const inc = TWO_PI / segments;
-        for (let j = 0; j < TWO_PI; j += inc) {
+        for (let j = 0; j < two_pi; j += inc) {
             const pos = start
                 .clone()
-                .add(startCross.clone().applyAxisAngle(axis, j));
+                .add(startcross.clone().applyaxisangle(axis, j));
             v.push(pos);
         }
         for (let j = 0; j < TWO_PI; j += inc) {
@@ -196,9 +238,9 @@ function Tree() {
         gSegment.vertices = v;
         gSegment.faces = f;
 
-        let m = new THREE.Mesh(gSegment, Materials.GREEN);
+        let m = new THREE.Mesh(gSegment, Materials.PHONG);
         const wf = Helpers.wireframe(gSegment);
-        group.add(wf);
+        // group.add(wf);
         group.add(m);
 
         return new THREE.BoxGeometry(0.2, 0.2, 0.2);
