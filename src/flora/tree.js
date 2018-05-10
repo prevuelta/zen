@@ -23,7 +23,7 @@ function Tree() {
     const vertices = [];
 
     let currentVector;
-    let segmentLength = 0.5;
+    let segmentLength = 0.2;
     let currentSegment = new THREE.Vector3();
     let angle = 0;
     let stack = [];
@@ -34,13 +34,13 @@ function Tree() {
         root: true,
         children: [],
         level,
-        position: new THREE.Vector3(),
+        position: new THREE.Vector3(0, 0.1, 0),
     };
     linkedTree.push(currentParent);
     let nodeStack = [];
     const segments = 16;
     let maxLevel = 0;
-    let theta = HALF_PI / 3;
+    let theta = HALF_PI / 2;
     let yTheta = HALF_PI / 2; // randomInt(1, 5);
 
     // [ { start, end, parent},
@@ -59,10 +59,10 @@ function Tree() {
                     level,
                     children: [],
                 };
-                // currentParent.children.push(branchNode);
-                // currentParent = branchNode;
-                // linkedTree.push(currentParent);
-                // nodeStack.push(currentParent);
+                currentParent.children.push(branchNode);
+                currentParent = branchNode;
+                linkedTree.push(currentParent);
+                nodeStack.push(currentParent);
                 level++;
                 maxLevel = Math.max(level, maxLevel);
                 yAngle = randomTwoPi();
@@ -76,8 +76,8 @@ function Tree() {
                 angle = prevAngle;
                 yAngle = prevYAngle;
                 currentSegment = seg;
-                // currentParent = nodeStack.pop();
-                // level = currentParent.level;
+                currentParent = nodeStack.pop();
+                level = currentParent.level;
             },
             '+': () => {
                 // angle += randomFloat(0, theta);
@@ -121,7 +121,7 @@ function Tree() {
             },
         },
     });
-    system.iterate(1);
+    system.iterate(4);
     system.final();
 
     // branch(new THREE.Vector3(), getRandomTarget(new THREE.Vector3()), 4);
@@ -141,12 +141,27 @@ function Tree() {
     geometry.vertices = vertices;
 
     let group = new THREE.Group();
-    let maxThickness = 0.5;
+    let maxThickness = 1;
+    let currentThickness = 1.2;
 
     linkedTree.forEach(n => {
         if (n.start) {
-            n.plane = verticesAroundAxis(n.end, n.start, segments, 0.1);
+            n.plane = verticesAroundAxis(
+                n.end,
+                n.start,
+                segments,
+                n.children.length ? currentThickness : 0
+            );
         }
+        const delta = 1 - n.level / maxLevel;
+        console.log(delta);
+        currentThickness = maxThickness * delta;
+        currentThickness += randomFloat(-0.02, 0.02);
+        if (n.branch) {
+            // currentThickness -= 0.02;
+        }
+        // console.log(currentThickness);
+        // }
     });
 
     linkedTree.forEach(n => {
@@ -160,8 +175,13 @@ function Tree() {
         // } else if (n.start && n.parent.start) {
         // let g = trunk(n); //new THREE.BoxGeometry(0.1, 0.1, 0.1);
         // const g = plane(n.start, n.plane);
-        console.log(n);
-        if (n.parent) {
+        function closestSegment(n) {
+            return !n.parent.branch ? n.parent : closestSegment(n.parent);
+        }
+
+        if (!n.branch && !n.root) {
+            const parent = closestSegment(n);
+
             //thisplane
             const p1 = n.plane;
             // verticesAroundAxis(
@@ -172,13 +192,13 @@ function Tree() {
             // );
             // parent plane
             const p2 =
-                n.parent.plane ||
+                parent.plane ||
                 verticesAroundAxis(
-                    n.parent.position,
-                    n.end,
+                    parent.position,
+                    n.start,
                     segments,
-                    0.4
-                ).reverse();
+                    parent.root ? 1 : 0.2
+                );
 
             // verticesAroundAxis(
             //     n.parent.position,

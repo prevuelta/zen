@@ -29,7 +29,11 @@ var params = {
 
 let Util = {
     randomFloat(min = 0, max = 1) {
-        return Math.random() * (max - min) + min;
+        if (!max) {
+            return Math.random() * min;
+        } else {
+            return Math.random() * (max - min) + min;
+        }
     },
     randomTwoPi() {
         return Math.random() * (Math.PI * 2);

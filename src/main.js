@@ -58,7 +58,7 @@ function initThree() {
         30,
         window.innerWidth / window.innerHeight,
         1,
-        10000,
+        10000
     );
 
     for (let i = 0; i < ROCKS; i++) {
@@ -82,7 +82,7 @@ function initThree() {
     // terrain.mesh.rotation.set(0, -Math.PI, 0);
     // terrain.oesh.position.set(size * xAmp/2, 0, size * xAmp/2);
 
-    // scene.add(terrain.mesh);
+    scene.add(terrain.mesh);
 
     let highest = terrain.highestPoint();
 
@@ -92,7 +92,7 @@ function initThree() {
     tree.position.set(
         size * xAmp / 2,
         0,
-        size * xAmp / 2,
+        size * xAmp / 2
         // terrain.mesh.position.x / 2,
         // terrain.mesh.position.y,
         // terrain.mesh.position.z / 2
@@ -132,7 +132,7 @@ function initThree() {
 
     let directionalLightHelper = new THREE.DirectionalLightHelper(
         directionalLight,
-        0,
+        0
     );
     // scene.add( directionalLightHelper);
 
@@ -161,7 +161,7 @@ window.addEventListener(
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     },
-    false,
+    false
 );
 
 initThree();
