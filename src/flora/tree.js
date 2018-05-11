@@ -9,7 +9,7 @@ import FastSimplexNoise from 'fast-simplex-noise';
 
 import { lathe } from '../util/3dUtil';
 
-const { randomFloat, randomInt, randomPi } = Util;
+const { randomFloat, randomInt, randomTwoPi } = Util;
 
 const xAxis = new THREE.Vector3(1, 0, 0);
 const zAxis = new THREE.Vector3(0, 0, 1);
@@ -31,7 +31,7 @@ function Tree() {
     let angle = 0;
     let stack = [];
     let linkedTree = [];
-    let yAngle = randomPi();
+    let yAngle = randomTwoPi();
     let level = 0;
     let currentParent = {
         root: true,
@@ -65,7 +65,7 @@ function Tree() {
                 nodeStack.push(currentParent);
                 level++;
                 maxLevel = Math.max(level, maxLevel);
-                yAngle = randomPi();
+                yAngle = randomTwoPi();
             },
             '+': () => {
                 angle += randomFloat(0, theta);
@@ -160,14 +160,12 @@ function Tree() {
             let ray = new THREE.Ray(v, n1.clone().sub(centerNode));
             // const c = intersect(ray, planes);
             let c = new THREE.Vector3();
-            ray.intersectPlane(new THREE.Plane(), c);
-            console.log(c);
+            ray.intersectPlane(plane, c);
+            console.log('c', c);
             centralVertices.push(c);
             // if (distance from v cjj >< distance v, intersect(ray, p)jk
         });
     });
-
-    console.log('Central vertices');
 
     const maxDistance = centralVertices.reduce((a, b) => {
         return Math.max(a, b.distanceTo(centerNode));
@@ -180,10 +178,12 @@ function Tree() {
             .normalize()
             .multiplyScalar(maxDistance);
     });
-    const hull = new THREE.QuickHull();
-    hull.setFromPoints(centralVertices);
-    console.log('Hull', hull);
-    const hullMesh = new THREE.Mesh(hull);
+    // const hull = qh(centralVertices)
+    // console.log(hull);
+    // const hull = new THREE.QuickHull();
+    // hull.setFromPoints(centralVertices);
+    // console.log('Hull', hull);
+    // const hullMesh = new THREE.Mesh(hull);
 
     // .cross(centerNode);
     // const p2Normal = n2
@@ -384,7 +384,7 @@ function Tree() {
         }),
     );
 
-    mesh.add(hullMesh);
+    // mesh.add(hullMesh);
     mesh.add(planeMesh);
 
     // mesh.add( Helpers.wireframe(geometry) );
