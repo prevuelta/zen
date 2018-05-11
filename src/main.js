@@ -1,4 +1,6 @@
 import THREE from 'three';
+import './extendThree';
+
 import OrbitControls from 'three-orbit-controls';
 
 // import Grass from './flora/grass';

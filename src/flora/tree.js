@@ -1,4 +1,5 @@
 import THREE from 'three';
+import qh from 'quickhull3d';
 import Helpers from '../util/helpers';
 
 import Materials from '../util/materials';
@@ -114,7 +115,7 @@ function Tree() {
             },
         },
     });
-    system.iterate(3);
+    system.iterate(1);
     system.final();
 
     // branch(new THREE.Vector3(), getRandomTarget(new THREE.Vector3()), 4);
@@ -129,35 +130,98 @@ function Tree() {
     function renderBranch() {}
 
     // renderModel(tree);
+    const centerNode = new THREE.Vector3(0, 0.2, 0);
+
+    const n1 = new THREE.Vector3(0, 1, 1);
+    const n2 = new THREE.Vector3(1, 1, 0);
+
+    const bV1 = verticesAroundAxis(n1, centerNode, 4, 0.4);
+    const bV2 = verticesAroundAxis(n2, centerNode, 4, 0.4);
+
+    const n1PlusN2 = n1.clone().sub(n2);
+    const p1Normal = n1
+        .clone()
+        .sub(n2)
+        .normalize();
+
+    const plane = new THREE.Plane(
+        p1Normal,
+        centerNode.distanceTo(new THREE.Vector3()),
+    );
+
+    // Vertex boundry generation from node input
+    [n1, n2].forEach((n, i) => {});
+
+    let centralVertices = [];
+
+    [bV1, bV2].forEach(b => {
+        b.forEach(v => {
+            //ray from node in direction of centernode
+            let ray = new THREE.Ray(v, n1.clone().sub(centerNode));
+            // const c = intersect(ray, planes);
+            let c = new THREE.Vector3();
+            ray.intersectPlane(new THREE.Plane(), c);
+            console.log(c);
+            centralVertices.push(c);
+            // if (distance from v cjj >< distance v, intersect(ray, p)jk
+        });
+    });
+
+    console.log('Central vertices');
+
+    const maxDistance = centralVertices.reduce((a, b) => {
+        return Math.max(a, b.distanceTo(centerNode));
+    }, 0);
+
+    centralVertices = centralVertices.map(v => {
+        // Translate to outer sphere
+        return v
+            .sub(centerNode)
+            .normalize()
+            .multiplyScalar(maxDistance);
+    });
+    const hull = new THREE.QuickHull();
+    hull.setFromPoints(centralVertices);
+    console.log('Hull', hull);
+    const hullMesh = new THREE.Mesh(hull);
+
+    // .cross(centerNode);
+    // const p2Normal = n2
+    // .clone()
+    // .add(centerNode)
+    // .cross(xAxis);
 
     const geometry = new THREE.Geometry();
-    geometry.vertices = vertices;
+    geometry.vertices = [n1, centerNode, n2, centerNode];
+    const planes = new THREE.Geometry();
+    planes.vertices = [centerNode, p1Normal];
+    // geometry.vertices = vertices;
 
-    let group = new THREE.Group();
-    let maxThickness = 0.5;
+    // let group = new THREE.Group();
+    // let maxThickness = 0.5;
 
-    linkedTree.forEach(n => {
-        if (n.start) {
-            n.plane = verticesAroundAxis(n.start, n.end, segments, 0.4);
-        }
-    });
+    // linkedTree.forEach(n => {
+    //     if (n.start) {
+    //         n.plane = verticesAroundAxis(n.start, n.end, segments, 0.4);
+    //     }
+    // });
 
-    linkedTree.forEach(n => {
-        if (n.branch) {
-            // let thicknessDelta = 1 - n.parent.level / (maxLevel - 1);
-            // let thickness = maxThickness * thicknessDelta;
-            // let g = new THREE.SphereGeometry(0.2, 32, 32);
-            // let m = new THREE.Mesh(g, Materials.BASIC);
-            // m.position.set(n.position.x, n.position.y, n.position.z);
-            // group.add(m);
-        } else if (n.start) {
-            // let g = trunk(n); //new THREE.BoxGeometry(0.1, 0.1, 0.1);
-            const g = plane(n.plane);
-            let m = new THREE.Mesh(g, Materials.BLUE);
-            m.position.set(n.start.x, n.start.y, n.start.z);
-            group.add(m);
-        }
-    });
+    // linkedTree.forEach(n => {
+    //     if (n.branch) {
+    //         // let thicknessDelta = 1 - n.parent.level / (maxLevel - 1);
+    //         // let thickness = maxThickness * thicknessDelta;
+    //         // let g = new THREE.SphereGeometry(0.2, 32, 32);
+    //         // let m = new THREE.Mesh(g, Materials.BASIC);
+    //         // m.position.set(n.position.x, n.position.y, n.position.z);
+    //         // group.add(m);
+    //     } else if (n.start) {
+    //         // let g = trunk(n); //new THREE.BoxGeometry(0.1, 0.1, 0.1);
+    //         const g = plane(n.plane);
+    //         let m = new THREE.Mesh(g, Materials.BLUE);
+    //         m.position.set(n.start.x, n.start.y, n.start.z);
+    //         group.add(m);
+    //     }
+    // });
 
     function verticesAroundAxis(start, end, segments, distance) {
         const v = [];
@@ -180,7 +244,7 @@ function Tree() {
         return v;
     }
 
-    function plane(vertices) {
+    function disc(vertices) {
         const seg = new THREE.Geometry();
         const f = [];
         const center = new THREE.Vector3();
@@ -313,7 +377,15 @@ function Tree() {
         }),
     );
 
-    mesh.add(group);
+    let planeMesh = new THREE.LineSegments(
+        planes,
+        new THREE.LineBasicMaterial({
+            color: 0xff0000,
+        }),
+    );
+
+    mesh.add(hullMesh);
+    mesh.add(planeMesh);
 
     // mesh.add( Helpers.wireframe(geometry) );
 
