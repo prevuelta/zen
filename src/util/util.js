@@ -29,10 +29,14 @@ var params = {
 
 let Util = {
     randomFloat(min = 0, max = 1) {
-        return Math.random() * (max - min) + min;
+        if (!max) {
+            return Math.random() * min;
+        } else {
+            return Math.random() * (max - min) + min;
+        }
     },
-    randomPi() {
-        return Math.random() * Math.PI;
+    randomTwoPi() {
+        return Math.random() * (Math.PI * 2);
     },
     randomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
