@@ -84,7 +84,7 @@ function initThree() {
     // terrain.mesh.rotation.set(0, -Math.PI, 0);
     // terrain.oesh.position.set(size * xAmp/2, 0, size * xAmp/2);
 
-    scene.add(terrain.mesh);
+    // scene.add(terrain.mesh);
 
     let highest = terrain.highestPoint();
 

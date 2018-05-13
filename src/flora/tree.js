@@ -132,11 +132,15 @@ function Tree() {
     // renderModel(tree);
     const centerNode = new THREE.Vector3(0, 0.2, 0);
 
-    const n1 = new THREE.Vector3(0, 1, 1);
-    const n2 = new THREE.Vector3(1, 1, 0);
+    const n1 = new THREE.Vector3(0, 1, 2);
+    const n2 = new THREE.Vector3(3, 2, 0);
 
     const bV1 = verticesAroundAxis(n1, centerNode, 4, 0.4);
     const bV2 = verticesAroundAxis(n2, centerNode, 4, 0.4);
+
+    let group = new THREE.Group();
+    group.add(new THREE.Mesh(disc([n1, ...bV1])));
+    group.add(new THREE.Mesh(disc([n2, ...bV2])));
 
     const n1PlusN2 = n1.clone().sub(n2);
     const p1Normal = n1
@@ -146,23 +150,31 @@ function Tree() {
 
     const plane = new THREE.Plane(
         p1Normal,
-        centerNode.distanceTo(new THREE.Vector3()),
+        0
+        // centerNode.distanceTo(new THREE.Vector3())
     );
+    var planeHelper = new THREE.PlaneHelper(plane, 2, 0x000000);
+    planeHelper.position.set(centerNode.x, centerNode.y, centerNode.z);
+    group.add(planeHelper);
 
     // Vertex boundry generation from node input
-    [n1, n2].forEach((n, i) => {});
-
     let centralVertices = [];
 
-    [bV1, bV2].forEach(b => {
+    [bV1, bV2].forEach((b, i) => {
         b.forEach(v => {
             //ray from node in direction of centernode
-            let ray = new THREE.Ray(v, n1.clone().sub(centerNode));
-            // const c = intersect(ray, planes);
+            let rayVector = (i ? n2 : n1)
+                .clone()
+                .sub(centerNode)
+                .normalize()
+                .negate();
+            let ray = new THREE.Ray(v, rayVector);
             let c = new THREE.Vector3();
             ray.intersectPlane(plane, c);
             console.log('c', c);
             centralVertices.push(c);
+            var arrowHelper = new THREE.ArrowHelper(rayVector, v, 1, 0xff0000);
+            group.add(arrowHelper);
             // if (distance from v cjj >< distance v, intersect(ray, p)jk
         });
     });
@@ -178,8 +190,22 @@ function Tree() {
             .normalize()
             .multiplyScalar(maxDistance);
     });
-    // const hull = qh(centralVertices)
-    // console.log(hull);
+    console.log('Central vertices', centralVertices);
+    centralVertices.forEach(v => {
+        var arrowHelper = new THREE.ArrowHelper(
+            new THREE.Vector3(0, 0.2, 0),
+            v,
+            1,
+            0x00ff00
+        );
+        group.add(arrowHelper);
+    });
+    try {
+        const hull = qh(centralVertices);
+        console.log('Hull', hull);
+    } catch (e) {
+        console.log(e);
+    }
     // const hull = new THREE.QuickHull();
     // hull.setFromPoints(centralVertices);
     // console.log('Hull', hull);
@@ -197,7 +223,6 @@ function Tree() {
     planes.vertices = [centerNode, p1Normal];
     // geometry.vertices = vertices;
 
-    // let group = new THREE.Group();
     // let maxThickness = 0.5;
 
     // linkedTree.forEach(n => {
@@ -245,13 +270,13 @@ function Tree() {
     }
 
     function disc(vertices) {
+        console.log('Vertices', vertices);
         const seg = new THREE.Geometry();
         const f = [];
-        const center = new THREE.Vector3();
-        for (let i = 0; i < vertices.length; i++) {
-            f.push(new THREE.Face3(i, (i + 1) % vertices.length, center));
+        for (let i = 1; i < vertices.length; i++) {
+            f.push(new THREE.Face3(i, (i + 1) % vertices.length || 1, 0));
         }
-        seg.vertices = v;
+        seg.vertices = vertices;
         seg.faces = f;
         return seg;
     }
@@ -295,8 +320,8 @@ function Tree() {
                 new THREE.Face3(
                     i + segments,
                     (i + 1 + segments) % segments + segments,
-                    (i + 1) % segments,
-                ),
+                    (i + 1) % segments
+                )
             );
         }
         gSegment.vertices = v;
@@ -374,18 +399,19 @@ function Tree() {
         new THREE.LineBasicMaterial({
             color: 0x0000ff,
             linewidth: 4,
-        }),
+        })
     );
 
     let planeMesh = new THREE.LineSegments(
         planes,
         new THREE.LineBasicMaterial({
             color: 0xff0000,
-        }),
+        })
     );
 
     // mesh.add(hullMesh);
     mesh.add(planeMesh);
+    mesh.add(group);
 
     // mesh.add( Helpers.wireframe(geometry) );
 
