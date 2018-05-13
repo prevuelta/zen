@@ -1,6 +1,6 @@
 import THREE from 'three';
 
-// let Cross = require('./cross');
+import Cross from './cross';
 
 //     let wireframe = new THREE.WireframeGeometry( geometry ); // or THREE.WireframeHelper
 // var line = new THREE.LineSegments( wireframe );
@@ -35,8 +35,8 @@ import THREE from 'three';
 //object.applyMatrix(mS);
 
 export default {
-    marker(pos, weight = 0.5) {
-        let cross = Cross(weight);
+    marker(pos, weight = 0.5, color = 0xff0000) {
+        let cross = Cross(weight, color);
 
         cross.position.x = pos.x;
         cross.position.y = pos.y;
