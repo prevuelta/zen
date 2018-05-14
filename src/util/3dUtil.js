@@ -1,4 +1,9 @@
 import { Vector3, Geometry, BufferGeometry, BufferAttribute } from 'three';
+import Util from './util';
+const { randomTwoPi } = Util;
+
+const xAxis = new Vector3(1, 0, 0);
+const zAxis = new Vector3(0, 0, 1);
 
 function move(v, x, y) {
     moveAcross(v, x);
@@ -11,6 +16,12 @@ function moveAcross(v, x) {
 
 function moveUp(v, y) {
     v.add(new Vector3(0, 0, 1).multiplyScalar(y));
+}
+
+export function randomVector(length = 1) {
+    const v = new Vector3(0, length, 0);
+    v.applyAxisAngle(xAxis, randomTwoPi()).applyAxisAngle(zAxis, randomTwoPi());
+    return v;
 }
 
 export function splineToVectorArray(splineArray) {
@@ -31,7 +42,7 @@ export function fanShape(
     axist,
     radius,
     rotateZ = false,
-    offset = 0
+    offset = 0,
 ) {
     let buffer = new BufferGeometry({ flat: true });
     const TWO_PI = Math.PI * 2;
@@ -47,7 +58,7 @@ export function lathe(
     axis,
     capped,
     shapeFill = 0xff0000,
-    capFill = 0x00ff00
+    capFill = 0x00ff00,
 ) {
     let newSpline;
     console.log(spline);
@@ -94,7 +105,7 @@ export function lathe(
 
     geometry.addAttribute(
         'position',
-        new BufferAttribute(new Float32Array(vertices), 3)
+        new BufferAttribute(new Float32Array(vertices), 3),
     );
     geometry.setIndex(new BufferAttribute(new Uint8Array(indices), 1));
 
@@ -108,7 +119,7 @@ export function latheRepeat(
     capped,
     shapeFill1,
     shapeFill2,
-    capFill
+    capFill,
 ) {
     let splineCount = splines.length;
     let divisions = repeats * splineCount;
@@ -171,7 +182,7 @@ export function latheRepeat(
 
     geometry.addAttribute(
         'position',
-        new BufferAttribute(new Float32Array(vertices), 3)
+        new BufferAttribute(new Float32Array(vertices), 3),
     );
     geometry.setIndex(new BufferAttribute(new Uint16Array(indices), 1));
 

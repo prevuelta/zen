@@ -60,7 +60,7 @@ function initThree() {
         30,
         window.innerWidth / window.innerHeight,
         1,
-        10000
+        10000,
     );
 
     for (let i = 0; i < ROCKS; i++) {
@@ -91,14 +91,14 @@ function initThree() {
     let tree = Tree();
 
     // tree.position.set(highest.x, highest.y, highest.z);
-    tree.position.set(
-        size * xAmp / 2,
-        0,
-        size * xAmp / 2
-        // terrain.mesh.position.x / 2,
-        // terrain.mesh.position.y,
-        // terrain.mesh.position.z / 2
-    );
+    // tree.position.set(
+    // size * xAmp / 2,
+    // 0,
+    // size * xAmp / 2,
+    // terrain.mesh.position.x / 2,
+    // terrain.mesh.position.y,
+    // terrain.mesh.position.z / 2
+    // );
 
     scene.add(tree);
 
@@ -118,9 +118,9 @@ function initThree() {
 
     // scene.add(new THREE.AxisHelper(50));
 
-    camera.position.z = 30;
+    camera.position.z = 0;
     camera.position.y = 10;
-    camera.position.x = 10;
+    camera.position.x = 0;
     camera.target = new THREE.Vector3(0, 0, 0);
 
     var light = new THREE.AmbientLight(0x444444); // soft white light
@@ -134,13 +134,16 @@ function initThree() {
 
     let directionalLightHelper = new THREE.DirectionalLightHelper(
         directionalLight,
-        0
+        0,
     );
     // scene.add( directionalLightHelper);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+
+    var axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
 
     let controls = new orbitControls(camera);
 }
@@ -163,7 +166,7 @@ window.addEventListener(
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     },
-    false
+    false,
 );
 
 initThree();

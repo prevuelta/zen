@@ -7,7 +7,7 @@ import Util from '../util/util';
 import LSystem from 'lindenmayer';
 import FastSimplexNoise from 'fast-simplex-noise';
 
-import { lathe } from '../util/3dUtil';
+import { lathe, randomVector } from '../util/3dUtil';
 
 const { randomFloat, randomInt, randomTwoPi } = Util;
 
@@ -132,37 +132,44 @@ function Tree() {
     // renderModel(tree);
     const centerNode = new THREE.Vector3(0, 0, 0);
 
-    const nodes = [
-        new THREE.Vector3(0, 0, 1),
-        new THREE.Vector3(1, 0, 0),
-        new THREE.Vector3(0, 1, 0),
-    ];
+    const nodes = [];
+    const nodeCount = 3; //randomInt(3);
+
+    for (let i = 0; i < nodeCount; i++) {
+        nodes.push(randomVector(3));
+    }
 
     let group = new THREE.Group();
     const boundryVertices = nodes.map(n =>
-        verticesAroundAxis(n, centerNode, 4, 0.4),
+        verticesAroundAxis(n, centerNode, 3, 0.4),
     );
 
-    // group.add(new THREE.Mesh(disc([n1, ...bV1])));
+    boundryVertices.forEach((b, i) => {
+        group.add(new THREE.Mesh(disc([nodes[i], ...b])));
+    });
 
     const planes = [];
 
-    for (let i = 0; i < nodes.length; i++) {
+    for (let i = 0; i < nodeCount; i++) {
         const v1 = nodes[i];
-        const v2 = nodes[(i + 1) % nodes.length];
+        for (let j = i + 1; j < nodeCount; j++) {
+            const v2 = nodes[j];
 
-        const pNormal = v1
-            .clone()
-            .sub(v2)
-            .normalize();
+            const pNormal = v1
+                .clone()
+                .sub(v2)
+                .normalize();
 
-        const plane = new THREE.Plane(pNormal, 0);
-        // centerNode.distanceTo(new THREE.Vector3())
-        var planeHelper = new THREE.PlaneHelper(plane, 1, 0x000000);
-        planeHelper.position.set(centerNode.x, centerNode.y, centerNode.z);
-        // group.add(planeHelper);
-        planes.push(plane);
+            const plane = new THREE.Plane(pNormal, 0);
+            // centerNode.distanceTo(new THREE.Vector3())
+            var planeHelper = new THREE.PlaneHelper(plane, 1, 0x000000);
+            planeHelper.position.set(centerNode.x, centerNode.y, centerNode.z);
+            // group.add(planeHelper);
+            planes.push(plane);
+        }
     }
+
+    console.log('Plane count', planes.length);
 
     // Vertex boundry generation from node input
     let centralVertices = [];
@@ -189,11 +196,11 @@ function Tree() {
             });
             centralVertices.push(c);
             var arrowHelper = new THREE.ArrowHelper(rayVector, v, 2, 0xff0000);
-            // group.add(arrowHelper);
+            group.add(arrowHelper);
         });
     });
 
-    const maxDistance = centralVertices.reduce((a, b) => {
+    const maxDistance = nodes.reduce((a, b) => {
         return Math.max(a, b.distanceTo(centerNode));
     }, 0);
 
@@ -202,7 +209,6 @@ function Tree() {
         let duplicate = false;
         unique.some(v2 => {
             const dist = v.distanceTo(v2);
-            console.log(dist);
             if (dist < 0.01) {
                 duplicate = true;
                 return true;
@@ -213,29 +219,44 @@ function Tree() {
             unique.push(v);
         }
     });
-    console.log(unique.length);
-    // centralVertices = unique.map(v => {
-    // Translate to outer sphere
-    // return v
-    // .sub(centerNode)
-    // .normalize()
-    // .multiplyScalar(maxDistance);
-    // });
-    centralVertices = unique;
-    console.log('Central vertices', centralVertices);
-    centralVertices.forEach(v => {
-        // var arrowHelper = new THREE.ArrowHelper(
-        // new THREE.Vector3(0, 1, 0),
-        // v,
-        // 1,
-        // 0x00ff00,
-        // );
-        // group.add(arrowHelper);
-        group.add(Helpers.marker(v, 0.1, 'teal'));
+    const sphereVertices = centralVertices.map(v => {
+        // Translate to outer sphere
+        return (
+            v
+                .clone()
+                // .sub(centerNode)
+                .normalize()
+                .multiplyScalar(maxDistance)
+        );
     });
+
+    sphereVertices.forEach(v => {
+        group.add(Helpers.marker(v, 0.04, 'teal'));
+    });
+
+    const sphere = new THREE.SphereGeometry(maxDistance, 12, 12);
+    const sphereMesh = Helpers.wireframe(sphere);
+    sphereMesh.position.set(centerNode.x, centerNode.y, centerNode.z);
+    group.add(sphereMesh);
     try {
-        const hull = qh(centralVertices);
+        let hull = qh(sphereVertices.map(v => [v.x, v.y, v.z]));
         console.log('Hull', hull);
+        const gHull = new THREE.Geometry();
+        gHull.vertices = centralVertices;
+        hull = hull.filter(a => {
+            return boundryVertices.some(b => {
+                const hullFaceString = JSON.stringify(
+                    a.map(i => sphereVertices[i]),
+                );
+                console.log('A', hullFaceString);
+                console.log('B', JSON.stringify(b));
+                console.log(hullFaceString === JSON.stringify(b));
+                return hullFaceString !== JSON.stringify(b);
+            });
+        });
+        gHull.faces = hull.map(arr => new THREE.Face3(arr[0], arr[1], arr[2]));
+        group.add(new THREE.Mesh(gHull));
+        group.add(Helpers.wireframe(gHull));
     } catch (e) {
         console.log(e);
     }
@@ -261,8 +282,7 @@ function Tree() {
             pos.applyAxisAngle(yAxis, ry);
             pos.add(start);
 
-            console.log('Pos', pos);
-            group.add(Helpers.marker(pos, 0.1, 0x000000));
+            // group.add(Helpers.marker(pos, 0.04, 0x000000));
             v.push(pos);
         }
 
