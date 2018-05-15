@@ -140,8 +140,9 @@ function Tree() {
     }
 
     let group = new THREE.Group();
+
     const boundryVertices = nodes.map(n =>
-        verticesAroundAxis(n, centerNode, 3, 0.4),
+        verticesAroundAxis(n, centerNode, 3, 0.4)
     );
 
     boundryVertices.forEach((b, i) => {
@@ -169,13 +170,8 @@ function Tree() {
         }
     }
 
-    console.log('Plane count', planes.length);
-
-    // Vertex boundry generation from node input
-    let centralVertices = [];
-
     boundryVertices.forEach((b, i) => {
-        b.forEach(v => {
+        boundryVertices[i] = b.map(v => {
             //ray from node in direction of centernode
             let rayVector = nodes[i]
                 .clone()
@@ -194,9 +190,14 @@ function Tree() {
                     }
                 }
             });
-            centralVertices.push(c);
             var arrowHelper = new THREE.ArrowHelper(rayVector, v, 2, 0xff0000);
             group.add(arrowHelper);
+            return {
+                original: v,
+                rayVector,
+                ray,
+                centralVertex: c,
+            };
         });
     });
 
@@ -204,49 +205,48 @@ function Tree() {
         return Math.max(a, b.distanceTo(centerNode));
     }, 0);
 
-    let unique = [];
-    centralVertices.forEach(v => {
-        let duplicate = false;
-        unique.some(v2 => {
-            const dist = v.distanceTo(v2);
-            if (dist < 0.01) {
-                duplicate = true;
-                return true;
-            }
-            return false;
-        });
-        if (!duplicate) {
-            unique.push(v);
-        }
-    });
-    const sphereVertices = centralVertices.map(v => {
-        // Translate to outer sphere
-        return (
-            v
-                .clone()
-                // .sub(centerNode)
-                .normalize()
-                .multiplyScalar(maxDistance)
-        );
-    });
-
-    sphereVertices.forEach(v => {
-        group.add(Helpers.marker(v, 0.04, 'teal'));
-    });
+    // let unique = [];
+    // centralVertices.forEach(v => {
+    //     let duplicate = false;
+    //     unique.some(v2 => {
+    //         const dist = v.distanceTo(v2);
+    //         if (dist < 0.01) {
+    //             duplicate = true;
+    //             return true;
+    //         }
+    //         return false;
+    //     });
+    //     if (!duplicate) {
+    //         unique.push(v);
+    //     }
+    // });
 
     const sphere = new THREE.SphereGeometry(maxDistance, 12, 12);
     const sphereMesh = Helpers.wireframe(sphere);
     sphereMesh.position.set(centerNode.x, centerNode.y, centerNode.z);
     group.add(sphereMesh);
+
+    const expandedVertices = boundryVertices
+        .map(b => {
+            const vector = b.rayVector
+                .clone()
+                .normalize()
+                .multiplyScalar(maxDistance);
+            return b.centralVertice.clone().add(vector);
+        })
+        .reduce((a, b) => [...a, ...b], []);
+
+    console.log('Exapnded vertice', expandedVertices);
+
     try {
-        let hull = qh(sphereVertices.map(v => [v.x, v.y, v.z]));
+        let hull = qh(expandedVertices.map(v => [v.x, v.y, v.z]));
         console.log('Hull', hull);
         const gHull = new THREE.Geometry();
         gHull.vertices = centralVertices;
         hull = hull.filter(a => {
             return boundryVertices.some(b => {
                 const hullFaceString = JSON.stringify(
-                    a.map(i => sphereVertices[i]),
+                    a.map(i => sphereVertices[i])
                 );
                 console.log('A', hullFaceString);
                 console.log('B', JSON.stringify(b));
@@ -276,7 +276,7 @@ function Tree() {
         const cross = xAxis.clone().multiplyScalar(distance);
         for (let j = 0; j < TWO_PI; j += inc) {
             const pos = new THREE.Vector3().add(
-                cross.clone().applyAxisAngle(zAxis, j),
+                cross.clone().applyAxisAngle(zAxis, j)
             );
             pos.applyAxisAngle(xAxis, rx);
             pos.applyAxisAngle(yAxis, ry);
@@ -340,8 +340,8 @@ function Tree() {
                 new THREE.Face3(
                     i + segments,
                     (i + 1 + segments) % segments + segments,
-                    (i + 1) % segments,
-                ),
+                    (i + 1) % segments
+                )
             );
         }
         gSegment.vertices = v;
@@ -419,7 +419,7 @@ function Tree() {
         new THREE.LineBasicMaterial({
             color: 0x0000ff,
             linewidth: 4,
-        }),
+        })
     );
 
     mesh.add(group);
