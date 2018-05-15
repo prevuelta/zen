@@ -141,14 +141,6 @@ function Tree() {
 
     let group = new THREE.Group();
 
-    const boundryVertices = nodes.map(n =>
-        verticesAroundAxis(n, centerNode, 3, 0.4)
-    );
-
-    boundryVertices.forEach((b, i) => {
-        group.add(new THREE.Mesh(disc([nodes[i], ...b])));
-    });
-
     const planes = [];
 
     for (let i = 0; i < nodeCount; i++) {
@@ -170,96 +162,91 @@ function Tree() {
         }
     }
 
-    boundryVertices.forEach((b, i) => {
-        boundryVertices[i] = b.map(v => {
-            //ray from node in direction of centernode
-            let rayVector = nodes[i]
-                .clone()
-                .sub(centerNode)
-                .normalize()
-                .negate();
-            let ray = new THREE.Ray(v, rayVector);
-            let c = new THREE.Vector3();
-            ray.intersectPlane(planes[0], c);
-            planes.forEach((p, i) => {
-                if (i) {
-                    const d = new THREE.Vector3();
-                    ray.intersectPlane(p, d);
-                    if (v.distanceTo(c) > v.distanceTo(d)) {
-                        c = d;
+    const branchVertices = {
+        flat() {
+            return this.nodeVertices.reduce((a, b) => [...a, ...b], []);
+        },
+        nodeVertices: nodes.map(n =>
+            verticesAroundAxis(n, centerNode, 3, 0.4).map(v => {
+                //ray from node in direction of centernode
+                let rayVector = n
+                    .clone()
+                    .sub(centerNode)
+                    .normalize()
+                    .negate();
+                let ray = new THREE.Ray(v, rayVector);
+                let c = new THREE.Vector3();
+                ray.intersectPlane(planes[0], c);
+                planes.forEach((p, i) => {
+                    if (i) {
+                        const d = new THREE.Vector3();
+                        ray.intersectPlane(p, d);
+                        if (v.distanceTo(c) > v.distanceTo(d)) {
+                            c = d;
+                        }
                     }
-                }
-            });
-            var arrowHelper = new THREE.ArrowHelper(rayVector, v, 2, 0xff0000);
-            group.add(arrowHelper);
-            return {
-                original: v,
-                rayVector,
-                ray,
-                centralVertex: c,
-            };
-        });
+                });
+                var arrowHelper = new THREE.ArrowHelper(
+                    rayVector,
+                    v,
+                    2,
+                    0xff0000,
+                );
+                group.add(arrowHelper);
+                return {
+                    outerVertex: v,
+                    rayVector,
+                    ray,
+                    innerVertex: c,
+                    distance: c.distanceTo(v),
+                };
+            }),
+        ),
+    };
+
+    branchVertices.nodeVertices.forEach((b, i) => {
+        const arr = b.map(b => b.outerVertex);
+        group.add(new THREE.Mesh(disc([nodes[i], ...arr])));
     });
 
     const maxDistance = nodes.reduce((a, b) => {
         return Math.max(a, b.distanceTo(centerNode));
     }, 0);
 
-    // let unique = [];
-    // centralVertices.forEach(v => {
-    //     let duplicate = false;
-    //     unique.some(v2 => {
-    //         const dist = v.distanceTo(v2);
-    //         if (dist < 0.01) {
-    //             duplicate = true;
-    //             return true;
-    //         }
-    //         return false;
-    //     });
-    //     if (!duplicate) {
-    //         unique.push(v);
-    //     }
-    // });
-
     const sphere = new THREE.SphereGeometry(maxDistance, 12, 12);
     const sphereMesh = Helpers.wireframe(sphere);
     sphereMesh.position.set(centerNode.x, centerNode.y, centerNode.z);
     group.add(sphereMesh);
 
-    const expandedVertices = boundryVertices
-        .map(b => {
-            const vector = b.rayVector
-                .clone()
-                .normalize()
-                .multiplyScalar(maxDistance);
-            return b.centralVertice.clone().add(vector);
-        })
-        .reduce((a, b) => [...a, ...b], []);
+    branchVertices.flat().forEach(b => {
+        const vector = b.rayVector
+            .clone()
+            .normalize()
+            .multiplyScalar(b.distance)
+            .negate();
+        b.expanded = b.innerVertex.clone().add(vector);
+    });
 
-    console.log('Exapnded vertice', expandedVertices);
+    let hull = qh(
+        branchVertices.flat().map(({ expanded: { x, y, z } }) => [x, y, z]),
+    );
+    hull = hull.filter(a => {
+        let result = true;
+        for (let i = 0; i < nodes.length; i++) {
+            const face = [i * 3, i * 3 + 1, i * 3 + 2];
+            console.log('Face', face);
+            result = a.some(a => !face.includes(a));
+            if (!result) break;
+        }
+        return result;
+    });
 
-    try {
-        let hull = qh(expandedVertices.map(v => [v.x, v.y, v.z]));
-        console.log('Hull', hull);
-        const gHull = new THREE.Geometry();
-        gHull.vertices = centralVertices;
-        hull = hull.filter(a => {
-            return boundryVertices.some(b => {
-                const hullFaceString = JSON.stringify(
-                    a.map(i => sphereVertices[i])
-                );
-                console.log('A', hullFaceString);
-                console.log('B', JSON.stringify(b));
-                console.log(hullFaceString === JSON.stringify(b));
-                return hullFaceString !== JSON.stringify(b);
-            });
-        });
-        gHull.faces = hull.map(arr => new THREE.Face3(arr[0], arr[1], arr[2]));
-        group.add(new THREE.Mesh(gHull));
-        group.add(Helpers.wireframe(gHull));
-    } catch (e) {
-        console.log(e);
-    }
+    const gBranch = new THREE.Geometry();
+    const vertices = branchVertices.flat().map(b => b.innerVertex);
+    const faces = hull.map(arr => new THREE.Face3(arr[0], arr[1], arr[2]));
+
+    group.add(new THREE.Mesh(gBranch));
+    group.add(Helpers.wireframe(gHull));
 
     const geometry = new THREE.Geometry();
     geometry.vertices = nodes.reduce((a, b) => [...a, b, centerNode], []);
@@ -276,7 +263,7 @@ function Tree() {
         const cross = xAxis.clone().multiplyScalar(distance);
         for (let j = 0; j < TWO_PI; j += inc) {
             const pos = new THREE.Vector3().add(
-                cross.clone().applyAxisAngle(zAxis, j)
+                cross.clone().applyAxisAngle(zAxis, j),
             );
             pos.applyAxisAngle(xAxis, rx);
             pos.applyAxisAngle(yAxis, ry);
@@ -290,7 +277,6 @@ function Tree() {
     }
 
     function disc(vertices) {
-        console.log('Vertices', vertices);
         const seg = new THREE.Geometry();
         const f = [];
         for (let i = 1; i < vertices.length; i++) {
@@ -301,125 +287,12 @@ function Tree() {
         return seg;
     }
 
-    function trunk(node) {
-        const { start, end, level, children } = node;
-        const startThicknessDelta = 1 - node.parent.level / (maxLevel - 1);
-        const endThicknessDelta = 1 - level / (maxLevel - 1);
-        const startThickness = maxThickness * startThicknessDelta;
-        const endThickness = maxThickness * endThicknessDelta;
-        const axis = start
-            .clone()
-            .sub(end)
-            .normalize();
-        const cross = axis
-            .clone()
-            .cross(xAxis)
-            .normalize();
-
-        const startCross = cross.clone().multiplyScalar(startThickness);
-        const endCross = cross.clone().multiplyScalar(endThickness);
-        const gSegment = new THREE.Geometry();
-        let v = [],
-            f = [];
-        const inc = TWO_PI / segments;
-        for (let j = 0; j < two_pi; j += inc) {
-            const pos = start
-                .clone()
-                .add(startcross.clone().applyaxisangle(axis, j));
-            v.push(pos);
-        }
-        for (let j = 0; j < TWO_PI; j += inc) {
-            const pos = children.length
-                ? end.clone().add(endCross.clone().applyAxisAngle(axis, j))
-                : end;
-            v.push(pos);
-        }
-        for (let i = 0; i < segments; i++) {
-            f.push(
-                new THREE.Face3(i, i + segments, (i + 1) % segments),
-                new THREE.Face3(
-                    i + segments,
-                    (i + 1 + segments) % segments + segments,
-                    (i + 1) % segments
-                )
-            );
-        }
-        gSegment.vertices = v;
-        gSegment.faces = f;
-
-        let m = new THREE.Mesh(gSegment, Materials.PHONG);
-        const wf = Helpers.wireframe(gSegment);
-        // group.add(wf);
-        group.add(m);
-
-        return new THREE.BoxGeometry(0.2, 0.2, 0.2);
-
-        // let gSegment = new THREE.Geometry();
-        // let v = [],
-        //         f = [];
-        //     let fOrigin = v.length;
-        //     for (let j = 0; j < PI; j += QUARTER_PI) {
-        //         v.push(start.clone().add(cross.clone().applyAxisAngle(axis, j)));
-        //     }
-        //     for (let j = 0; j < PI; j += QUARTER_PI) {
-        //         v.push(end.clone().add(cross.clone().applyAxisAngle(axis, j)));
-        //     }
-        //     // f.push(new THREE.Face3(fOrigin, fOrigin + 4, fOrigin + 1));
-        //     f.push(new THREE.Face3(fOrigin, fOrigin + 1, fOrigin + 2));
-        //     gSegment.vertices = v;
-        //     gSegment.faces = f;
-        //     // gSegment.computeVertexNormals();
-        //     // gSegment.computeFaceNormals();
-        //     // gSegment = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-        //     // gSegment =
-    }
-
-    // for (let i = 0; i < vertices.length; i += 2) {
-    //     let start = vertices[i];
-    //     let end = vertices[i + 1];
-    //     let axis = start
-    //         .clone()
-    //         .sub(end)
-    //         .normalize();
-    //     let cross = axis
-    //         .clone()
-    //         .cross(xAxis)
-    //         .normalize()
-    //         .multiplyScalar(3);
-    //     let gSegment = new THREE.Geometry();
-    //     let v = [],
-    //         f = [];
-    //     let fOrigin = v.length;
-    //     for (let j = 0; j < PI; j += QUARTER_PI) {
-    //         v.push(start.clone().add(cross.clone().applyAxisAngle(axis, j)));
-    //     }
-    //     for (let j = 0; j < PI; j += QUARTER_PI) {
-    //         v.push(end.clone().add(cross.clone().applyAxisAngle(axis, j)));
-    //     }
-    //     // f.push(new THREE.Face3(fOrigin, fOrigin + 4, fOrigin + 1));
-    //     f.push(new THREE.Face3(fOrigin, fOrigin + 1, fOrigin + 2));
-    //     gSegment.vertices = v;
-    //     gSegment.faces = f;
-    //     // gSegment.computeVertexNormals();
-    //     // gSegment.computeFaceNormals();
-    //     // gSegment = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-    //     // gSegment =
-
-    // let gMesh = new THREE.Mesh(gSegment, Materials.BASIC);
-    // gMesh.position.set(p1.x, p1.y, p1.z);
-    // group.add(gMesh);
-
-    // spline / div / axis /capped
-    // let p1Cross = p1.clone().add(p2).cross(xAxis).normalize();
-    // let v1 =
-    // }
-
     let mesh = new THREE.LineSegments(
         geometry,
         new THREE.LineBasicMaterial({
             color: 0x0000ff,
             linewidth: 4,
-        })
+        }),
     );
 
     mesh.add(group);
