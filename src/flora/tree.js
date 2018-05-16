@@ -134,6 +134,7 @@ function Tree() {
 
     const nodes = [];
     const nodeCount = 3; //randomInt(3);
+    const sides = 3;
 
     for (let i = 0; i < nodeCount; i++) {
         nodes.push(randomVector(3));
@@ -167,7 +168,7 @@ function Tree() {
             return this.nodeVertices.reduce((a, b) => [...a, ...b], []);
         },
         nodeVertices: nodes.map(n =>
-            verticesAroundAxis(n, centerNode, 3, 0.4).map(v => {
+            verticesAroundAxis(n, centerNode, sides, 0.4).map(v => {
                 //ray from node in direction of centernode
                 let rayVector = n
                     .clone()
@@ -204,10 +205,10 @@ function Tree() {
         ),
     };
 
-    branchVertices.nodeVertices.forEach((b, i) => {
-        const arr = b.map(b => b.outerVertex);
-        group.add(new THREE.Mesh(disc([nodes[i], ...arr])));
-    });
+    // branchVertices.nodeVertices.forEach((b, i) => {
+    // const arr = b.map(b => b.outerVertex);
+    // group.add(new THREE.Mesh(disc([nodes[i], ...arr])));
+    // });
 
     const maxDistance = nodes.reduce((a, b) => {
         return Math.max(a, b.distanceTo(centerNode));
@@ -234,19 +235,58 @@ function Tree() {
         let result = true;
         for (let i = 0; i < nodes.length; i++) {
             const face = [i * 3, i * 3 + 1, i * 3 + 2];
-            console.log('Face', face);
             result = a.some(a => !face.includes(a));
             if (!result) break;
         }
         return result;
     });
 
-    const gBranch = new THREE.Geometry();
-    const vertices = branchVertices.flat().map(b => b.innerVertex);
+    const gHull = new THREE.Geometry();
     const faces = hull.map(arr => new THREE.Face3(arr[0], arr[1], arr[2]));
+    gHull.vertices = branchVertices.flat().map(b => b.innerVertex);
+    gHull.faces = faces;
 
-    group.add(new THREE.Mesh(gBranch));
+    group.add(new THREE.Mesh(gHull));
     group.add(Helpers.wireframe(gHull));
+
+    const nodeBranches = new THREE.Geometry();
+    let nodeBranchesVertices = [];
+    const nodeBranchesFaces = [];
+    const doubleSides = sides * 2;
+
+    branchVertices.nodeVertices.forEach((b, i) => {
+        nodeBranchesVertices = [
+            ...nodeBranchesVertices,
+            ...b
+                .map(v => [v.outerVertex, v.innerVertex])
+                .reduce((a, b) => [...a, ...b], []),
+        ];
+        const l = i * sides * 2;
+        for (let j = 0; j < sides * 2; j += 2) {
+            const k = l + j;
+            console.log('k', k, k + 1, (k + 2) % doubleSides + l);
+            console.log('---');
+            nodeBranchesFaces.push(
+                new THREE.Face3(k, k + 1, (k + 2) % doubleSides + l),
+                new THREE.Face3(
+                    (k + 3) % doubleSides,
+                    (k + 2) % doubleSides + l,
+                    k + 1,
+                ),
+                // new THREE.Face3(
+                // k + 1,
+                // (k + 3) % doubleSides,
+                // (k + 2) % doubleSides,
+                // ),
+            );
+        }
+        nodeBranchesFaces.push(new THREE.Face3(l, l + 2, l + 4));
+    });
+
+    nodeBranches.vertices = nodeBranchesVertices;
+    nodeBranches.faces = nodeBranchesFaces;
+
+    group.add(new THREE.Mesh(nodeBranches));
 
     const geometry = new THREE.Geometry();
     geometry.vertices = nodes.reduce((a, b) => [...a, b, centerNode], []);
