@@ -43,8 +43,6 @@ function Tree() {
     const segments = 16;
     let maxLevel = 0;
 
-    // [ { start, end, parent},
-
     var system = new LSystem({
         axiom: 'X',
         productions: { X: 'F+[[X]-X]-F[-FX]+X', F: 'FF' },
@@ -61,8 +59,8 @@ function Tree() {
                 };
                 currentParent.children.push(branchNode);
                 currentParent = branchNode;
-                linkedTree.push(currentParent);
-                nodeStack.push(currentParent);
+                // linkedTree.push(currentParent);
+                // nodeStack.push(currentParent);
                 level++;
                 maxLevel = Math.max(level, maxLevel);
                 yAngle = randomTwoPi();
@@ -108,7 +106,7 @@ function Tree() {
                 };
                 currentParent.children.push(node);
                 currentParent = node;
-                linkedTree.push(node);
+                // linkedTree.push(node);
                 currentSegment = end;
                 level++;
                 // segmentLength *= 0.98;
@@ -127,24 +125,21 @@ function Tree() {
         nodes.push(randomVector(3));
     }
 
+    function renderTree(tree) {
+        if (branch) {
+            renderTrunk();
+            geo = branch();
+        } else {
+            geo = trunk();
+        }
+    }
+
+    function trunk() {}
+
     const branch = branchGeometry(centerNode, nodes, 8);
     const group = new THREE.Group();
 
-    // const sphere = new THREE.SphereGeometry(maxDistance, 12, 12);
-    // const sphereMesh = Helpers.wireframe(sphere);
-    // sphereMesh.position.set(centerNode.x, centerNode.y, centerNode.z);
-    // group.add(sphereMesh);
-
-    // branchVertices.flat().forEach(b => {
-    //     const vector = b.rayVector
-    //         .clone()
-    //         .normalize()
-    //         .multiplyScalar(b.distance)
-    //         .negate();
-    //     // b.expanded = b.innerVertex.clone().add(vector);
-    // });
-
-    group.add(new THREE.Mesh(branch.hullGeometry, Materials.BASIC));
+    group.add(new THREE.Mesh(branch.hullGeometry));
     // group.add(Helpers.wireframe(gHull));
     group.add(new THREE.Mesh(branch.branchGeometry, Materials.BASIC));
 
