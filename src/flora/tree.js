@@ -133,8 +133,8 @@ function Tree() {
     const centerNode = new THREE.Vector3(0, 0, 0);
 
     const nodes = [];
-    const nodeCount = 4; //randomInt(3);
-    const sides = 4;
+    const nodeCount = randomInt(2, 5);
+    const sides = 8;
 
     for (let i = 0; i < nodeCount; i++) {
         nodes.push(randomVector(3));
@@ -246,7 +246,7 @@ function Tree() {
     gHull.vertices = branchVertices.flat().map(b => b.innerVertex);
     gHull.faces = faces;
 
-    group.add(new THREE.Mesh(gHull));
+    group.add(new THREE.Mesh(gHull, Materials.PHONG));
     group.add(Helpers.wireframe(gHull));
 
     const nodeBranches = new THREE.Geometry();
@@ -275,7 +275,10 @@ function Tree() {
                 ),
             );
         }
-        nodeBranchesFaces.push(new THREE.Face3(l, l + 2, l + 4));
+        // nodeBranchesFaces.push(new THREE.Face3(l, l + 2, l + 4));
+        for (let i = 1; i < sides; i++) {
+            // nodeBranchesFaces.push(new THREE.Face3(l, (l + 2) % doubleSides || 1, 0)));
+        }
     });
 
     nodeBranches.vertices = nodeBranchesVertices;
