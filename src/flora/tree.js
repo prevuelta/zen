@@ -133,8 +133,8 @@ function Tree() {
     const centerNode = new THREE.Vector3(0, 0, 0);
 
     const nodes = [];
-    const nodeCount = 3; //randomInt(3);
-    const sides = 3;
+    const nodeCount = 4; //randomInt(3);
+    const sides = 4;
 
     for (let i = 0; i < nodeCount; i++) {
         nodes.push(randomVector(3));
@@ -269,15 +269,10 @@ function Tree() {
             nodeBranchesFaces.push(
                 new THREE.Face3(k, k + 1, (k + 2) % doubleSides + l),
                 new THREE.Face3(
-                    (k + 3) % doubleSides,
-                    (k + 2) % doubleSides + l,
                     k + 1,
+                    (k + 3) % doubleSides + l,
+                    (k + 2) % doubleSides + l,
                 ),
-                // new THREE.Face3(
-                // k + 1,
-                // (k + 3) % doubleSides,
-                // (k + 2) % doubleSides,
-                // ),
             );
         }
         nodeBranchesFaces.push(new THREE.Face3(l, l + 2, l + 4));
