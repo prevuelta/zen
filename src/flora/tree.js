@@ -120,18 +120,7 @@ function Tree() {
 
     // branch(new THREE.Vector3(), getRandomTarget(new THREE.Vector3()), 4);
 
-    // Example of simple tree:
-    // [ [000, 020], [020,040], [020, 020]
-
-    // for (let i = increment; i < height; i+=increment) {
-    //     // Will split?
-    //     vertices.push([Math.random(), i, Math.random()]);
-    // }
-    function renderBranch() {}
-
-    // renderModel(tree);
     const centerNode = new THREE.Vector3(0, 0, 0);
-
     const nodes = [];
     const nodeCount = randomInt(2, 5);
     const sides = 8;
@@ -140,114 +129,24 @@ function Tree() {
         nodes.push(randomVector(3));
     }
 
-    let group = new THREE.Group();
+    // branchGeometry(centerNode, nodes, 4);
 
-    const planes = [];
+    // const sphere = new THREE.SphereGeometry(maxDistance, 12, 12);
+    // const sphereMesh = Helpers.wireframe(sphere);
+    // sphereMesh.position.set(centerNode.x, centerNode.y, centerNode.z);
+    // group.add(sphereMesh);
 
-    for (let i = 0; i < nodeCount; i++) {
-        const v1 = nodes[i];
-        for (let j = i + 1; j < nodeCount; j++) {
-            const v2 = nodes[j];
-
-            const pNormal = v1
-                .clone()
-                .sub(v2)
-                .normalize();
-
-            const plane = new THREE.Plane(pNormal, 0);
-            // centerNode.distanceTo(new THREE.Vector3())
-            var planeHelper = new THREE.PlaneHelper(plane, 1, 0x000000);
-            planeHelper.position.set(centerNode.x, centerNode.y, centerNode.z);
-            // group.add(planeHelper);
-            planes.push(plane);
-        }
-    }
-
-    const branchVertices = {
-        flat() {
-            return this.nodeVertices.reduce((a, b) => [...a, ...b], []);
-        },
-        nodeVertices: nodes.map(n =>
-            verticesAroundAxis(n, centerNode, sides, 0.4).map(v => {
-                //ray from node in direction of centernode
-                let rayVector = n
-                    .clone()
-                    .sub(centerNode)
-                    .normalize()
-                    .negate();
-                let ray = new THREE.Ray(v, rayVector);
-                let c = new THREE.Vector3();
-                ray.intersectPlane(planes[0], c);
-                planes.forEach((p, i) => {
-                    if (i) {
-                        const d = new THREE.Vector3();
-                        ray.intersectPlane(p, d);
-                        if (v.distanceTo(c) > v.distanceTo(d)) {
-                            c = d;
-                        }
-                    }
-                });
-                var arrowHelper = new THREE.ArrowHelper(
-                    rayVector,
-                    v,
-                    2,
-                    0xff0000,
-                );
-                group.add(arrowHelper);
-                return {
-                    outerVertex: v,
-                    rayVector,
-                    ray,
-                    innerVertex: c,
-                    distance: c.distanceTo(v),
-                };
-            }),
-        ),
-    };
-
-    // branchVertices.nodeVertices.forEach((b, i) => {
-    // const arr = b.map(b => b.outerVertex);
-    // group.add(new THREE.Mesh(disc([nodes[i], ...arr])));
+    // branchVertices.flat().forEach(b => {
+    //     const vector = b.rayVector
+    //         .clone()
+    //         .normalize()
+    //         .multiplyScalar(b.distance)
+    //         .negate();
+    //     // b.expanded = b.innerVertex.clone().add(vector);
     // });
 
-    const maxDistance = nodes.reduce((a, b) => {
-        return Math.max(a, b.distanceTo(centerNode));
-    }, 0);
-
-    const sphere = new THREE.SphereGeometry(maxDistance, 12, 12);
-    const sphereMesh = Helpers.wireframe(sphere);
-    sphereMesh.position.set(centerNode.x, centerNode.y, centerNode.z);
-    group.add(sphereMesh);
-
-    branchVertices.flat().forEach(b => {
-        const vector = b.rayVector
-            .clone()
-            .normalize()
-            .multiplyScalar(b.distance)
-            .negate();
-        b.expanded = b.innerVertex.clone().add(vector);
-    });
-
-    let hull = qh(
-        branchVertices.flat().map(({ expanded: { x, y, z } }) => [x, y, z]),
-    );
-    hull = hull.filter(a => {
-        let result = true;
-        for (let i = 0; i < nodes.length; i++) {
-            const face = [i * 3, i * 3 + 1, i * 3 + 2];
-            result = a.some(a => !face.includes(a));
-            if (!result) break;
-        }
-        return result;
-    });
-
-    const gHull = new THREE.Geometry();
-    const faces = hull.map(arr => new THREE.Face3(arr[0], arr[1], arr[2]));
-    gHull.vertices = branchVertices.flat().map(b => b.innerVertex);
-    gHull.faces = faces;
-
     group.add(new THREE.Mesh(gHull, Materials.PHONG));
-    group.add(Helpers.wireframe(gHull));
+    // group.add(Helpers.wireframe(gHull));
 
     const nodeBranches = new THREE.Geometry();
     let nodeBranchesVertices = [];
