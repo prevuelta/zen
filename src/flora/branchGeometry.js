@@ -1,19 +1,22 @@
 import THREE from 'three';
+import qh from 'quickhull3d';
+import { verticesAroundAxis } from '../util/3dUtil';
 
 export default function BranchGeometry(
     centerNode,
     branches,
     segments,
-    hullSize = 1,
+    hullSize = 1
 ) {
     const group = new THREE.Group();
+    const nodeCount = branches.length;
 
     // Create planes
     const planes = [];
     for (let i = 0; i < nodeCount; i++) {
-        const v1 = nodes[i];
+        const v1 = branches[i];
         for (let j = i + 1; j < nodeCount; j++) {
-            const v2 = nodes[j];
+            const v2 = branches[j];
 
             const pNormal = v1
                 .clone()
@@ -32,10 +35,10 @@ export default function BranchGeometry(
     // Branches
     const branchVertices = {
         flat() {
-            return this.nodeVertices.reduce((a, b) => [...a, ...b], []);
+            return this.branchVertices.reduce((a, b) => [...a, ...b], []);
         },
-        branchVertices: nodes.map(n =>
-            verticesAroundAxis(n, centerNode, sides, 0.4).map(v => {
+        branchVertices: branches.map(n =>
+            verticesAroundAxis(n, centerNode, segments, 0.4).map(v => {
                 //ray from node in direction of centernode
                 let rayVector = n
                     .clone()
@@ -58,7 +61,7 @@ export default function BranchGeometry(
                     rayVector,
                     v,
                     2,
-                    0xff0000,
+                    0xff0000
                 );
                 group.add(arrowHelper);
                 return {
@@ -68,7 +71,7 @@ export default function BranchGeometry(
                     innerVertex: c,
                     distance: c.distanceTo(v),
                 };
-            }),
+            })
         ),
     };
 
@@ -78,11 +81,11 @@ export default function BranchGeometry(
 
     // Create center hull
     let hull = qh(
-        branchVertices.flat().map(({ outerVertex: { x, y, z } }) => [x, y, z]),
+        branchVertices.flat().map(({ outerVertex: { x, y, z } }) => [x, y, z])
     );
     hull = hull.filter(a => {
         let result = true;
-        for (let i = 0; i < nodes.length; i++) {
+        for (let i = 0; i < nodeCount; i++) {
             const face = [i * 3, i * 3 + 1, i * 3 + 2];
             result = a.some(a => !face.includes(a));
             if (!result) break;
@@ -90,8 +93,47 @@ export default function BranchGeometry(
         return result;
     });
 
-    const gHull = new THREE.Geometry();
+    const hullGeometry = new THREE.Geometry();
     const faces = hull.map(arr => new THREE.Face3(arr[0], arr[1], arr[2]));
-    gHull.vertices = branchVertices.flat().map(b => b.innerVertex);
-    gHull.faces = faces;
+    hullGeometry.vertices = branchVertices.flat().map(b => b.innerVertex);
+    hullGeometry.faces = faces;
+
+    // Branches
+    const branchGeometry = new THREE.Geometry();
+    let nodeBranchesVertices = [];
+    const nodeBranchesFaces = [];
+    const doubleSides = segments * 2;
+
+    branchVertices.branchVertices.forEach((b, i) => {
+        nodeBranchesVertices = [
+            ...nodeBranchesVertices,
+            ...b
+                .map(v => [v.outerVertex, v.innerVertex])
+                .reduce((a, b) => [...a, ...b], []),
+        ];
+        const l = i * segments * 2;
+        for (let j = 0; j < segments * 2; j += 2) {
+            const k = l + j;
+            console.log('k', k, k + 1, (k + 2) % doubleSides + l);
+            console.log('---');
+            nodeBranchesFaces.push(
+                new THREE.Face3(k, k + 1, (k + 2) % doubleSides + l),
+                new THREE.Face3(
+                    k + 1,
+                    (k + 3) % doubleSides + l,
+                    (k + 2) % doubleSides + l
+                )
+            );
+        }
+        for (let i = 1; i < segments; i++) {
+            // nodeBranchesFaces.push(new THREE.Face3(l, (l + 2) % doubleSides || 1, 0)));
+        }
+    });
+    branchGeometry.vertices = nodeBranchesVertices;
+    branchGeometry.faces = nodeBranchesFaces;
+    return {
+        hullGeometry,
+        branchGeometry,
+        helpers: group,
+    };
 }

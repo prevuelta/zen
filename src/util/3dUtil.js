@@ -1,9 +1,11 @@
 import { Vector3, Geometry, BufferGeometry, BufferAttribute } from 'three';
 import Util from './util';
 const { randomTwoPi } = Util;
+const TWO_PI = Math.PI * 2;
 
 const xAxis = new Vector3(1, 0, 0);
 const zAxis = new Vector3(0, 0, 1);
+const yAxis = new Vector3(0, 1, 0);
 
 function move(v, x, y) {
     moveAcross(v, x);
@@ -36,13 +38,47 @@ export function splineToVectorArray(splineArray) {
     return splineVec;
 }
 
+export function verticesAroundAxis(start, end, segments, distance) {
+    const v = [];
+    const inc = TWO_PI / segments;
+    const vec = start
+        .clone()
+        .sub(end)
+        .normalize();
+    const rx = Math.asin(-vec.y);
+    const ry = Math.atan2(vec.x, vec.z);
+    const cross = xAxis.clone().multiplyScalar(distance);
+    for (let j = 0; j < TWO_PI; j += inc) {
+        const pos = new THREE.Vector3().add(
+            cross.clone().applyAxisAngle(zAxis, j)
+        );
+        pos.applyAxisAngle(xAxis, rx);
+        pos.applyAxisAngle(yAxis, ry);
+        pos.add(start);
+        v.push(pos);
+    }
+
+    return v;
+}
+
+export function disc(vertices) {
+    const seg = new THREE.Geometry();
+    const f = [];
+    for (let i = 1; i < vertices.length; i++) {
+        f.push(new THREE.Face3(i, (i + 1) % vertices.length || 1, 0));
+    }
+    seg.vertices = vertices;
+    seg.faces = f;
+    return seg;
+}
+
 export function fanShape(
     shape,
     count,
     axist,
     radius,
     rotateZ = false,
-    offset = 0,
+    offset = 0
 ) {
     let buffer = new BufferGeometry({ flat: true });
     const TWO_PI = Math.PI * 2;
@@ -58,7 +94,7 @@ export function lathe(
     axis,
     capped,
     shapeFill = 0xff0000,
-    capFill = 0x00ff00,
+    capFill = 0x00ff00
 ) {
     let newSpline;
     console.log(spline);
@@ -105,7 +141,7 @@ export function lathe(
 
     geometry.addAttribute(
         'position',
-        new BufferAttribute(new Float32Array(vertices), 3),
+        new BufferAttribute(new Float32Array(vertices), 3)
     );
     geometry.setIndex(new BufferAttribute(new Uint8Array(indices), 1));
 
@@ -119,7 +155,7 @@ export function latheRepeat(
     capped,
     shapeFill1,
     shapeFill2,
-    capFill,
+    capFill
 ) {
     let splineCount = splines.length;
     let divisions = repeats * splineCount;
@@ -182,7 +218,7 @@ export function latheRepeat(
 
     geometry.addAttribute(
         'position',
-        new BufferAttribute(new Float32Array(vertices), 3),
+        new BufferAttribute(new Float32Array(vertices), 3)
     );
     geometry.setIndex(new BufferAttribute(new Uint16Array(indices), 1));
 

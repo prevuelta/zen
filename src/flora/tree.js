@@ -1,5 +1,4 @@
 import THREE from 'three';
-import qh from 'quickhull3d';
 import Helpers from '../util/helpers';
 
 import Materials from '../util/materials';
@@ -8,6 +7,7 @@ import LSystem from 'lindenmayer';
 import FastSimplexNoise from 'fast-simplex-noise';
 
 import { lathe, randomVector } from '../util/3dUtil';
+import branchGeometry from './branchGeometry';
 
 const { randomFloat, randomInt, randomTwoPi } = Util;
 
@@ -118,8 +118,6 @@ function Tree() {
     system.iterate(1);
     system.final();
 
-    // branch(new THREE.Vector3(), getRandomTarget(new THREE.Vector3()), 4);
-
     const centerNode = new THREE.Vector3(0, 0, 0);
     const nodes = [];
     const nodeCount = randomInt(2, 5);
@@ -129,7 +127,8 @@ function Tree() {
         nodes.push(randomVector(3));
     }
 
-    // branchGeometry(centerNode, nodes, 4);
+    const branch = branchGeometry(centerNode, nodes, 8);
+    const group = new THREE.Group();
 
     // const sphere = new THREE.SphereGeometry(maxDistance, 12, 12);
     // const sphereMesh = Helpers.wireframe(sphere);
@@ -145,91 +144,19 @@ function Tree() {
     //     // b.expanded = b.innerVertex.clone().add(vector);
     // });
 
-    group.add(new THREE.Mesh(gHull, Materials.PHONG));
+    group.add(new THREE.Mesh(branch.hullGeometry, Materials.BASIC));
     // group.add(Helpers.wireframe(gHull));
-
-    const nodeBranches = new THREE.Geometry();
-    let nodeBranchesVertices = [];
-    const nodeBranchesFaces = [];
-    const doubleSides = sides * 2;
-
-    branchVertices.nodeVertices.forEach((b, i) => {
-        nodeBranchesVertices = [
-            ...nodeBranchesVertices,
-            ...b
-                .map(v => [v.outerVertex, v.innerVertex])
-                .reduce((a, b) => [...a, ...b], []),
-        ];
-        const l = i * sides * 2;
-        for (let j = 0; j < sides * 2; j += 2) {
-            const k = l + j;
-            console.log('k', k, k + 1, (k + 2) % doubleSides + l);
-            console.log('---');
-            nodeBranchesFaces.push(
-                new THREE.Face3(k, k + 1, (k + 2) % doubleSides + l),
-                new THREE.Face3(
-                    k + 1,
-                    (k + 3) % doubleSides + l,
-                    (k + 2) % doubleSides + l,
-                ),
-            );
-        }
-        // nodeBranchesFaces.push(new THREE.Face3(l, l + 2, l + 4));
-        for (let i = 1; i < sides; i++) {
-            // nodeBranchesFaces.push(new THREE.Face3(l, (l + 2) % doubleSides || 1, 0)));
-        }
-    });
-
-    nodeBranches.vertices = nodeBranchesVertices;
-    nodeBranches.faces = nodeBranchesFaces;
-
-    group.add(new THREE.Mesh(nodeBranches));
+    group.add(new THREE.Mesh(branch.branchGeometry, Materials.BASIC));
 
     const geometry = new THREE.Geometry();
     geometry.vertices = nodes.reduce((a, b) => [...a, b, centerNode], []);
-
-    function verticesAroundAxis(start, end, segments, distance) {
-        const v = [];
-        const inc = TWO_PI / segments;
-        const vec = start
-            .clone()
-            .sub(end)
-            .normalize();
-        const rx = Math.asin(-vec.y);
-        const ry = Math.atan2(vec.x, vec.z);
-        const cross = xAxis.clone().multiplyScalar(distance);
-        for (let j = 0; j < TWO_PI; j += inc) {
-            const pos = new THREE.Vector3().add(
-                cross.clone().applyAxisAngle(zAxis, j),
-            );
-            pos.applyAxisAngle(xAxis, rx);
-            pos.applyAxisAngle(yAxis, ry);
-            pos.add(start);
-
-            // group.add(Helpers.marker(pos, 0.04, 0x000000));
-            v.push(pos);
-        }
-
-        return v;
-    }
-
-    function disc(vertices) {
-        const seg = new THREE.Geometry();
-        const f = [];
-        for (let i = 1; i < vertices.length; i++) {
-            f.push(new THREE.Face3(i, (i + 1) % vertices.length || 1, 0));
-        }
-        seg.vertices = vertices;
-        seg.faces = f;
-        return seg;
-    }
 
     let mesh = new THREE.LineSegments(
         geometry,
         new THREE.LineBasicMaterial({
             color: 0x0000ff,
             linewidth: 4,
-        }),
+        })
     );
 
     mesh.add(group);
