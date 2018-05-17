@@ -19,7 +19,7 @@ const { PI } = Math;
 const HALF_PI = PI / 2;
 const QUARTER_PI = PI / 4;
 const TWO_PI = PI * 2;
-const theta = HALF_PI / 2;
+const theta = HALF_PI / 3;
 const yTheta = HALF_PI / randomInt(1, 5);
 
 function Tree() {
@@ -44,12 +44,16 @@ function Tree() {
     const segments = 16;
     let maxLevel = 0;
 
+    const xRule = 'F[-F][+F]';
+    const fRule = 'F[-F][+F]';
+
     var system = new LSystem({
-        axiom: 'X',
-        productions: { X: 'F+[[X]-X]-F[-FX]+X', F: 'FF' },
+        axiom: 'F',
+        productions: { X: xRule, F: fRule },
         finals: {
             '[': () => {
                 // Split
+                // if (!currentParent.isBranch) {
                 stack.push({ seg: currentSegment.clone(), angle, yAngle });
                 const branchNode = {
                     parent: currentParent,
@@ -116,8 +120,9 @@ function Tree() {
             },
         },
     });
-    system.iterate(2);
+    system.iterate(1);
     system.final();
+    console.log(system.getString());
 
     // const nodes = [];
     // const nodeCount = randomInt(2, 5);
@@ -132,8 +137,9 @@ function Tree() {
             console.log(node.parent.isBranch, node.children.length);
             if (!node.parent.isBranch && !node.children.length) {
                 console.log('End');
-                trunk(node);
+                // trunk(node);
             } else if (node.isBranch && node.children.length > 1) {
+                console.log(node);
                 const gBranch = branchGeometry(
                     node.position,
                     [

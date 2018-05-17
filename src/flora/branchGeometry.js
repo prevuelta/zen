@@ -5,14 +5,25 @@ import { verticesAroundAxis } from '../util/3dUtil';
 
 export default function BranchGeometry(
     centerNode,
-    branches,
+    rawBranches,
     segments,
     hullSize = 1,
     thickness = 0.1
 ) {
-    console.log(centerNode, branches);
+    const branches = rawBranches.map(b => {
+        const distance = b.distanceTo(centerNode);
+        const vec = b
+            .clone()
+            .sub(centerNode)
+            .normalize()
+            .multiplyScalar(distance / 2);
+        return centerNode.clone().add(vec);
+    });
+
     const helpers = new THREE.Group();
     const nodeCount = branches.length;
+
+    console.log('Center node', centerNode, 'Branches', branches);
 
     // Create planes
     const planes = [];
@@ -30,7 +41,6 @@ export default function BranchGeometry(
             // centerNode.distanceTo(new THREE.Vector3())
             var planeHelper = new THREE.PlaneHelper(plane, 0.4, 0x000000);
             planeHelper.position.set(centerNode.x, centerNode.y, centerNode.z);
-            console.log(centerNode, pNormal);
             helpers.add(planeHelper);
             planes.push(plane);
         }
@@ -69,7 +79,6 @@ export default function BranchGeometry(
                     0xff0000
                 );
                 helpers.add(arrowHelper);
-                console.log('Innervertex', c);
                 helpers.add(Helpers.marker(c.clone().add(centerNode), 0.04));
                 return {
                     outerVertex: v,
