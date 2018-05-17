@@ -137,7 +137,7 @@ function Tree() {
                 const gBranch = branchGeometry(
                     node.position,
                     [
-                        node.parent.position || node.parent.end,
+                        node.parent.position || node.parent.start,
                         ...node.children.map(c => c.position || c.end),
                     ],
                     4
@@ -151,6 +151,10 @@ function Tree() {
                 !node.parent.isBranch &&
                 !node.children.some(c => c.isBranch)
             ) {
+                // const gBranch = branchGeometry(
+                // node.start,
+                // [ node.end, node.parent.start || node.parent.position
+                // );
                 // const gTrunk = trunk(node);
                 // group.add(new THREE.Mesh(gTrunk));
             }
