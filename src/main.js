@@ -99,6 +99,8 @@ function initThree() {
     // terrain.mesh.position.y,
     // terrain.mesh.position.z / 2
     // );
+    //
+    tree.position.set(0, 0, 0.5);
 
     scene.add(tree);
 
