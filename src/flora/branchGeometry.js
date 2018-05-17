@@ -1,4 +1,5 @@
 import THREE from 'three';
+import Helpers from '../util/helpers';
 import qh from 'quickhull3d';
 import { verticesAroundAxis } from '../util/3dUtil';
 
@@ -6,9 +7,11 @@ export default function BranchGeometry(
     centerNode,
     branches,
     segments,
-    hullSize = 1
+    hullSize = 1,
+    thickness = 0.1
 ) {
-    const group = new THREE.Group();
+    console.log(centerNode, branches);
+    const helpers = new THREE.Group();
     const nodeCount = branches.length;
 
     // Create planes
@@ -25,9 +28,10 @@ export default function BranchGeometry(
 
             const plane = new THREE.Plane(pNormal, 0);
             // centerNode.distanceTo(new THREE.Vector3())
-            var planeHelper = new THREE.PlaneHelper(plane, 3, 0x000000);
+            var planeHelper = new THREE.PlaneHelper(plane, 0.4, 0x000000);
             planeHelper.position.set(centerNode.x, centerNode.y, centerNode.z);
-            group.add(planeHelper);
+            console.log(centerNode, pNormal);
+            helpers.add(planeHelper);
             planes.push(plane);
         }
     }
@@ -38,21 +42,22 @@ export default function BranchGeometry(
             return this.branchVertices.reduce((a, b) => [...a, ...b], []);
         },
         branchVertices: branches.map(n =>
-            verticesAroundAxis(n, centerNode, segments, 0.4).map(v => {
+            verticesAroundAxis(n, centerNode, segments, thickness).map(v => {
                 //ray from node in direction of centernode
                 let rayVector = n
                     .clone()
                     .sub(centerNode)
                     .normalize()
                     .negate();
-                let ray = new THREE.Ray(v, rayVector);
+                const vZero = v.clone().sub(centerNode);
+                let ray = new THREE.Ray(vZero, rayVector);
                 let c = new THREE.Vector3();
                 ray.intersectPlane(planes[0], c);
                 planes.forEach((p, i) => {
                     if (i) {
                         const d = new THREE.Vector3();
                         ray.intersectPlane(p, d);
-                        if (v.distanceTo(c) > v.distanceTo(d)) {
+                        if (vZero.distanceTo(c) > vZero.distanceTo(d)) {
                             c = d;
                         }
                     }
@@ -60,15 +65,19 @@ export default function BranchGeometry(
                 var arrowHelper = new THREE.ArrowHelper(
                     rayVector,
                     v,
-                    2,
+                    0.2,
                     0xff0000
                 );
-                group.add(arrowHelper);
+                helpers.add(arrowHelper);
+                console.log('Innervertex', c);
+                helpers.add(Helpers.marker(c.clone().add(centerNode), 0.04));
                 return {
                     outerVertex: v,
                     rayVector,
                     ray,
-                    innerVertex: c,
+                    innerVertex: c.clone().add(centerNode),
+                    // innerVertex: c,
+                    // midVertex:
                     distance: c.distanceTo(v),
                 };
             })
@@ -81,7 +90,7 @@ export default function BranchGeometry(
 
     // Create center hull
     let hull = qh(
-        branchVertices.flat().map(({ outerVertex: { x, y, z } }) => [x, y, z])
+        branchVertices.flat().map(({ innerVertex: { x, y, z } }) => [x, y, z])
     );
     hull = hull.filter(a => {
         let result = true;
@@ -114,8 +123,6 @@ export default function BranchGeometry(
         const l = i * segments * 2;
         for (let j = 0; j < segments * 2; j += 2) {
             const k = l + j;
-            console.log('k', k, k + 1, (k + 2) % doubleSides + l);
-            console.log('---');
             nodeBranchesFaces.push(
                 new THREE.Face3(k, k + 1, (k + 2) % doubleSides + l),
                 new THREE.Face3(
@@ -134,6 +141,6 @@ export default function BranchGeometry(
     return {
         hullGeometry,
         branchGeometry,
-        helpers: group,
+        helpers,
     };
 }

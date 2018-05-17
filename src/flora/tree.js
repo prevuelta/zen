@@ -19,14 +19,14 @@ const { PI } = Math;
 const HALF_PI = PI / 2;
 const QUARTER_PI = PI / 4;
 const TWO_PI = PI * 2;
-const theta = HALF_PI / 3;
+const theta = HALF_PI / 2;
 const yTheta = HALF_PI / randomInt(1, 5);
 
 function Tree() {
     const vertices = [];
 
     let currentVector;
-    let segmentLength = 0.5;
+    let segmentLength = 1;
     let currentSegment = new THREE.Vector3();
     let angle = 0;
     let stack = [];
@@ -34,11 +34,12 @@ function Tree() {
     let yAngle = randomTwoPi();
     let level = 0;
     let currentParent = {
-        root: true,
+        isRoot: true,
         children: [],
         level,
+        position: new THREE.Vector3(),
     };
-    linkedTree.push(currentParent);
+    let tree = currentParent;
     let nodeStack = [];
     const segments = 16;
     let maxLevel = 0;
@@ -52,7 +53,7 @@ function Tree() {
                 stack.push({ seg: currentSegment.clone(), angle, yAngle });
                 const branchNode = {
                     parent: currentParent,
-                    branch: true,
+                    isBranch: true,
                     position: currentSegment,
                     level,
                     children: [],
@@ -60,14 +61,10 @@ function Tree() {
                 currentParent.children.push(branchNode);
                 currentParent = branchNode;
                 // linkedTree.push(currentParent);
-                // nodeStack.push(currentParent);
+                nodeStack.push(currentParent);
                 level++;
                 maxLevel = Math.max(level, maxLevel);
                 yAngle = randomTwoPi();
-            },
-            '+': () => {
-                angle += randomFloat(0, theta);
-                yAngle += randomFloat(0, yTheta);
             },
             ']': () => {
                 const {
@@ -81,8 +78,14 @@ function Tree() {
                 currentParent = nodeStack.pop();
                 level = currentParent.level;
             },
+            '+': () => {
+                // angle += randomFloat(0, theta);
+                angle += theta;
+                yAngle += randomFloat(0, yTheta);
+            },
             '-': () => {
                 angle -= theta;
+                yAngle -= randomFloat(0, yTheta);
                 // angle -= randomFloat(0, theta);
             },
             X: () => {},
@@ -113,38 +116,137 @@ function Tree() {
             },
         },
     });
-    system.iterate(1);
+    system.iterate(2);
     system.final();
 
-    const centerNode = new THREE.Vector3(0, 0, 0);
-    const nodes = [];
-    const nodeCount = randomInt(2, 5);
+    // const nodes = [];
+    // const nodeCount = randomInt(2, 5);
     const sides = 8;
 
-    for (let i = 0; i < nodeCount; i++) {
-        nodes.push(randomVector(3));
-    }
+    // for (let i = 0; i < nodeCount; i++) {
+    // nodes.push(randomVector(3));
+    // }
 
-    function renderTree(tree) {
-        if (branch) {
-            renderTrunk();
-            geo = branch();
-        } else {
-            geo = trunk();
+    function renderTree(node) {
+        if (!node.isRoot) {
+            console.log(node.parent.isBranch, node.children.length);
+            if (!node.parent.isBranch && !node.children.length) {
+                console.log('End');
+                trunk(node);
+            } else if (node.isBranch && node.children.length > 1) {
+                const gBranch = branchGeometry(
+                    node.position,
+                    [
+                        node.parent.position || node.parent.end,
+                        ...node.children.map(c => c.position || c.end),
+                    ],
+                    4
+                );
+                // console.log(gBranch);
+                // group.add(new THREE.Mesh(gBranch.hullGeometry));
+                group.add(gBranch.helpers);
+                group.add(new THREE.Mesh(gBranch.branchGeometry));
+            } else if (
+                !node.isBranch &&
+                !node.parent.isBranch &&
+                !node.children.some(c => c.isBranch)
+            ) {
+                // const gTrunk = trunk(node);
+                // group.add(new THREE.Mesh(gTrunk));
+            }
+        }
+        if (node.children.length) {
+            node.children.forEach(renderTree);
         }
     }
-
-    function trunk() {}
-
-    const branch = branchGeometry(centerNode, nodes, 8);
     const group = new THREE.Group();
 
-    group.add(new THREE.Mesh(branch.hullGeometry));
+    renderTree(tree);
+
+    function trunk(node) {
+        const { start, end, level, children } = node;
+        // const startThicknessDelta = 1 - node.parent.level / (maxLevel - 1);
+        // const endThicknessDelta = 1 - level / (maxLevel - 1);
+        // const startThickness = maxThickness * startThicknessDelta;
+        // const endThickness = maxThickness * endThicknessDelta;
+        const thickness = 0.1;
+        const axis = start
+            .clone()
+            .sub(end)
+            .normalize();
+        const cross = axis
+            .clone()
+            .cross(xAxis)
+            .normalize();
+
+        const startCross = cross.clone().multiplyScalar(thickness);
+        const endCross = cross.clone().multiplyScalar(thickness);
+        const gSegment = new THREE.Geometry();
+        let v = [],
+            f = [];
+
+        const inc = TWO_PI / segments;
+        for (let j = 0; j < TWO_PI; j += inc) {
+            const pos = start
+                .clone()
+                .add(startCross.clone().applyAxisAngle(axis, j));
+            v.push(pos);
+        }
+        for (let j = 0; j < TWO_PI; j += inc) {
+            const pos = children.length
+                ? end.clone().add(endCross.clone().applyAxisAngle(axis, j))
+                : end;
+            v.push(pos);
+        }
+        for (let i = 0; i < segments; i++) {
+            f.push(
+                new THREE.Face3(i, i + segments, (i + 1) % segments),
+                new THREE.Face3(
+                    i + segments,
+                    (i + 1 + segments) % segments + segments,
+                    (i + 1) % segments
+                )
+            );
+        }
+        gSegment.vertices = v;
+        gSegment.faces = f;
+
+        let m = new THREE.Mesh(gSegment, Materials.PHONG);
+        // const wf = Helpers.wireframe(gSegment);
+        // group.add(wf);
+        group.add(m);
+
+        return new THREE.BoxGeometry(0.2, 0.2, 0.2);
+    }
+
+    // const branch = branchGeometry(centerNode, nodes, 8);
+
+    // group.add(new THREE.Mesh(branch.hullGeometry));
     // group.add(Helpers.wireframe(gHull));
-    group.add(new THREE.Mesh(branch.branchGeometry, Materials.BASIC));
+    // group.add(new THREE.Mesh(branch.branchGeometry, Materials.BASIC));
 
     const geometry = new THREE.Geometry();
-    geometry.vertices = nodes.reduce((a, b) => [...a, b, centerNode], []);
+    const lineVertices = [];
+
+    function parseLinesFromTree(node) {
+        if (!node.isBranch && !node.isRoot) {
+            lineVertices.push(node.start, node.end);
+        }
+        if (node.isBranch && !node.children.length) {
+            lineVertices.push(
+                node.position,
+                node.parent.end || node.parent.position
+            );
+        }
+        node.children.forEach(c => {
+            parseLinesFromTree(c);
+        });
+    }
+
+    parseLinesFromTree(tree);
+    console.log('Line', lineVertices);
+
+    geometry.vertices = lineVertices;
 
     let mesh = new THREE.LineSegments(
         geometry,
