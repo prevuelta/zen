@@ -40,14 +40,14 @@ function Tree() {
         position: new THREE.Vector3(),
     };
     let tree = currentParent;
-    let nodeStack = [];
+    let nodeStack = [currentParent];
     let maxLevel = 0;
     const segments = 4;
     const iterations = 2;
     const thickness = 0.1;
 
-    const xRule = '';
-    const fRule = 'F[-F]F[+F]F';
+    const xRule = 'FF';
+    const fRule = 'F+[[X]-X]-F[-FX]+X';
 
     var system = new LSystem({
         axiom: 'F',
@@ -55,8 +55,6 @@ function Tree() {
         finals: {
             '[': () => {
                 // Split
-                // if (!currentParent.isBranch) {
-                stack.push({ seg: currentSegment.clone(), angle, yAngle });
                 const branchNode = {
                     parent: currentParent,
                     isBranch: true,
@@ -66,23 +64,32 @@ function Tree() {
                 };
                 currentParent.children.push(branchNode);
                 currentParent = branchNode;
-                // linkedTree.push(currentParent);
-                nodeStack.push(currentParent);
+
+                stack.push({
+                    seg: currentSegment.clone(),
+                    angle,
+                    yAngle,
+                    parent: currentParent,
+                });
+
                 level++;
                 maxLevel = Math.max(level, maxLevel);
                 yAngle = randomTwoPi();
             },
             ']': () => {
+                const prevBranch = stack.pop();
                 const {
                     angle: prevAngle,
                     seg,
                     yAngle: prevYAngle,
-                } = stack.pop();
+                    parent: prevParent,
+                } = prevBranch;
+                console.log('Angles pop', prevAngle, prevYAngle);
 
                 angle = prevAngle;
                 yAngle = prevYAngle;
                 currentSegment = seg;
-                currentParent = nodeStack.pop();
+                currentParent = prevParent;
                 level = currentParent.level;
             },
             '+': () => {
@@ -108,6 +115,7 @@ function Tree() {
                     end,
                     level,
                     children: [],
+                    isBranch: false,
                 };
                 currentParent.children.push(node);
                 currentParent = node;
@@ -117,8 +125,20 @@ function Tree() {
         },
     });
     system.iterate(iterations);
-    system.final();
     console.log(system.getString());
+    system.final();
+    console.log(tree);
+
+    function fixTree(node) {
+        if (node.isBranch) {
+            node.children.forEach(c => {
+                if (c.isBranch) {
+                    node.children = [...node.children, ...c.children];
+                }
+            });
+        }
+        node.children.forEach(fixTree);
+    }
 
     // const nodes = [];
     // const nodeCount = randomInt(2, 5);
@@ -130,7 +150,9 @@ function Tree() {
 
     function renderTree(node) {
         if (!node.isRoot) {
-            if (node.isBranch && node.children.length > 1) {
+            console.log(node.isBranch, node.children.length);
+            if (node.isBranch && node.children.length > 0) {
+                console.log('Why is not rendergin');
                 const gBranch = branchGeometry(
                     node.position,
                     [
@@ -147,7 +169,6 @@ function Tree() {
                     thickness,
                 );
                 // group.add(new THREE.Mesh(gBranch.hullGeometry));
-                group.add(gBranch.helpers);
                 group.add(new THREE.Mesh(gBranch.branchGeometry));
             } else if (
                 !node.children.length &&
@@ -170,6 +191,7 @@ function Tree() {
                     segments,
                     thickness,
                 );
+                group.add(new THREE.Mesh(terminalBranch.branchGeometry));
                 group.add(terminalBranch.helpers);
             }
         }

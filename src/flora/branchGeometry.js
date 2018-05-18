@@ -93,6 +93,7 @@ export default function BranchGeometry(
                         // midVertex:
                         isTerminal: n.isTerminal,
                         distance: c.distanceTo(v),
+                        center: n.position,
                     };
                 },
             ),
@@ -132,7 +133,10 @@ export default function BranchGeometry(
         nodeBranchesVertices = [
             ...nodeBranchesVertices,
             ...b
-                .map(v => [v.outerVertex, v.innerVertex])
+                .map(v => [
+                    v.isTerminal ? v.center : v.outerVertex,
+                    v.innerVertex,
+                ])
                 .reduce((a, b) => [...a, ...b], []),
         ];
         const l = i * segments * 2;
