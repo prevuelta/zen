@@ -27,7 +27,7 @@ function Tree() {
 
     let currentVector;
     let segmentLength = 0.5;
-    let currentSegment = new THREE.Vector3();
+    let currentPosition = new THREE.Vector3();
     let angle = 0;
     let stack = [];
     let linkedTree = [];
@@ -43,11 +43,21 @@ function Tree() {
     let nodeStack = [currentParent];
     let maxLevel = 0;
     const segments = 4;
-    const iterations = 2;
+    const iterations = 1;
     const thickness = 0.1;
 
     const xRule = 'FF';
-    const fRule = 'F+[[X]-X]-F[-FX]+X';
+    // let fRule = '-F[+F][---X]+F-F[++++X]-X';
+    fRule = 'F[-F][+F]';
+
+    function updatePosition() {
+        const v = new THREE.Vector3(0, 1, 0)
+            .applyAxisAngle(xAxis, angle)
+            .applyAxisAngle(yAxis, yAngle)
+            .normalize()
+            .multiplyScalar(segmentLength);
+        return currentPosition.clone().add(v);
+    }
 
     var system = new LSystem({
         axiom: 'F',
@@ -55,21 +65,26 @@ function Tree() {
         finals: {
             '[': () => {
                 // Split
-                const branchNode = {
-                    parent: currentParent,
-                    isBranch: true,
-                    position: currentSegment,
-                    level,
-                    children: [],
-                };
-                currentParent.children.push(branchNode);
-                currentParent = branchNode;
+                // currentPosition = updatePosition();
+                // If currentBranch is Branch then push ref to currentBranchh
+                const branchNode = currentParent.isBranch
+                    ? currentParent
+                    : {
+                          parent: currentParent,
+                          isBranch: true,
+                          position: currentPosition,
+                          level,
+                          children: [],
+                      };
+                if (!currentParent.isBranch) {
+                    currentParent.children.push(branchNode);
+                    currentParent = branchNode;
+                }
 
                 stack.push({
-                    seg: currentSegment.clone(),
+                    node: branchNode,
                     angle,
                     yAngle,
-                    parent: currentParent,
                 });
 
                 level++;
@@ -80,17 +95,16 @@ function Tree() {
                 const prevBranch = stack.pop();
                 const {
                     angle: prevAngle,
-                    seg,
                     yAngle: prevYAngle,
-                    parent: prevParent,
+                    node,
                 } = prevBranch;
-                console.log('Angles pop', prevAngle, prevYAngle);
 
                 angle = prevAngle;
                 yAngle = prevYAngle;
-                currentSegment = seg;
-                currentParent = prevParent;
-                level = currentParent.level;
+
+                currentParent = node;
+                currentPosition = node.position;
+                level = node.level;
             },
             '+': () => {
                 angle += theta;
@@ -102,16 +116,11 @@ function Tree() {
             },
             X: () => {},
             F: () => {
-                const v = new THREE.Vector3(0, 1, 0)
-                    .applyAxisAngle(xAxis, angle)
-                    .applyAxisAngle(yAxis, yAngle)
-                    .normalize()
-                    .multiplyScalar(segmentLength);
-                const end = currentSegment.clone().add(v);
-                vertices.push(currentSegment, end);
+                const end = updatePosition();
+                vertices.push(currentPosition, end);
                 const node = {
                     parent: currentParent,
-                    start: currentSegment,
+                    start: currentPosition,
                     end,
                     level,
                     children: [],
@@ -119,7 +128,7 @@ function Tree() {
                 };
                 currentParent.children.push(node);
                 currentParent = node;
-                currentSegment = end;
+                currentPosition = end;
                 level++;
             },
         },
@@ -149,51 +158,58 @@ function Tree() {
     // }
 
     function renderTree(node) {
+        let centerNode, nodes;
         if (!node.isRoot) {
-            console.log(node.isBranch, node.children.length);
             if (node.isBranch && node.children.length > 0) {
-                console.log('Why is not rendergin');
-                const gBranch = branchGeometry(
-                    node.position,
-                    [
-                        {
-                            position: node.parent.position || node.parent.start,
-                            isTerminal: false,
-                        },
-                        ...node.children.map(c => ({
-                            position: c.position || c.end,
-                            isTerminal: !c.children.length,
-                        })),
-                    ],
-                    segments,
-                    thickness,
-                );
-                // group.add(new THREE.Mesh(gBranch.hullGeometry));
-                group.add(new THREE.Mesh(gBranch.branchGeometry));
+                centerNode = node.position;
+                nodes = [
+                    {
+                        position: node.parent.position || node.parent.start,
+                        isTerminal: false,
+                    },
+                    ...node.children.map(c => ({
+                        position: c.position || c.end,
+                        isTerminal: !c.children.length,
+                    })),
+                ];
             } else if (
                 !node.children.length &&
                 !node.isBranch &&
                 !node.parent.isBranch
             ) {
-                console.log('TERMINAL BRANCH');
-                const terminalBranch = branchGeometry(
-                    node.start,
-                    [
-                        {
-                            position: node.parent.start,
-                            isTerminal: false,
-                        },
-                        {
-                            position: node.end,
-                            isTerminal: true,
-                        },
-                    ],
-                    segments,
-                    thickness,
-                );
-                group.add(new THREE.Mesh(terminalBranch.branchGeometry));
-                group.add(terminalBranch.helpers);
+                const centerNode = node.start;
+                nodes = [
+                    {
+                        position: node.parent.start,
+                        isTerminal: false,
+                    },
+                    {
+                        position: node.end,
+                        isTerminal: true,
+                    },
+                ];
+            } else if (!node.isBranch) {
+                centerNode = node.start;
+                nodes = [
+                    {
+                        position: node.end,
+                    },
+                    {
+                        position: node.parent.position || node.parent.start,
+                    },
+                ];
             }
+        }
+        if (nodes && centerNode) {
+            const branch = branchGeometry(
+                centerNode,
+                nodes,
+                segments,
+                thickness,
+            );
+            group.add(new THREE.Mesh(branch.hullGeometry));
+            // group.add(terminalBranch.helpers);
+            // group.add(new THREE.Mesh(branch.branchGeometry));
         }
         if (node.children.length) {
             node.children.forEach(renderTree);
@@ -242,7 +258,7 @@ function Tree() {
         if (!node.isBranch && !node.isRoot) {
             lineVertices.push(node.start, node.end);
         }
-        if (node.isBranch && !node.children.length) {
+        if (node.isBranch) {
             lineVertices.push(
                 node.position,
                 node.parent.end || node.parent.position,
