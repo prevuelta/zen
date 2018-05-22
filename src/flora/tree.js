@@ -48,7 +48,7 @@ function Tree() {
 
     const xRule = 'FF';
     // let fRule = '-F[+F][---X]+F-F[++++X]-X';
-    fRule = 'F[-F][+F]';
+    let fRule = '+F[+F]-F';
 
     function updatePosition() {
         const v = new THREE.Vector3(0, 1, 0)
