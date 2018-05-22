@@ -48,7 +48,7 @@ function Tree() {
 
     const xRule = 'FF';
     // let fRule = '-F[+F][---X]+F-F[++++X]-X';
-    fRule = 'F[-F][+F]';
+    const fRule = 'F[-F][+F]';
 
     function updatePosition() {
         const v = new THREE.Vector3(0, 1, 0)
@@ -67,6 +67,7 @@ function Tree() {
                 // Split
                 // currentPosition = updatePosition();
                 // If currentBranch is Branch then push ref to currentBranchh
+                console.log('Currentparent', currentParent.isBranch);
                 const branchNode = currentParent.isBranch
                     ? currentParent
                     : {
@@ -205,10 +206,10 @@ function Tree() {
                 centerNode,
                 nodes,
                 segments,
-                thickness,
+                thickness
             );
-            group.add(new THREE.Mesh(branch.hullGeometry));
-            // group.add(terminalBranch.helpers);
+            // group.add(new THREE.Mesh(branch.hullGeometry));
+            group.add(branch.helpers);
             // group.add(new THREE.Mesh(branch.branchGeometry));
         }
         if (node.children.length) {
@@ -233,7 +234,7 @@ function Tree() {
             midPoint,
             end,
             segments,
-            thickness,
+            thickness
         );
         const geometry = new THREE.Geometry();
         geometry.vertices = [end, ...startVertices];
@@ -261,7 +262,7 @@ function Tree() {
         if (node.isBranch) {
             lineVertices.push(
                 node.position,
-                node.parent.end || node.parent.position,
+                node.parent.end || node.parent.position
             );
         }
         node.children.forEach(c => {
@@ -278,7 +279,7 @@ function Tree() {
         new THREE.LineBasicMaterial({
             color: 0x0000ff,
             linewidth: 4,
-        }),
+        })
     );
 
     mesh.add(group);
