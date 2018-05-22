@@ -108,18 +108,25 @@ export default function BranchGeometry(
     let hull = qh(
         branchVertices.flat().map(({ innerVertex: { x, y, z } }) => [x, y, z]),
     );
+    console.log(hull.length, hull, nodeCount);
+    // This is stupid and  too simplisticf
     hull = hull.filter(a => {
         let result = true;
         for (let i = 0; i < nodeCount; i++) {
             const face = [i * 3, i * 3 + 1, i * 3 + 2];
             result = a.some(a => !face.includes(a));
+            console.log('Result', result, face, a);
             if (!result) break;
         }
         return result;
     });
+    console.log(hull.length);
 
+    const outerHull = new THREE.Geometry();
     const hullGeometry = new THREE.Geometry();
     const faces = hull.map(arr => new THREE.Face3(arr[0], arr[1], arr[2]));
+    outerHull.vertices = branchVertices.flat().map(b => b.outerVertex);
+    outerHull.faces = faces;
     hullGeometry.vertices = branchVertices.flat().map(b => b.innerVertex);
     hullGeometry.faces = faces;
 
@@ -157,8 +164,10 @@ export default function BranchGeometry(
     });
     branchGeometry.vertices = nodeBranchesVertices;
     branchGeometry.faces = nodeBranchesFaces;
+    helpers.add(Helpers.wireframe(hullGeometry));
     return {
         hullGeometry,
+        outerHull,
         branchGeometry,
         helpers,
     };
