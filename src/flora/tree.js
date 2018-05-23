@@ -42,18 +42,18 @@ function Tree() {
     let tree = currentParent;
     let nodeStack = [currentParent];
     let maxLevel = 0;
-    const segments = 8;
-    const iterations = 4;
-    const thickness = 0.1;
+    const segments = 3;
+    const iterations = 1;
+    const radius = 0.1;
 
     const xRule = 'FF';
     // let fRule = '-F[+F][---X]+F-F[++++X]-X';
-    const fRule = 'F[+F][-F]';
+    const fRule = '+F[+F][-F]-';
 
     function updatePosition() {
         const v = new THREE.Vector3(0, 1, 0)
             .applyAxisAngle(xAxis, angle)
-            // .applyAxisAngle(yAxis, yAngle)
+            .applyAxisAngle(yAxis, yAngle)
             .normalize()
             .multiplyScalar(segmentLength);
         return currentPosition.clone().add(v);
@@ -90,7 +90,7 @@ function Tree() {
 
                 level++;
                 maxLevel = Math.max(level, maxLevel);
-                // yAngle = randomTwoPi();
+                yAngle = randomTwoPi();
             },
             ']': () => {
                 const prevBranch = stack.pop();
@@ -202,16 +202,11 @@ function Tree() {
             }
         }
         if (centerNode && nodes) {
-            const branch = branchGeometry(
-                centerNode,
-                nodes,
-                segments,
-                thickness,
-            );
+            const branch = branchGeometry(centerNode, nodes, segments, radius);
             group.add(new THREE.Mesh(branch.hullGeometry));
             // group.add(new THREE.Mesh(branch.outerHull));
-            // group.add(branch.helpers);
-            group.add(new THREE.Mesh(branch.branchGeometry));
+            group.add(branch.helpers);
+            // group.add(new THREE.Mesh(branch.branchGeometry));
         }
         if (node.children.length) {
             node.children.forEach(renderTree);
@@ -235,7 +230,7 @@ function Tree() {
             midPoint,
             end,
             segments,
-            thickness,
+            radius,
         );
         const geometry = new THREE.Geometry();
         geometry.vertices = [end, ...startVertices];

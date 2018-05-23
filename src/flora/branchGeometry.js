@@ -1,13 +1,15 @@
 import THREE from 'three';
-import Helpers from '../util/helpers';
 import qh from 'quickhull3d';
+
+import Helpers from '../util/helpers';
 import { verticesAroundAxis } from '../util/3dUtil';
+import { PI, zAxis, TWO_PI, yAxis, xAxis } from '../util/constants';
 
 export default function BranchGeometry(
     centerNode,
     rawBranches,
     segments,
-    thickness = 0.1,
+    radius = 0.4,
     hullSize = 1,
 ) {
     const branches = rawBranches.map(b => {
@@ -47,58 +49,106 @@ export default function BranchGeometry(
         }
     }
 
+    const originalVertices = [];
+    const inc = TWO_PI / segments;
+    const pos = xAxis.clone().multiplyScalar(radius);
+    for (let j = 0; j < TWO_PI; j += inc) {
+        pos.applyAxisAngle(yAxis, inc);
+        originalVertices.push(pos.clone());
+
+        //             const originalVertices = verticesAroundAxis(
+        //                 new THREE.Vector3(0, 0, 0),
+        //                 new THREE.Vector3(0, 0, 1),
+        //                 segments,
+        //                 radius,
+        //             );
+
+        var arrowHelper = new THREE.ArrowHelper(
+            new THREE.Vector3(0, 1, 0),
+            pos,
+            0.2,
+            0xff0000,
+        );
+        helpers.add(arrowHelper);
+    }
+    console.log('Original g', originalVertices);
+
     // Branches
     const branchVertices = {
         flat() {
             return this.branchVertices.reduce((a, b) => [...a, ...b], []);
         },
-        branchVertices: branches.map(n =>
-            verticesAroundAxis(n.position, centerNode, segments, thickness).map(
-                v => {
-                    //ray from node in direction of centernode
-                    let rayVector = n.position
+        branchVertices: branches.map((n, i) => {
+            console.log(n, i);
+            const qRotation = new THREE.Quaternion();
+            const vec = centerNode.clone().sub(n.position);
+            qRotation.setFromEuler(vec);
+            // qRotation.setFromUnitVectors(
+            // centerNode.clone().normalize(),
+            // n.position.clone().normalize(),
+            // );
+            const vertices = originalVertices.map(
+                v =>
+                    v
                         .clone()
-                        .sub(centerNode)
-                        .normalize()
-                        .negate();
-                    const vZero = v.clone().sub(centerNode);
-                    let ray = new THREE.Ray(vZero, rayVector);
-                    let c = new THREE.Vector3();
-                    ray.intersectPlane(planes[0], c);
-                    planes.forEach((p, i) => {
-                        if (i) {
-                            const d = new THREE.Vector3();
-                            ray.intersectPlane(p, d);
-                            if (vZero.distanceTo(c) > vZero.distanceTo(d)) {
-                                c = d;
-                            }
+                        // .multiplyScalar(radius)
+                        .applyQuaternion(qRotation),
+                // .normalize()
+                // .add(n.position),
+            );
+            console.log(vertices);
+
+            // iM = rotation matrix from yAxis to start / end;
+            // v = m * (v * distance) + end;
+            // return verticesAroundAxis(
+            // n.position,
+            // centerNode,
+            // segments,
+            // radius,
+
+            return vertices.map(v => {
+                //ray from node in direction of centernode
+                let rayVector = n.position
+                    .clone()
+                    .sub(centerNode)
+                    .normalize()
+                    .negate();
+                const vZero = v.clone().sub(centerNode);
+                let ray = new THREE.Ray(vZero, rayVector);
+                let c = new THREE.Vector3();
+                ray.intersectPlane(planes[0], c);
+                planes.forEach((p, i) => {
+                    if (i) {
+                        const d = new THREE.Vector3();
+                        ray.intersectPlane(p, d);
+                        if (vZero.distanceTo(c) > vZero.distanceTo(d)) {
+                            c = d;
                         }
-                    });
-                    var arrowHelper = new THREE.ArrowHelper(
-                        rayVector,
-                        v,
-                        0.2,
-                        0xff0000,
-                    );
-                    helpers.add(arrowHelper);
-                    helpers.add(
-                        Helpers.marker(c.clone().add(centerNode), 0.04),
-                    );
-                    return {
-                        outerVertex: v,
-                        rayVector,
-                        ray,
-                        innerVertex: c.clone().add(centerNode),
-                        // innerVertex: c,
-                        // midVertex:
-                        isTerminal: n.isTerminal,
-                        distance: c.distanceTo(v),
-                        center: n.position,
-                    };
-                },
-            ),
-        ),
+                    }
+                });
+                var arrowHelper = new THREE.ArrowHelper(
+                    rayVector,
+                    v,
+                    0.2,
+                    0xff0000,
+                );
+                helpers.add(arrowHelper);
+                helpers.add(Helpers.marker(c.clone().add(centerNode), 0.04));
+                return {
+                    outerVertex: v,
+                    rayVector,
+                    ray,
+                    innerVertex: c.clone().add(centerNode),
+                    // innerVertex: c,
+                    // midVertex:
+                    isTerminal: n.isTerminal,
+                    distance: c.distanceTo(v),
+                    center: n.position,
+                };
+            });
+        }),
     };
+    console.log('Branch vertices', branchVertices.flat().length);
 
     const maxDistance = branches.reduce((a, b) => {
         return Math.max(a.position, b.position.distanceTo(centerNode));
@@ -115,7 +165,6 @@ export default function BranchGeometry(
         for (let i = 0; i < nodeCount; i++) {
             const face = [i * 3, i * 3 + 1, i * 3 + 2];
             result = a.some(a => !face.includes(a));
-            console.log('Result', result, face, a);
             if (!result) break;
         }
         return result;
