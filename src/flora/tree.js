@@ -19,7 +19,7 @@ const { PI } = Math;
 const HALF_PI = PI / 2;
 const QUARTER_PI = PI / 4;
 const TWO_PI = PI * 2;
-const theta = HALF_PI / 3;
+const theta = HALF_PI / 2;
 const yTheta = HALF_PI / randomInt(1, 5);
 
 function Tree() {
@@ -42,15 +42,9 @@ function Tree() {
     let tree = currentParent;
     let nodeStack = [currentParent];
     let maxLevel = 0;
-    const segments = 8;
-    const iterations = 2;
+    const segments = 4;
+    const iterations = 1;
     const radius = 0.1;
-
-    // const xRule = 'FF';
-    // let fRule = '-F[+F][---X]+F-F[++++X]-X';
-    // const fRule = '+F[+F][-F]-';
-    // const xRule = '';
-    // const fRule = 'F-[[+F]-F]+F';
 
     function updatePosition() {
         const v = new THREE.Vector3(0, 1, 0)
@@ -79,7 +73,6 @@ function Tree() {
         stack.push({
             node: branchNode,
             angle,
-            yAngle,
         });
 
         level++;
@@ -102,63 +95,43 @@ function Tree() {
         currentParent = node;
         currentPosition = end;
         level++;
+        yAngle += randomFloat(-QUARTER_PI, QUARTER_PI);
     }
 
-    // var system = new LSystem({
-    //     axiom: 'F',
-    //     productions: { X: xRule, F: fRule },
-    //     finals: {
-    //         '[': () => {
-    //             // Split
-    //             // currentPosition = updatePosition();
-    //             // If currentBranch is Branch then push ref to currentBranchh
-    //         },
-    //         ']': () => {
-    //             const prevBranch = stack.pop();
-    //             const {
-    //                 angle: prevAngle,
-    //                 yAngle: prevYAngle,
-    //                 node,
-    //             } = prevBranch;
+    const xRule = '';
+    const fRule = 'F[+F[-F][+F]]-F[+F[-F][+F]]';
 
-    // angle = prevAngle;
-    // yAngle = prevYAngle;
-
-    //                 currentParent = node;
-    //                 currentPosition = node.position;
-    //                 level = node.level;
-    //             },
-    //             '+': () => {
-    //                 angle += theta;
-    //                 yAngle += randomFloat(0, yTheta);
-    //             },
-    //             '-': () => {
-    //                 angle -= theta;
-    //                 yAngle -= randomFloat(0, yTheta);
-    //             },
-    //             X: () => {},
-    //             F: () => {},
-    //         },
-    //     });
-    //     system.iterate(iterations);
-    //     console.log(system.getString());
-    //     system.final();
-    //     console.log(tree);
-
-    function iterateTree(iterations) {
-        if (!iterations) {
-            return;
-        }
-        if (chance(1, 3)) {
-            branch();
-            iterateTree(iterations - 1);
-        } else {
-            trunk();
-            iterateTree(iterations - 1);
-        }
-    }
-
-    iterateTree(3);
+    var system = new LSystem({
+        axiom: 'F',
+        productions: { X: xRule, F: fRule },
+        finals: {
+            '[': () => {
+                branch();
+            },
+            ']': () => {
+                const prevBranch = stack.pop();
+                const { angle: prevAngle, node } = prevBranch;
+                angle = prevAngle;
+                currentParent = node;
+                currentPosition = node.position;
+                level = node.level;
+            },
+            '+': () => {
+                angle += theta;
+            },
+            '-': () => {
+                angle -= theta;
+            },
+            X: () => {},
+            F: () => {
+                trunk();
+            },
+        },
+    });
+    system.iterate(iterations);
+    console.log(system.getString());
+    system.final();
+    console.log(tree);
 
     function renderTree(node) {
         let centerNode, nodes;

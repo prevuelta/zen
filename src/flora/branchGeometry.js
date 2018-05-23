@@ -29,24 +29,30 @@ export default function BranchGeometry(
     const nodeCount = branches.length;
 
     // Create planes
-    const planes = [];
-    for (let i = 0; i < nodeCount; i++) {
-        const v1 = branches[i].position;
-        for (let j = i + 1; j < nodeCount; j++) {
-            const v2 = branches[j].position;
+    function getPlanes(nodes, node) {
+        const planes = [];
+        nodes.forEach(n => {
+            if (n !== node) {
+                const v1 = node.position;
+                const v2 = n.position;
 
-            const pNormal = v1
-                .clone()
-                .sub(v2)
-                .normalize();
+                const pNormal = v1
+                    .clone()
+                    .sub(v2)
+                    .normalize();
 
-            const plane = new THREE.Plane(pNormal, 0);
-            // centerNode.distanceTo(new THREE.Vector3())
-            var planeHelper = new THREE.PlaneHelper(plane, 1, 0x000000);
-            planeHelper.position.set(centerNode.x, centerNode.y, centerNode.z);
-            helpers.add(planeHelper);
-            planes.push(plane);
-        }
+                const plane = new THREE.Plane(pNormal, 0);
+                var planeHelper = new THREE.PlaneHelper(plane, 1, 0x000000);
+                planeHelper.position.set(
+                    centerNode.x,
+                    centerNode.y,
+                    centerNode.z
+                );
+                helpers.add(planeHelper);
+                planes.push(plane);
+            }
+        });
+        return planes;
     }
 
     // Branches
@@ -54,6 +60,9 @@ export default function BranchGeometry(
         flat() {
             return this.branchVertices.reduce((a, b) => [...a, ...b], []);
         },
+        maximumHullSize: branches.reduce((a, b) => {
+            return Math.min(a, b.position.distanceTo(centerNode));
+        }, 0),
         branchVertices: branches.map((n, i) => {
             return verticesAroundAxis(
                 n.position,
@@ -61,8 +70,8 @@ export default function BranchGeometry(
                 segments,
                 radius
             ).map(v => {
-                // return vertices.map(v => {
-                //ray from node in direction of centernode
+                const planes = getPlanes(branches, n);
+
                 let rayVector = n.position
                     .clone()
                     .sub(centerNode)
@@ -95,8 +104,9 @@ export default function BranchGeometry(
                     rayVector,
                     ray,
                     innerVertex: c.clone().add(centerNode),
-                    // innerVertex: c,
-                    // midVertex:
+                    adjustedHullVertex(hullSize = 0) {
+                        return new THREE.Vector3();
+                    },
                     isTerminal: n.isTerminal,
                     distance: c.distanceTo(v),
                     center: n.position,
@@ -104,21 +114,11 @@ export default function BranchGeometry(
             });
         }),
     };
-    console.log('Branch vertices', branchVertices.flat().length);
-
-    const maxDistance = branches.reduce((a, b) => {
-        return Math.max(a.position, b.position.distanceTo(centerNode));
-    }, 0);
 
     // Create center hull
     let hull = qh(
         branchVertices.flat().map(({ outerVertex: { x, y, z } }) => [x, y, z])
     );
-    console.log(hull.length, hull, nodeCount);
-    // This is stupid and  too simplisticf
-    // Vertice groups for each connecting node
-    //eg.  [0,1,2]
-    // for each face check if all vertices are in node group
 
     const nodeFaces = [];
     for (let i = 0; i < nodeCount; i++) {
@@ -134,12 +134,6 @@ export default function BranchGeometry(
             return !nodeFaces.some(f => {
                 return !a.some(a => !f.includes(a));
             });
-            // for (let i = 0; i < nodeCount; i++) {
-            // const face = [i * 3, i * 3 + 1, i * 3 + 2];
-            // result = a.some(a => !face.includes(a));
-            // if (!result) break;
-            // }
-            // return result;
         });
     }
 
@@ -150,7 +144,9 @@ export default function BranchGeometry(
     const faces = hull.map(arr => new THREE.Face3(arr[0], arr[1], arr[2]));
     outerHull.vertices = branchVertices.flat().map(b => b.outerVertex);
     outerHull.faces = faces;
-    hullGeometry.vertices = branchVertices.flat().map(b => b.innerVertex);
+    hullGeometry.vertices = branchVertices
+        .flat()
+        .map(b => b.adjustedHullVertice(0.5));
     hullGeometry.faces = faces;
 
     // Branches
