@@ -10,7 +10,7 @@ export default function BranchGeometry(
     rawBranches,
     segments,
     radius = 0.4,
-    hullSize = 1,
+    hullSize = 1
 ) {
     const branches = rawBranches.map(b => {
         const distance = b.position.distanceTo(centerNode);
@@ -42,36 +42,12 @@ export default function BranchGeometry(
 
             const plane = new THREE.Plane(pNormal, 0);
             // centerNode.distanceTo(new THREE.Vector3())
-            var planeHelper = new THREE.PlaneHelper(plane, 0.4, 0x000000);
+            var planeHelper = new THREE.PlaneHelper(plane, 1, 0x000000);
             planeHelper.position.set(centerNode.x, centerNode.y, centerNode.z);
             helpers.add(planeHelper);
             planes.push(plane);
         }
     }
-
-    const originalVertices = [];
-    const inc = TWO_PI / segments;
-    const pos = xAxis.clone().multiplyScalar(radius);
-    for (let j = 0; j < TWO_PI; j += inc) {
-        pos.applyAxisAngle(yAxis, inc);
-        originalVertices.push(pos.clone());
-
-        //             const originalVertices = verticesAroundAxis(
-        //                 new THREE.Vector3(0, 0, 0),
-        //                 new THREE.Vector3(0, 0, 1),
-        //                 segments,
-        //                 radius,
-        //             );
-
-        var arrowHelper = new THREE.ArrowHelper(
-            new THREE.Vector3(0, 1, 0),
-            pos,
-            0.2,
-            0xff0000,
-        );
-        helpers.add(arrowHelper);
-    }
-    console.log('Original g', originalVertices);
 
     // Branches
     const branchVertices = {
@@ -79,34 +55,13 @@ export default function BranchGeometry(
             return this.branchVertices.reduce((a, b) => [...a, ...b], []);
         },
         branchVertices: branches.map((n, i) => {
-            console.log(n, i);
-            const qRotation = new THREE.Quaternion();
-            const vec = centerNode.clone().sub(n.position);
-            qRotation.setFromEuler(vec);
-            // qRotation.setFromUnitVectors(
-            // centerNode.clone().normalize(),
-            // n.position.clone().normalize(),
-            // );
-            const vertices = originalVertices.map(
-                v =>
-                    v
-                        .clone()
-                        // .multiplyScalar(radius)
-                        .applyQuaternion(qRotation),
-                // .normalize()
-                // .add(n.position),
-            );
-            console.log(vertices);
-
-            // iM = rotation matrix from yAxis to start / end;
-            // v = m * (v * distance) + end;
-            // return verticesAroundAxis(
-            // n.position,
-            // centerNode,
-            // segments,
-            // radius,
-
-            return vertices.map(v => {
+            return verticesAroundAxis(
+                n.position,
+                centerNode,
+                segments,
+                radius
+            ).map(v => {
+                // return vertices.map(v => {
                 //ray from node in direction of centernode
                 let rayVector = n.position
                     .clone()
@@ -121,7 +76,7 @@ export default function BranchGeometry(
                     if (i) {
                         const d = new THREE.Vector3();
                         ray.intersectPlane(p, d);
-                        if (vZero.distanceTo(c) > vZero.distanceTo(d)) {
+                        if (vZero.distanceTo(d) < vZero.distanceTo(c)) {
                             c = d;
                         }
                     }
@@ -129,8 +84,9 @@ export default function BranchGeometry(
                 var arrowHelper = new THREE.ArrowHelper(
                     rayVector,
                     v,
-                    0.2,
-                    0xff0000,
+                    2,
+                    0x0000ff,
+                    0.05
                 );
                 helpers.add(arrowHelper);
                 helpers.add(Helpers.marker(c.clone().add(centerNode), 0.04));
@@ -156,20 +112,38 @@ export default function BranchGeometry(
 
     // Create center hull
     let hull = qh(
-        branchVertices.flat().map(({ innerVertex: { x, y, z } }) => [x, y, z]),
+        branchVertices.flat().map(({ outerVertex: { x, y, z } }) => [x, y, z])
     );
     console.log(hull.length, hull, nodeCount);
     // This is stupid and  too simplisticf
-    hull = hull.filter(a => {
-        let result = true;
-        for (let i = 0; i < nodeCount; i++) {
-            const face = [i * 3, i * 3 + 1, i * 3 + 2];
-            result = a.some(a => !face.includes(a));
-            if (!result) break;
+    // Vertice groups for each connecting node
+    //eg.  [0,1,2]
+    // for each face check if all vertices are in node group
+
+    const nodeFaces = [];
+    for (let i = 0; i < nodeCount; i++) {
+        let face = [];
+        for (let j = 0; j < segments; j++) {
+            face.push(i * segments + j);
         }
-        return result;
-    });
-    console.log(hull.length);
+        nodeFaces.push(face);
+    }
+
+    function filter(hull) {
+        return hull.filter(a => {
+            return !nodeFaces.some(f => {
+                return !a.some(a => !f.includes(a));
+            });
+            // for (let i = 0; i < nodeCount; i++) {
+            // const face = [i * 3, i * 3 + 1, i * 3 + 2];
+            // result = a.some(a => !face.includes(a));
+            // if (!result) break;
+            // }
+            // return result;
+        });
+    }
+
+    hull = filter(hull);
 
     const outerHull = new THREE.Geometry();
     const hullGeometry = new THREE.Geometry();
@@ -203,8 +177,8 @@ export default function BranchGeometry(
                 new THREE.Face3(
                     k + 1,
                     (k + 3) % doubleSides + l,
-                    (k + 2) % doubleSides + l,
-                ),
+                    (k + 2) % doubleSides + l
+                )
             );
         }
         for (let i = 1; i < segments; i++) {
@@ -214,6 +188,8 @@ export default function BranchGeometry(
     branchGeometry.vertices = nodeBranchesVertices;
     branchGeometry.faces = nodeBranchesFaces;
     helpers.add(Helpers.wireframe(hullGeometry));
+    const hullMesh = new THREE.Mesh(hullGeometry);
+    helpers.add(new THREE.VertexNormalsHelper(hullMesh, 2, 0x000000, 1));
     return {
         hullGeometry,
         outerHull,

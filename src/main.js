@@ -60,7 +60,7 @@ function initThree() {
         30,
         window.innerWidth / window.innerHeight,
         1,
-        10000,
+        10000
     );
 
     for (let i = 0; i < ROCKS; i++) {
@@ -121,7 +121,7 @@ function initThree() {
     // scene.add(new THREE.AxisHelper(50));
 
     camera.position.z = 0;
-    camera.position.y = 10;
+    camera.position.y = 6;
     camera.position.x = 0;
     camera.target = new THREE.Vector3(0, 0, 0);
 
@@ -136,7 +136,7 @@ function initThree() {
 
     let directionalLightHelper = new THREE.DirectionalLightHelper(
         directionalLight,
-        0,
+        0
     );
     // scene.add( directionalLightHelper);
 
@@ -168,7 +168,7 @@ window.addEventListener(
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     },
-    false,
+    false
 );
 
 initThree();
