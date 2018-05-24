@@ -43,8 +43,8 @@ function Tree() {
     let nodeStack = [currentParent];
     let maxLevel = 0;
     const segments = 3;
-    const iterations = 1;
-    const radius = 0.1;
+    const iterations = 2;
+    const radius = 0.4;
 
     function updatePosition() {
         const v = new THREE.Vector3(0, 1, 0)
@@ -178,16 +178,10 @@ function Tree() {
             }
         }
         if (centerNode && nodes) {
-            const branch = branchGeometry(
-                centerNode,
-                nodes,
-                segments,
-                radius,
-                0.5
-            );
+            const branch = branchGeometry(centerNode, nodes, segments, radius);
             // group.add(new THREE.Mesh(branch.hullGeometry));
             group.add(new THREE.Mesh(branch.geometry));
-            roup.add(Helpers.wireframe(branch.geometry));
+            group.add(Helpers.wireframe(branch.geometry));
             // group.add(new THREE.Mesh(branch.outerHull));
             // group.add(branch.helpers);
             // group.add(new THREE.Mesh(branch.branchGeometry));
@@ -214,7 +208,7 @@ function Tree() {
             midPoint,
             end,
             segments,
-            radius
+            radius,
         );
         const geometry = new THREE.Geometry();
         geometry.vertices = [end, ...startVertices];
@@ -242,7 +236,7 @@ function Tree() {
         if (node.isBranch) {
             lineVertices.push(
                 node.position,
-                node.parent.end || node.parent.position
+                node.parent.end || node.parent.position,
             );
         }
         node.children.forEach(c => {
@@ -259,7 +253,7 @@ function Tree() {
         new THREE.LineBasicMaterial({
             color: 0x0000ff,
             linewidth: 4,
-        })
+        }),
     );
 
     mesh.add(group);

@@ -3,15 +3,18 @@ import qh from 'quickhull3d';
 import SubdivisionModifier from 'three-subdivision-modifier';
 
 import Helpers from '../util/helpers';
+import Util from '../util/util';
 import { verticesAroundAxis } from '../util/3dUtil';
 import { PI, zAxis, TWO_PI, yAxis, xAxis } from '../util/constants';
+
+const { randomFloat } = Util;
 
 export default function BranchGeometry(
     centerNode,
     rawBranches,
     segments,
     radius = 0.4,
-    hullSize = 0
+    hullSize = 0.3,
 ) {
     const branches = rawBranches.map(b => {
         const distance = b.position.distanceTo(centerNode);
@@ -26,7 +29,7 @@ export default function BranchGeometry(
         return b;
     });
 
-    const modifier = new SubdivisionModifier(2);
+    const modifier = new SubdivisionModifier(1);
 
     const helpers = new THREE.Group();
     const nodeCount = branches.length;
@@ -49,7 +52,7 @@ export default function BranchGeometry(
                 planeHelper.position.set(
                     centerNode.x,
                     centerNode.y,
-                    centerNode.z
+                    centerNode.z,
                 );
                 helpers.add(planeHelper);
                 planes.push(plane);
@@ -74,7 +77,7 @@ export default function BranchGeometry(
                 n.position,
                 centerNode,
                 segments,
-                radius
+                randomFloat(0.1, radius),
             ).map(v => {
                 const planes = getPlanes(branches, n);
 
@@ -100,7 +103,7 @@ export default function BranchGeometry(
                     rayVector,
                     v,
                     0.2,
-                    0xff0000
+                    0xff0000,
                 );
                 helpers.add(arrowHelper);
                 helpers.add(Helpers.marker(c.clone().add(centerNode), 0.04));
@@ -114,7 +117,7 @@ export default function BranchGeometry(
                             .clone()
                             .negate()
                             .multiplyScalar(
-                                branchVertices.maxHullSize * hullSize
+                                branchVertices.maxHullSize * hullSize,
                             );
                         return this.innerVertex.clone().add(vector);
                     },
@@ -128,7 +131,7 @@ export default function BranchGeometry(
 
     // Create center hull
     let hull = qh(
-        branchVertices.flat().map(({ outerVertex: { x, y, z } }) => [x, y, z])
+        branchVertices.flat().map(({ outerVertex: { x, y, z } }) => [x, y, z]),
     );
 
     const nodeFaces = [];
@@ -167,7 +170,7 @@ export default function BranchGeometry(
 
     branchVertices.branchVertices.forEach((b, i) => {
         vertices.push(
-            ...b.map(c => (c.isTerminal ? c.outerVertex : c.outerVertex))
+            ...b.map(c => (c.isTerminal ? c.outerVertex : c.outerVertex)),
         );
         const l = i * segments;
         for (let j = 0; j < segments; j++) {
@@ -181,11 +184,11 @@ export default function BranchGeometry(
 
             // [9, 1, 10][(10, 2, 11)][(11, 0, 9)];
 
-            const f1 = [(k + 1) % segments, k + count, k];
+            const f1 = [(k + 1) % segments + l, k + count, k];
             const f2 = [
-                (k + 1) % segments + count,
+                (k + 1) % segments + l + count,
                 k + count,
-                (k + 1) % segments,
+                (k + 1) % segments + l,
             ];
             // const f2 = [
             // k + count,
