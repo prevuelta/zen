@@ -42,7 +42,7 @@ function Tree() {
     let tree = currentParent;
     let nodeStack = [currentParent];
     let maxLevel = 0;
-    const segments = 4;
+    const segments = 3;
     const iterations = 1;
     const radius = 0.1;
 
@@ -95,11 +95,12 @@ function Tree() {
         currentParent = node;
         currentPosition = end;
         level++;
-        yAngle += randomFloat(-QUARTER_PI, QUARTER_PI);
+        yAngle += randomFloat(-HALF_PI, HALF_PI);
     }
 
     const xRule = '';
-    const fRule = 'F[+F[-F][+F]]-F[+F[-F][+F]]';
+    // const fRule = 'F[+F[-F][+F]]-F[+F[-F][+F]]';
+    const fRule = 'F[+F]-F';
 
     var system = new LSystem({
         axiom: 'F',
@@ -177,11 +178,19 @@ function Tree() {
             }
         }
         if (centerNode && nodes) {
-            const branch = branchGeometry(centerNode, nodes, segments, radius);
-            group.add(new THREE.Mesh(branch.hullGeometry));
+            const branch = branchGeometry(
+                centerNode,
+                nodes,
+                segments,
+                radius,
+                0.5
+            );
+            // group.add(new THREE.Mesh(branch.hullGeometry));
+            group.add(new THREE.Mesh(branch.geometry));
+            roup.add(Helpers.wireframe(branch.geometry));
             // group.add(new THREE.Mesh(branch.outerHull));
             // group.add(branch.helpers);
-            group.add(new THREE.Mesh(branch.branchGeometry));
+            // group.add(new THREE.Mesh(branch.branchGeometry));
         }
         if (node.children.length) {
             node.children.forEach(renderTree);

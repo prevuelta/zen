@@ -1,5 +1,6 @@
 import THREE from 'three';
 import qh from 'quickhull3d';
+import SubdivisionModifier from 'three-subdivision-modifier';
 
 import Helpers from '../util/helpers';
 import { verticesAroundAxis } from '../util/3dUtil';
@@ -10,7 +11,7 @@ export default function BranchGeometry(
     rawBranches,
     segments,
     radius = 0.4,
-    hullSize = 1
+    hullSize = 0
 ) {
     const branches = rawBranches.map(b => {
         const distance = b.position.distanceTo(centerNode);
@@ -24,6 +25,8 @@ export default function BranchGeometry(
         }
         return b;
     });
+
+    const modifier = new SubdivisionModifier(2);
 
     const helpers = new THREE.Group();
     const nodeCount = branches.length;
@@ -42,7 +45,7 @@ export default function BranchGeometry(
                     .normalize();
 
                 const plane = new THREE.Plane(pNormal, 0);
-                var planeHelper = new THREE.PlaneHelper(plane, 1, 0x000000);
+                var planeHelper = new THREE.PlaneHelper(plane, 0.4);
                 planeHelper.position.set(
                     centerNode.x,
                     centerNode.y,
@@ -57,12 +60,15 @@ export default function BranchGeometry(
 
     // Branches
     const branchVertices = {
+        get count() {
+            return branches.length * segments;
+        },
         flat() {
             return this.branchVertices.reduce((a, b) => [...a, ...b], []);
         },
-        maximumHullSize: branches.reduce((a, b) => {
+        maxHullSize: branches.reduce((a, b) => {
             return Math.min(a, b.position.distanceTo(centerNode));
-        }, 0),
+        }, Infinity),
         branchVertices: branches.map((n, i) => {
             return verticesAroundAxis(
                 n.position,
@@ -93,9 +99,8 @@ export default function BranchGeometry(
                 var arrowHelper = new THREE.ArrowHelper(
                     rayVector,
                     v,
-                    2,
-                    0x0000ff,
-                    0.05
+                    0.2,
+                    0xff0000
                 );
                 helpers.add(arrowHelper);
                 helpers.add(Helpers.marker(c.clone().add(centerNode), 0.04));
@@ -105,7 +110,13 @@ export default function BranchGeometry(
                     ray,
                     innerVertex: c.clone().add(centerNode),
                     adjustedHullVertex(hullSize = 0) {
-                        return new THREE.Vector3();
+                        const vector = this.rayVector
+                            .clone()
+                            .negate()
+                            .multiplyScalar(
+                                branchVertices.maxHullSize * hullSize
+                            );
+                        return this.innerVertex.clone().add(vector);
                     },
                     isTerminal: n.isTerminal,
                     distance: c.distanceTo(v),
@@ -141,55 +152,86 @@ export default function BranchGeometry(
 
     const outerHull = new THREE.Geometry();
     const hullGeometry = new THREE.Geometry();
-    const faces = hull.map(arr => new THREE.Face3(arr[0], arr[1], arr[2]));
-    outerHull.vertices = branchVertices.flat().map(b => b.outerVertex);
-    outerHull.faces = faces;
-    hullGeometry.vertices = branchVertices
+    // const hullFaces = hull.map(arr => new THREE.Face3(arr[0], arr[1], arr[2]));
+    // outerHull.vertices = branchVertices.flat().map(b => b.outerVertex);
+    // outerHull.faces = faces;
+    // hullGeometry.vertices = branchVertices
+    let vertices = branchVertices
         .flat()
-        .map(b => b.adjustedHullVertice(0.5));
-    hullGeometry.faces = faces;
+        .map(b => b.adjustedHullVertex(hullSize));
+    const faces = hull;
 
-    // Branches
-    const branchGeometry = new THREE.Geometry();
-    let nodeBranchesVertices = [];
-    const nodeBranchesFaces = [];
-    const doubleSides = segments * 2;
+    console.log('Verticecount', branchVertices.count);
+
+    const { count } = branchVertices;
 
     branchVertices.branchVertices.forEach((b, i) => {
-        nodeBranchesVertices = [
-            ...nodeBranchesVertices,
-            ...b
-                .map(v => [
-                    v.isTerminal ? v.center : v.outerVertex,
-                    v.innerVertex,
-                ])
-                .reduce((a, b) => [...a, ...b], []),
-        ];
-        const l = i * segments * 2;
-        for (let j = 0; j < segments * 2; j += 2) {
+        vertices.push(
+            ...b.map(c => (c.isTerminal ? c.outerVertex : c.outerVertex))
+        );
+        const l = i * segments;
+        for (let j = 0; j < segments; j++) {
             const k = l + j;
-            nodeBranchesFaces.push(
-                new THREE.Face3(k, k + 1, (k + 2) % doubleSides + l),
-                new THREE.Face3(
-                    k + 1,
-                    (k + 3) % doubleSides + l,
-                    (k + 2) % doubleSides + l
-                )
-            );
+            // [0, 9, 1]
+            // [(1, 10, 2)],
+            // [2, 11, 0],
+            // [3, 12, 4],
+            // [4, 13, 5],
+            // [5, 14, 0];
+
+            // [9, 1, 10][(10, 2, 11)][(11, 0, 9)];
+
+            const f1 = [(k + 1) % segments, k + count, k];
+            const f2 = [
+                (k + 1) % segments + count,
+                k + count,
+                (k + 1) % segments,
+            ];
+            // const f2 = [
+            // k + count,
+            // (k + 2) % doubleSides + l,
+            // (k + count + 1) % doubleSides + l + count,
+            // ];
+            console.log(f1, f2);
+            // [k, k + 1, (k + 2) % doubleSides + l],
+            // [k + 1, (k + 3) % doubleSides + l, (k + 2) % doubleSides + l]
+            faces.push(f1, f2);
         }
         for (let i = 1; i < segments; i++) {
             // nodeBranchesFaces.push(new THREE.Face3(l, (l + 2) % doubleSides || 1, 0)));
         }
     });
-    branchGeometry.vertices = nodeBranchesVertices;
-    branchGeometry.faces = nodeBranchesFaces;
+
+    console.log('Vertices length', vertices.length, branchVertices.count);
+
     helpers.add(Helpers.wireframe(hullGeometry));
-    const hullMesh = new THREE.Mesh(hullGeometry);
-    helpers.add(new THREE.VertexNormalsHelper(hullMesh, 2, 0x000000, 1));
+    helpers.add(Helpers.wireframe(hullGeometry));
+
+    const mergedGeometry = new THREE.Geometry();
+
+    // mergedGeometry.vertices = [...hullVertices, ...nodeBranchesVertices];
+    console.log(faces);
+
+    mergedGeometry.vertices = vertices;
+    mergedGeometry.faces = faces.map(bf => new THREE.Face3(...bf));
+
+    // TODO: remove duplicate vertices where hull and branch intersect
+
+    // branchMesh.updateMatrix();
+    // hullMesh.updateMatrix();
+
+    // mergedGeometry.merge(branchMesh.geometry, branchMesh.matrix);
+    // mergedGeometry.merge(hullMesh.geometry, hullMesh.matrix);
+
+    // mergedGeometry.updateMatrix();
+
+    // modifier.modify(mergedGeometry);
+
     return {
-        hullGeometry,
-        outerHull,
-        branchGeometry,
+        geometry: mergedGeometry,
+        // hullGeometry,
+        // outerHull,
+        // branchGeometry,
         helpers,
     };
 }
