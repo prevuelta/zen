@@ -44,7 +44,7 @@ function Tree() {
     let maxLevel = 0;
     const segments = 3;
     const iterations = 2;
-    const radius = 0.4;
+    const radius = 0.1;
 
     function updatePosition() {
         const v = new THREE.Vector3(0, 1, 0)
@@ -100,7 +100,7 @@ function Tree() {
 
     const xRule = '';
     // const fRule = 'F[+F[-F][+F]]-F[+F[-F][+F]]';
-    const fRule = 'F[+F]-F';
+    const fRule = 'F[+F]-F[+F]';
 
     var system = new LSystem({
         axiom: 'F',
@@ -186,6 +186,9 @@ function Tree() {
             // group.add(branch.helpers);
             // group.add(new THREE.Mesh(branch.branchGeometry));
         }
+        // Render joining mesh
+        // Match branch vertices to child start
+        // joingMeshes push f1: branch vertices && f2: child branch vertices.
         if (node.children.length) {
             node.children.forEach(renderTree);
         }

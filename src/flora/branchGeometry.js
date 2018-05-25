@@ -77,7 +77,7 @@ export default function BranchGeometry(
                 n.position,
                 centerNode,
                 segments,
-                randomFloat(0.1, radius),
+                radius,
             ).map(v => {
                 const planes = getPlanes(branches, n);
 
@@ -228,7 +228,7 @@ export default function BranchGeometry(
 
     // mergedGeometry.updateMatrix();
 
-    // modifier.modify(mergedGeometry);
+    modifier.modify(mergedGeometry);
 
     return {
         geometry: mergedGeometry,
